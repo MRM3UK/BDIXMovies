@@ -271,12 +271,14 @@
             border: 1px solid var(--border-color);
         }
         .modal-content.video-player {
-            max-width: 900px; /* Wider for video player */
+            max-width: 90vw; /* Use viewport width for better responsiveness */
             width: 95%;
-            height: auto; /* Allow height to adjust */
-            max-height: 90%; /* Max height of the modal */
+            height: 90vh; /* Use viewport height to ensure it's tall enough */
+            max-height: 90%; 
             display: flex;
-            flex-direction: column; /* Children flex vertically */
+            flex-direction: column; 
+            padding: 15px; /* Adjust padding if needed for smaller screens */
+            box-sizing: border-box; /* Include padding in width/height calculation */
         }
         .close-button {
             color: var(--text-color-light);
@@ -298,9 +300,10 @@
         }
         .modal-content h2 {
             margin-top: 0;
-            margin-bottom: 25px;
+            margin-bottom: 15px; /* Reduced margin for player modal title */
             color: var(--accent-color);
             text-shadow: 1px 1px 1px var(--shadow-dark);
+            flex-shrink: 0; /* Prevent title from shrinking */
         }
         .player-option {
             display: block;
@@ -339,24 +342,22 @@
         /* Video Player inside Modal Container */
         #videoPlayerContainer {
             width: 100%;
-            flex-grow: 1; /* This is KEY: Allows video/iframe to take available space */
+            flex-grow: 1; 
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: black;
             border-radius: 8px;
-            overflow: hidden; /* Ensures content stays within bounds */
+            overflow: hidden; 
+            position: relative; /* Needed for absolute positioning if using error message inside */
         }
-        /* Style for the <iframe> element when it's directly used */
-        #videoPlayerContainer iframe {
+        /* Ensure iframe and playerjs_container take full space within videoPlayerContainer */
+        #videoPlayerContainer iframe,
+        #playerjs_container { /* Added playerjs_container here for consistency */
             width: 100%;
             height: 100%;
             border: none;
-        }
-        /* Style for the PlayerJS container */
-        #playerjs_container {
-            width: 100%;
-            height: 100%; /* This is KEY: PlayerJS div takes full height of its container */
+            display: block; /* Ensure it's a block element */
         }
 
         /* Loading Spinner */
@@ -466,7 +467,16 @@
                 font-size: 1em;
             }
             .modal-content.video-player {
-                padding: 15px;
+                /* On smaller screens, make player modal full screen or nearly full screen */
+                width: 100vw;
+                height: 100vh;
+                max-width: 100vw;
+                max-height: 100vh;
+                padding: 10px; /* Reduce padding to maximize player space */
+            }
+            /* Adjust title margin in player modal for small screens */
+            .modal-content.video-player h2 {
+                margin-bottom: 10px;
             }
         }
 
@@ -942,7 +952,10 @@
                         id: 'playerjs_container',
                         file: currentVideoUrl,
                         autoplay: true, 
-                        fullscreen: true, // Add this line for fullscreen
+                        // The 'fullscreen: true' option here typically controls whether the player *starts* in browser fullscreen.
+                        // However, the user's main issue is the player size within the modal.
+                        // The CSS changes are more directly addressing that.
+                        fullscreen: true, 
                         // poster: 'your-poster.jpg' // Uncomment and set your poster image URL
                     });
                     console.log('PlayerJS initialized with URL:', currentVideoUrl);
@@ -953,7 +966,7 @@
                 }
             } else if (typeof window.pjscnfgs === 'object') {
                 // Fallback for async PlayerJS config (if PlayerJS loads its config first)
-                window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true, fullscreen: true }; // Add fullscreen here too
+                window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true, fullscreen: true }; 
                 console.log('PlayerJS config set for async initialization for URL:', currentVideoUrl);
             } else {
                 playerJsErrorElement.textContent = 'PlayerJS স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি। PlayerJS CDN URL সঠিক আছে কিনা যাচাই করুন।';
