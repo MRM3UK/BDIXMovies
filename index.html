@@ -493,6 +493,7 @@
         let currentCategory = 'All';
         let currentVideoUrl = '';
         let currentVideoTitle = ''; // To store the title for the web player modal
+        let hlsInstance = null; // Store HLS.js instance
 
         const videoGrid = document.getElementById('video-grid');
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -502,7 +503,23 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const webPlayerTitle = document.getElementById('webPlayerTitle');
 
+        // Function to safely get elements by ID
+        function getElement(id) {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.error(`Error: Element with ID "${id}" not found.`);
+                return null;
+            }
+            return element;
+        }
+
         async function loadM3uFile() {
+            // Ensure elements are available before proceeding
+            if (!videoGrid || !loadingSpinner || !categoryList) {
+                console.error("Essential DOM elements not found. Script might be running too early or HTML is malformed.");
+                return;
+            }
+
             if (!m3uFileUrl) {
                 loadingSpinner.classList.add('hidden');
                 videoGrid.innerHTML = '<p style="color: var(--accent-color); text-align: center;">কোনো প্লেলিস্ট URL প্রদান করা হয়নি। অনুগ্রহ করে ওয়েবসাইটের লিংকের সাথে <b>?link=আপনার_M3U_ফাইলের_URL</b> যোগ করুন।</p>';
@@ -619,6 +636,7 @@
         }
 
         function displayVideos(category) {
+            if (!videoGrid) return; // Defensive check
             videoGrid.innerHTML = '';
 
             const filteredVideos = videos.filter(video => {
@@ -717,6 +735,7 @@
         }
 
         function displayCategories() {
+            if (!categoryList) return; // Defensive check
             categoryList.innerHTML = '';
 
             const allCategory = document.createElement('a');
@@ -750,11 +769,11 @@
         function openPlayerModal(url, title) {
             currentVideoUrl = url;
             currentVideoTitle = title;
-            playerSelectionModal.classList.remove('hidden');
+            if (playerSelectionModal) playerSelectionModal.classList.remove('hidden');
         }
 
         function closePlayerModal() {
-            playerSelectionModal.classList.add('hidden');
+            if (playerSelectionModal) playerSelectionModal.classList.add('hidden');
             currentVideoUrl = '';
             currentVideoTitle = '';
         }
@@ -771,11 +790,6 @@
                 case 'mxplayer':
                     launchUrl = "mxplayer://" + encodeURIComponent(finalUrl);
                     break;
-                case 'browser': // This case is now handled by openWebPlayerModal()
-                    // This case should ideally not be reached if button is hidden/replaced
-                    window.open(finalUrl, '_blank'); 
-                    closePlayerModal();
-                    return;
                 default:
                     alert("অজানা প্লেয়ার নির্বাচন করা হয়েছে।");
                     closePlayerModal();
@@ -785,6 +799,7 @@
             window.location.href = launchUrl;
             closePlayerModal();
 
+            // Give a short delay before alert, in case the app launches quickly
             setTimeout(() => {
                 alert(`প্লে করার চেষ্টা করা হচ্ছে: ${playerType.toUpperCase()}\nআপনার ডিভাইসে এই প্লেয়ারটি ইনস্টল নাও থাকতে পারে, অথবা এটি স্বয়ংক্রিয়ভাবে খুলছে না।`);
             }, 500);
@@ -792,46 +807,56 @@
 
         // New function: Open web player modal
         function openWebPlayerModal() {
-            if (!currentVideoUrl) return;
+            if (!currentVideoUrl || !webPlayerModal || !videoPlayer || !webPlayerTitle) return;
 
             closePlayerModal(); // Close player selection modal
 
             webPlayerTitle.textContent = currentVideoTitle; // Set modal title
             webPlayerModal.classList.remove('hidden'); // Show web player modal
 
+            // Ensure previous HLS instance is destroyed if it exists
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+            videoPlayer.src = ''; // Clear previous video source
+            videoPlayer.load(); // Load to clear internal state
+
             // Check if HLS.js is supported and needed
+            // A simple check if URL ends with .m3u8 for HLS, otherwise assume native support or MP4
             if (Hls.isSupported() && currentVideoUrl.includes('.m3u8')) {
-                const hls = new Hls();
-                hls.loadSource(currentVideoUrl);
-                hls.attachMedia(videoPlayer);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                hlsInstance = new Hls();
+                hlsInstance.loadSource(currentVideoUrl);
+                hlsInstance.attachMedia(videoPlayer);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
                     videoPlayer.play();
                 });
-                hls.on(Hls.Events.ERROR, function (event, data) {
+                hlsInstance.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
                         switch(data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                // try to recover network error
-                                console.error("Fatal network error encountered, try to recover", data);
-                                hls.recoverMediaError();
+                                console.error("Fatal network error encountered for HLS, trying to recover", data);
+                                hlsInstance.recoverMediaError();
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.error("Fatal media error encountered, try to recover", data);
-                                hls.recoverMediaError();
+                                console.error("Fatal media error encountered for HLS, trying to recover", data);
+                                hlsInstance.recoverMediaError();
                                 break;
                             default:
-                                // cannot recover
-                                console.error("Fatal HLS error, destroying video player", data);
-                                hls.destroy();
-                                videoPlayer.src = currentVideoUrl; // Fallback to native if HLS fails
+                                console.error("Fatal HLS error, destroying HLS instance and trying native playback", data);
+                                hlsInstance.destroy();
+                                hlsInstance = null;
+                                videoPlayer.src = currentVideoUrl; // Fallback to native HTML5 if HLS fails
                                 videoPlayer.load();
                                 videoPlayer.play();
                                 break;
                         }
+                    } else {
+                        console.warn("Non-fatal HLS error:", data);
                     }
                 });
-            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl') || videoPlayer.canPlayType('video/mp4')) {
-                // For native HLS support (Safari/iOS) or direct MP4 links
+            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl') || videoPlayer.canPlayType('video/mp4') || videoPlayer.canPlayType('video/webm')) {
+                // For native HLS support (Safari/iOS) or direct MP4/WebM links
                 videoPlayer.src = currentVideoUrl;
                 videoPlayer.load();
                 videoPlayer.play();
@@ -844,10 +869,13 @@
 
         // New function: Close web player modal
         function closeWebPlayerModal() {
+            if (!webPlayerModal || !videoPlayer) return; // Defensive check
+
             videoPlayer.pause();
             videoPlayer.src = ''; // Clear video source
-            if (Hls.isSupported() && videoPlayer.hls) { // If hls.js instance exists
-                videoPlayer.hls.destroy(); // Destroy hls.js instance
+            if (hlsInstance) { // If hls.js instance exists
+                hlsInstance.destroy(); // Destroy hls.js instance
+                hlsInstance = null;
             }
             webPlayerModal.classList.add('hidden');
         }
@@ -861,4 +889,43 @@
                 alert('ভিডিও URL কপি করা হয়েছে!');
             } catch (err) {
                 console.error('URL কপি করতে ব্যর্থ:', err);
-                alert('URL কপি
+                alert('URL কপি করা যায়নি। ম্যানুয়ালি কপি করার চেষ্টা করুন।');
+            }
+            closePlayerModal();
+        }
+
+        function openNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "250px";
+            if (mainContent && window.innerWidth > 768) {
+                mainContent.style.marginLeft = "250px";
+            }
+        }
+
+        function closeNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "0";
+            if (mainContent) mainContent.style.marginLeft = "0";
+        }
+
+        // Ensure DOM is fully loaded before running script
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. Initializing app.");
+            loadM3uFile();
+        });
+
+        // Click outside modal to close
+        window.onclick = function(event) {
+            if (playerSelectionModal && event.target == playerSelectionModal) {
+                closePlayerModal();
+            }
+            if (webPlayerModal && event.target == webPlayerModal) {
+                closeWebPlayerModal();
+            }
+        }
+    </script>
+
+</body>
+</html>
