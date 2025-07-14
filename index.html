@@ -556,8 +556,6 @@
     </div>
 
     <script>
-        // Use a test M3U URL for debugging. Replace with your actual URL for deployment.
-        // const m3uFileUrl = urlParams.get('link'); // Original way to get URL from query param
         const urlParams = new URLSearchParams(window.location.search);
         let m3uFileUrl = urlParams.get('link'); 
 
@@ -944,6 +942,7 @@
                         id: 'playerjs_container',
                         file: currentVideoUrl,
                         autoplay: true, 
+                        fullscreen: true, // Add this line for fullscreen
                         // poster: 'your-poster.jpg' // Uncomment and set your poster image URL
                     });
                     console.log('PlayerJS initialized with URL:', currentVideoUrl);
@@ -954,7 +953,7 @@
                 }
             } else if (typeof window.pjscnfgs === 'object') {
                 // Fallback for async PlayerJS config (if PlayerJS loads its config first)
-                window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true };
+                window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true, fullscreen: true }; // Add fullscreen here too
                 console.log('PlayerJS config set for async initialization for URL:', currentVideoUrl);
             } else {
                 playerJsErrorElement.textContent = 'PlayerJS স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি। PlayerJS CDN URL সঠিক আছে কিনা যাচাই করুন।';
