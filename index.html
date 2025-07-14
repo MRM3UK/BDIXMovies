@@ -273,10 +273,10 @@
         .modal-content.video-player {
             max-width: 900px; /* Wider for video player */
             width: 95%;
-            height: auto;
-            max-height: 90%;
+            height: auto; /* Allow height to adjust */
+            max-height: 90%; /* Max height of the modal */
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* Children flex vertically */
         }
         .close-button {
             color: var(--text-color-light);
@@ -333,7 +333,7 @@
         /* Video Player inside Modal Container */
         #videoPlayerContainer {
             width: 100%;
-            flex-grow: 1; /* Allows video/iframe to take available space */
+            flex-grow: 1; /* This is KEY: Allows video/iframe to take available space */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -345,12 +345,12 @@
         #videoPlayerContainer iframe {
             width: 100%;
             height: 100%;
-            border: none; /* Already in style, but good for safety */
+            border: none;
         }
         /* Style for the PlayerJS container */
         #playerjs_container {
             width: 100%;
-            height: 100%;
+            height: 100%; /* This is KEY: PlayerJS div takes full height of its container */
         }
 
         /* Loading Spinner */
@@ -489,7 +489,7 @@
 
     <header>
         <button class="header-button menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
-        <h1>BDIX MOVIES & TV</h1>
+        <h1>BDIX ENTERTAINMENT</h1>
         <button class="header-button search-button" onclick="openSearchModal()"><i class="fas fa-search"></i></button>
     </header>
 
@@ -883,7 +883,10 @@
             webPlayerTitle.textContent = currentVideoTitle; 
             webPlayerModal.classList.remove('hidden'); 
 
+            // Clear previous content and dispose PlayerJS instance if it exists
             if (playerJsInstance) {
+                // If PlayerJS has a specific destroy method, use it here.
+                // For now, setting to null and clearing container is the fallback.
                 playerJsInstance = null; 
             }
             videoPlayerContainer.innerHTML = ''; 
@@ -908,7 +911,7 @@
                     playerJsInstance = new window.Playerjs({
                         id: 'playerjs_container',
                         file: currentVideoUrl,
-                        autoplay: true, // Added autoplay for better UX
+                        autoplay: true, 
                         // Add other PlayerJS options here if needed, e.g., poster: 'your-poster.jpg'
                     });
                     console.log('PlayerJS initialized with URL:', currentVideoUrl);
@@ -983,7 +986,7 @@
         function performSearch() {
             const searchTerm = searchInput.value.trim();
             closeSearchModal(); // Close the search modal after search
-            displayVideos(currentCategory, searchTerm);
+            displayVideos(currentCategory, searchTerm); // Filter by search term
         }
 
         // Event listener for Enter key in search input
