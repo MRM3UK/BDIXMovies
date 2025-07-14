@@ -590,6 +590,14 @@
         async function loadM3uFile() {
             if (!videoGrid || !loadingSpinner || !categoryList) {
                 console.error("Essential DOM elements not found. Script might be running too early or HTML is malformed.");
+                // Attempt to show an error message even if basic elements are missing
+                const body = document.querySelector('body');
+                if (body) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = "color: red; text-align: center; padding: 20px; font-size: 1.2em; background-color: #333; margin: 20px;";
+                    errorDiv.textContent = "গুরুত্বপূর্ণ HTML উপাদান খুঁজে পাওয়া যায়নি। কোড সঠিক ভাবে লোড হচ্ছে কিনা যাচাই করুন।";
+                    body.prepend(errorDiv);
+                }
                 return;
             }
 
@@ -605,7 +613,13 @@
             try {
                 const response = await fetch(m3uFileUrl);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                    let errorMessage = `HTTP error! status: ${response.status} - ${response.statusText}`;
+                    if (response.status === 0 || response.status === 404) {
+                        errorMessage += "। নিশ্চিত করুন যে M3U URL সঠিক এবং পাবলিকলি অ্যাক্সেসযোগ্য।";
+                    } else if (response.status === 200 && !response.headers.get('Content-Type')?.includes('text/plain') && !response.headers.get('Content-Type')?.includes('application/x-mpegurl')) {
+                         errorMessage += "। সার্ভার থেকে ফাইলটি M3U ফরম্যাটে আসছে না।";
+                    }
+                    throw new Error(errorMessage);
                 }
                 const text = await response.text();
                 parseM3u(text);
@@ -755,7 +769,7 @@
                     itemDiv.appendChild(playButton);
 
                     const fileSize = document.createElement('p');
-                    fileSize.textContent = `ফাইল সাইজ: N/A`;
+                    fileSize.textContent = `ফাইল সাইজ: N/A`; // M3U doesn't provide file size directly
                     itemDiv.appendChild(fileSize);
                 }
 
@@ -861,7 +875,7 @@
                 case 'vlc':
                     launchUrl = "vlc://" + encodeURIComponent(finalUrl);
                     break;
-                // MX Player case removed as per request
+                // MX Player case removed as per previous request
                 default:
                     alert("অজানা প্লেয়ার নির্বাচন করা হয়েছে।");
                     closePlayerModal();
@@ -890,73 +904,11 @@
 
             // Clear previous content and dispose PlayerJS instance if it exists
             if (playerJsInstance) {
-                // If PlayerJS has a specific destroy method, use it here.
-                // For now, setting to null and clearing container is the fallback.
-                playerJsInstance = null; 
-            }
-            videoPlayerContainer.innerHTML = ''; 
-
-            if (currentVideoUrl.includes('pixeldrain.dev/u/') && !currentVideoUrl.includes('?download')) {
-                // For PixelDrain embeds
-                const embedUrl = currentVideoUrl + '?embed';
-                
-                const iframe = document.createElement('iframe');
-                iframe.src = embedUrl;
-                iframe.style.cssText = "border: none; width: 100%; height: 100%; border-radius: 8px;";
-                iframe.allowFullscreen = true;
-                iframe.setAttribute('loading', 'lazy'); 
-                videoPlayerContainer.appendChild(iframe);
-            } 
-            else {
-                // For PlayerJS
-                const playerDiv = document.createElement('div');
-                playerDiv.id = 'playerjs_container'; 
-                playerDiv.style.cssText = "width: 100%; height: 100%;"; 
-                videoPlayerContainer.appendChild(playerDiv);
-
-                if (window.Playerjs) {
-                    playerJsInstance = new window.Playerjs({
-                        id: 'playerjs_container',
-                        file: currentVideoUrl,
-                        autoplay: true, 
-                        // You can add poster image here: poster: 'path/to/your/poster.jpg'
-                        // The styling of the player controls depends on the PlayerJS script itself.
-                    });
-                    console.log('PlayerJS initialized with URL:', currentVideoUrl);
-                } else if (window.pjscnfgs) {
-                    // Fallback for async PlayerJS config
-                    window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true };
-                    console.log('PlayerJS config set for async initialization for URL:', currentVideoUrl);
-                } else {
-                    alert('PlayerJS লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি।');
-                    console.error('PlayerJS object (window.Playerjs or window.pjscnfgs) not found.');
-                    closeWebPlayerModal();
+                // Check if PlayerJS has a specific destroy method for proper cleanup.
+                // If not, nulling the instance and clearing innerHTML is the fallback.
+                if (typeof playerJsInstance.destroy === 'function') {
+                    playerJsInstance.destroy();
                 }
-            }
-        }
-
-        function closeWebPlayerModal() {
-            if (!webPlayerModal || !videoPlayerContainer) return; 
-
-            if (playerJsInstance) {
-                // PlayerJS might have a .destroy() method. If so, use it for proper cleanup.
-                // For now, nulling the instance and clearing innerHTML is a common fallback.
                 playerJsInstance = null; 
             }
-            
-            videoPlayerContainer.innerHTML = ''; // Clear the player content
-
-            webPlayerModal.classList.add('hidden');
-        }
-
-
-        async function copyVideoUrl() {
-            if (!currentVideoUrl) return;
-
-            try {
-                await navigator.clipboard.writeText(currentVideoUrl);
-                alert('ভিডিও URL কপি করা হয়েছে!');
-            } catch (err) {
-                console.error('URL কপি করতে ব্যর্থ:', err);
-                alert('URL কপি করা যায়নি। ম্যানুয়ালি কপি করার চেষ্টা করুন।');
-            }
+            videoPlayerContainer.innerHTML
