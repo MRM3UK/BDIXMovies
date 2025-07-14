@@ -980,4 +980,149 @@
                     });
 
                 } catch (e) {
-                    console.error("PlayerJS শুরু
+                    console.error("PlayerJS শুরু করতে ত্রুটি:", e);
+                    playerJsErrorElement.textContent = "প্লেয়ার লোড হতে পারেনি: " + e.message + "। নিশ্চিত করুন ভিডিও URL এবং ফরম্যাট সঠিক।";
+                    playerJsErrorElement.style.display = 'block';
+                }
+            } else {
+                playerJsErrorElement.textContent = 'PlayerJS স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি। PlayerJS CDN URL সঠিক আছে কিনা যাচাই করুন।';
+                playerJsErrorElement.style.display = 'block';
+                console.error('PlayerJS object (window.Playerjs) খুঁজে পাওয়া যায়নি। PlayerJS স্ক্রিপ্ট URL এবং লোডিং সঠিকভাবে হয়েছে কিনা নিশ্চিত করুন।');
+            }
+        }
+
+        function closeWebPlayerModal() {
+            if (!webPlayerModal || !videoPlayerContainer) return; 
+
+            // PlayerJS ইনস্ট্যান্স ধ্বংস করা হচ্ছে যখন মডেল বন্ধ করা হয়।
+            if (playerJsInstance) {
+                if (typeof playerJsInstance.destroy === 'function') {
+                    playerJsInstance.destroy(); 
+                }
+                playerJsInstance = null; 
+            }
+            
+            videoPlayerContainer.innerHTML = ''; // প্লেয়ারের কন্টেন্ট পরিষ্কার করা হচ্ছে।
+            if (playerJsErrorElement) playerJsErrorElement.style.display = 'none'; // ত্রুটির মেসেজ লুকিয়ে রাখা হচ্ছে।
+
+            webPlayerModal.classList.add('hidden');
+        }
+
+
+        async function copyVideoUrl() {
+            if (!currentVideoUrl) {
+                alert("কপি করার জন্য কোনো ভিডিও URL নেই।");
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(currentVideoUrl);
+                alert('ভিডিও URL কপি করা হয়েছে!');
+            } catch (err) {
+                console.error('URL কপি করতে ব্যর্থ:', err);
+                alert('URL কপি করা যায়নি। অনুগ্রহ করে ম্যানুয়ালি কপি করুন: ' + currentVideoUrl);
+            }
+            closePlayerModal();
+        }
+
+        function downloadVideo() {
+            if (!currentVideoUrl) {
+                alert("ডাউনলোড করার জন্য কোনো ভিডিও URL নেই।");
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = currentVideoUrl;
+            // একটি ভালো ফাইলনেম তৈরি করার চেষ্টা করা হচ্ছে
+            let filename = currentVideoUrl.substring(currentVideoUrl.lastIndexOf('/') + 1);
+            if (!filename || filename.indexOf('?') !== -1 || filename.indexOf('.') === -1) { 
+                // যদি URL শেষ হয় '/' দিয়ে, বা query parameters থাকে, অথবা কোন extension না থাকে
+                filename = (currentVideoTitle || 'video') + '.mp4'; // ডিফল্ট হিসাবে .mp4 ব্যবহার করা হচ্ছে
+            }
+            a.download = currentVideoTitle ? `${currentVideoTitle}_${filename}` : filename; 
+            document.body.appendChild(a); 
+            a.click(); 
+            document.body.removeChild(a); 
+
+            alert(`ডাউনলোড শুরু করার চেষ্টা করা হচ্ছে: ${currentVideoTitle || 'ভিডিও'}`);
+            closePlayerModal();
+        }
+
+        function openNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "250px";
+            if (mainContent && window.innerWidth > 768) {
+                mainContent.style.marginLeft = "250px";
+            }
+        }
+
+        function closeNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "0";
+            if (mainContent) mainContent.style.marginLeft = "0";
+        }
+
+        function openSearchModal() {
+            if (searchModal) {
+                searchModal.classList.remove('hidden');
+                searchInput.value = ''; 
+                searchInput.focus(); 
+            }
+        }
+
+        function closeSearchModal() {
+            if (searchModal) searchModal.classList.add('hidden');
+        }
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            closeSearchModal(); 
+            displayVideos(currentCategory, searchTerm); 
+        }
+
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // DOM কন্টেন্ট লোড হওয়ার পর লোডM3uFile ফাংশন কল করা হচ্ছে
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. অ্যাপ্লিকেশন শুরু হচ্ছে।");
+            loadM3uFile();
+        });
+
+        // মডেলের বাইরে ক্লিক করলে মডেল বন্ধ করার জন্য
+        window.onclick = function(event) {
+            if (playerSelectionModal && event.target == playerSelectionModal) {
+                closePlayerModal();
+            }
+            if (webPlayerModal && event.target == webPlayerModal) {
+                closeWebPlayerModal();
+            }
+            if (searchModal && event.target == searchModal) {
+                closeSearchModal();
+            }
+        }
+
+        // স্ক্রিন সাইজ পরিবর্তনের সাথে sidebar এর আচরণ ঠিক করার জন্য
+        window.addEventListener('resize', () => {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (window.innerWidth <= 768) {
+                if (sidebar.style.width === "250px") { 
+                    mainContent.style.marginLeft = "0"; 
+                }
+            } else {
+                if (sidebar.style.width === "250px") { 
+                    mainContent.style.marginLeft = "250px"; 
+                }
+            }
+        });
+
+    </script>
+
+</body>
+</html>
