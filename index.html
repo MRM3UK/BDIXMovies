@@ -444,7 +444,7 @@
 
     <header>
         <button class="menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
-        <h1>আমার ভিডিও লাইব্রেরি</h1>
+        <h1>BDIX MOVIES</h1>
     </header>
 
     <div id="mySidebar" class="sidebar">
@@ -487,8 +487,7 @@
             <span class="close-button" onclick="closeWebPlayerModal()">&times;</span>
             <h2 id="webPlayerTitle"></h2>
             <div id="videoPlayerContainer">
-                <video id="videoPlayer" controls autoplay></video> 
-            </div>
+                </div>
         </div>
     </div>
 
@@ -509,11 +508,7 @@
         const playerSelectionModal = document.getElementById('playerSelectionModal');
         const categoryList = document.getElementById('category-list');
         const webPlayerModal = document.getElementById('webPlayerModal');
-        // IMPORTANT: videoPlayer is referenced as a variable, but its actual DOM element
-        // might be removed/re-added. It's better to get it from videoPlayerContainer dynamically
-        // when needed for HLS.js or native playback.
-        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
-        const webPlayerTitle = document.getElementById('webPlayerTitle');
+        const videoPlayerContainer = document.getElementById('videoPlayerContainer'); // Only the container
 
         // Function to safely get elements by ID (used for sidebar & main-content)
         function getElement(id) {
@@ -889,4 +884,92 @@
                             console.warn("Non-fatal HLS error:", data);
                         }
                     });
-                } else if (videoPlayer.can
+                } else if (videoPlayer.canPlayType('video/mp4') || videoPlayer.canPlayType('video/webm') || videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    // For direct MP4/WebM or native HLS support (Safari/iOS)
+                    videoPlayer.src = currentVideoUrl;
+                    videoPlayer.load();
+                    videoPlayer.play();
+                } else {
+                    alert('এই ভিডিও ফরম্যাটটি ব্রাউজারে প্লে করার জন্য সমর্থিত নয়। অনুগ্রহ করে অন্য প্লেয়ার ব্যবহার করুন বা URL কপি করুন।');
+                    closeWebPlayerModal();
+                }
+            }
+        }
+
+        // Function to close the web player modal
+        function closeWebPlayerModal() {
+            if (!webPlayerModal || !videoPlayerContainer) return; 
+
+            // Find any existing video or iframe and stop/clear it
+            const currentVideoElement = videoPlayerContainer.querySelector('video, iframe'); // Select either video or iframe
+            if (currentVideoElement) {
+                if (currentVideoElement.tagName === 'VIDEO') {
+                    currentVideoElement.pause();
+                    currentVideoElement.src = ''; 
+                    currentVideoElement.load(); // Important to clear internal state
+                } else if (currentVideoElement.tagName === 'IFRAME') {
+                    // For iframes, simply removing it from DOM is enough to stop playback
+                    // No direct 'pause' or 'src' manipulation needed for iframes
+                }
+            }
+            
+            if (hlsInstance) { 
+                hlsInstance.destroy(); 
+                hlsInstance = null;
+            }
+            
+            // Clear the container completely to remove video or iframe
+            videoPlayerContainer.innerHTML = ''; 
+
+            webPlayerModal.classList.add('hidden');
+        }
+
+
+        async function copyVideoUrl() {
+            if (!currentVideoUrl) return;
+
+            try {
+                await navigator.clipboard.writeText(currentVideoUrl);
+                alert('ভিডিও URL কপি করা হয়েছে!');
+            } catch (err) {
+                console.error('URL কপি করতে ব্যর্থ:', err);
+                alert('URL কপি করা যায়নি। ম্যানুয়ালি কপি করার চেষ্টা করুন।');
+            }
+            closePlayerModal();
+        }
+
+        function openNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "250px";
+            if (mainContent && window.innerWidth > 768) {
+                mainContent.style.marginLeft = "250px";
+            }
+        }
+
+        function closeNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "0";
+            if (mainContent) mainContent.style.marginLeft = "0";
+        }
+
+        // Ensure DOM is fully loaded before running script
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. Initializing app.");
+            loadM3uFile();
+        });
+
+        // Click outside modal to close
+        window.onclick = function(event) {
+            if (playerSelectionModal && event.target == playerSelectionModal) {
+                closePlayerModal();
+            }
+            if (webPlayerModal && event.target == webPlayerModal) {
+                closeWebPlayerModal();
+            }
+        }
+    </script>
+
+</body>
+</html>
