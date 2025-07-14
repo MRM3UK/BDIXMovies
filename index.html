@@ -539,7 +539,8 @@
             <span class="close-button" onclick="closeWebPlayerModal()">&times;</span>
             <h2 id="webPlayerTitle"></h2>
             <div id="videoPlayerContainer">
-                </div>
+                <p id="playerJsError" style="color: yellow; text-align: center; margin-top: 20px; display: none;">ভিডিও লোড করা যায়নি। প্লেয়ার স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা ভিডিও ফরম্যাট সমর্থিত নয়।</p>
+            </div>
         </div>
     </div>
 
@@ -555,8 +556,22 @@
     </div>
 
     <script>
+        // Use a test M3U URL for debugging. Replace with your actual URL for deployment.
+        // const m3uFileUrl = urlParams.get('link'); // Original way to get URL from query param
         const urlParams = new URLSearchParams(window.location.search);
-        const m3uFileUrl = urlParams.get('link'); 
+        let m3uFileUrl = urlParams.get('link'); 
+
+        // !!! For debugging purposes, you can uncomment one of these to test if the player works with a known good M3U.
+        // !!! Make sure to comment out the line above (let m3uFileUrl = urlParams.get('link');) if you use these.
+        // Example public M3U file (Bangladeshi channels from iptv-org):
+        // if (!m3uFileUrl) { // Only use this if no link parameter is provided
+        //     m3uFileUrl = 'https://raw.githubusercontent.com/iptv-org/iptv/master/channels/bd.m3u'; 
+        // }
+        // Example of a small test M3U with a single MP4 link:
+        // if (!m3uFileUrl) {
+        //     m3uFileUrl = 'https://gist.githubusercontent.com/username/gistid/raw/test.m3u'; // Replace with your own Gist raw URL
+        // }
+
 
         let videos = [];
         let categories = new Set();
@@ -576,6 +591,8 @@
         const webPlayerTitle = document.getElementById('webPlayerTitle');
         const searchModal = document.getElementById('searchModal');
         const searchInput = document.getElementById('searchInput');
+        const playerJsErrorElement = document.getElementById('playerJsError');
+
 
         // Function to safely get elements by ID (used for sidebar & main-content)
         function getElement(id) {
@@ -603,7 +620,7 @@
 
             if (!m3uFileUrl) {
                 loadingSpinner.classList.add('hidden');
-                videoGrid.innerHTML = '<p style="color: var(--accent-color); text-align: center;">কোনো প্লেলিস্ট URL প্রদান করা হয়নি। অনুগ্রহ করে ওয়েবসাইটের লিংকের সাথে <b>?link=আপনার_M3U_ফাইলের_URL</b> যোগ করুন।</p>';
+                videoGrid.innerHTML = '<p style="color: var(--accent-color); text-align: center;">কোনো প্লেলিস্ট URL প্রদান করা হয়নি। অনুগ্রহ করে ওয়েবসাইটের লিংকের সাথে <b>?link=আপনার_M3U_ফাইলের_URL</b> যোগ করুন। অথবা, কোডে একটি ডিফল্ট M3U লিঙ্ক সেট করুন।</p>';
                 videoGrid.classList.remove('hidden');
                 return;
             }
@@ -618,6 +635,8 @@
                         errorMessage += "। নিশ্চিত করুন যে M3U URL সঠিক এবং পাবলিকলি অ্যাক্সেসযোগ্য।";
                     } else if (response.status === 200 && !response.headers.get('Content-Type')?.includes('text/plain') && !response.headers.get('Content-Type')?.includes('application/x-mpegurl')) {
                          errorMessage += "। সার্ভার থেকে ফাইলটি M3U ফরম্যাটে আসছে না।";
+                    } else if (response.status === 0 && !response.ok) { // Common for CORS issues when request is blocked
+                        errorMessage += "। (সম্ভাব্য CORS নীতি সমস্যা) অনুগ্রহ করে M3U ফাইলটি হোস্ট করা সার্ভার থেকে অ্যাক্সেসের অনুমতি নিশ্চিত করুন।";
                     }
                     throw new Error(errorMessage);
                 }
@@ -694,7 +713,7 @@
                     groupedVideos[baseTitle].seasons[seasonKey].push({
                         title: video.title,
                         url: video.url,
-                        fileSize: 'N/A'
+                        fileSize: 'N/A' // M3U does not inherently provide file size
                     });
                 } else {
                     if (!groupedVideos[video.title]) {
@@ -769,7 +788,7 @@
                     itemDiv.appendChild(playButton);
 
                     const fileSize = document.createElement('p');
-                    fileSize.textContent = `ফাইল সাইজ: N/A`; // M3U doesn't provide file size directly
+                    fileSize.textContent = `ফাইল সাইজ: N/A`;
                     itemDiv.appendChild(fileSize);
                 }
 
@@ -867,7 +886,10 @@
         }
 
         function selectPlayer(playerType) {
-            if (!currentVideoUrl) return;
+            if (!currentVideoUrl) {
+                alert("ভিডিও URL পাওয়া যায়নি।");
+                return;
+            }
 
             let finalUrl = currentVideoUrl;
             let launchUrl = '';
@@ -875,7 +897,6 @@
                 case 'vlc':
                     launchUrl = "vlc://" + encodeURIComponent(finalUrl);
                     break;
-                // MX Player case removed as per previous request
                 default:
                     alert("অজানা প্লেয়ার নির্বাচন করা হয়েছে।");
                     closePlayerModal();
@@ -885,30 +906,186 @@
             window.location.href = launchUrl;
             closePlayerModal();
 
-            // A small delay to allow the external app to attempt launching
             setTimeout(() => {
                 alert(`প্লে করার চেষ্টা করা হচ্ছে: ${playerType.toUpperCase()}\nআপনার ডিভাইসে এই প্লেয়ারটি ইনস্টল নাও থাকতে পারে, অথবা এটি স্বয়ংক্রিয়ভাবে খুলছে না।`);
             }, 500);
         }
 
         function openWebPlayerModal() {
-            if (!currentVideoUrl || !webPlayerModal || !videoPlayerContainer || !webPlayerTitle) {
+            if (!currentVideoUrl || !webPlayerModal || !videoPlayerContainer || !webPlayerTitle || !playerJsErrorElement) {
                 console.error("Critical DOM elements for web player not found.");
                 return;
             }
 
             closePlayerModal(); 
+            playerJsErrorElement.style.display = 'none'; // Hide error message initially
 
             webPlayerTitle.textContent = currentVideoTitle; 
             webPlayerModal.classList.remove('hidden'); 
 
             // Clear previous content and dispose PlayerJS instance if it exists
             if (playerJsInstance) {
-                // Check if PlayerJS has a specific destroy method for proper cleanup.
-                // If not, nulling the instance and clearing innerHTML is the fallback.
                 if (typeof playerJsInstance.destroy === 'function') {
                     playerJsInstance.destroy();
                 }
                 playerJsInstance = null; 
             }
-            videoPlayerContainer.innerHTML
+            videoPlayerContainer.innerHTML = ''; // Clear the player content except the error message
+
+            const playerDiv = document.createElement('div');
+            playerDiv.id = 'playerjs_container'; 
+            playerDiv.style.cssText = "width: 100%; height: 100%;"; 
+            videoPlayerContainer.appendChild(playerDiv);
+
+            // Check if Playerjs is loaded before trying to initialize
+            if (typeof window.Playerjs === 'function') {
+                try {
+                    playerJsInstance = new window.Playerjs({
+                        id: 'playerjs_container',
+                        file: currentVideoUrl,
+                        autoplay: true, 
+                        // poster: 'your-poster.jpg' // Uncomment and set your poster image URL
+                    });
+                    console.log('PlayerJS initialized with URL:', currentVideoUrl);
+                } catch (e) {
+                    console.error("Error initializing PlayerJS:", e);
+                    playerJsErrorElement.textContent = "প্লেয়ার লোড হতে পারেনি: " + e.message + "। নিশ্চিত করুন ভিডিও URL এবং ফরম্যাট সঠিক।";
+                    playerJsErrorElement.style.display = 'block';
+                }
+            } else if (typeof window.pjscnfgs === 'object') {
+                // Fallback for async PlayerJS config (if PlayerJS loads its config first)
+                window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true };
+                console.log('PlayerJS config set for async initialization for URL:', currentVideoUrl);
+            } else {
+                playerJsErrorElement.textContent = 'PlayerJS স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি। PlayerJS CDN URL সঠিক আছে কিনা যাচাই করুন।';
+                playerJsErrorElement.style.display = 'block';
+                console.error('PlayerJS object (window.Playerjs or window.pjscnfgs) not found. Check PlayerJS script URL and ensure it loads correctly.');
+            }
+        }
+
+        function closeWebPlayerModal() {
+            if (!webPlayerModal || !videoPlayerContainer) return; 
+
+            if (playerJsInstance) {
+                if (typeof playerJsInstance.destroy === 'function') {
+                    playerJsInstance.destroy(); 
+                }
+                playerJsInstance = null; 
+            }
+            
+            videoPlayerContainer.innerHTML = ''; // Clear the player content
+            if (playerJsErrorElement) playerJsErrorElement.style.display = 'none'; // Hide error message on close
+
+            webPlayerModal.classList.add('hidden');
+        }
+
+
+        async function copyVideoUrl() {
+            if (!currentVideoUrl) {
+                alert("কপি করার জন্য কোনো ভিডিও URL নেই।");
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(currentVideoUrl);
+                alert('ভিডিও URL কপি করা হয়েছে!');
+            } catch (err) {
+                console.error('URL কপি করতে ব্যর্থ:', err);
+                alert('URL কপি করা যায়নি। অনুগ্রহ করে ম্যানুয়ালি কপি করুন: ' + currentVideoUrl);
+            }
+            closePlayerModal();
+        }
+
+        function downloadVideo() {
+            if (!currentVideoUrl) {
+                alert("ডাউনলোড করার জন্য কোনো ভিডিও URL নেই।");
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = currentVideoUrl;
+            const filename = currentVideoUrl.substring(currentVideoUrl.lastIndexOf('/') + 1) || 'video.mp4';
+            a.download = currentVideoTitle ? `${currentVideoTitle}_${filename}` : filename; 
+            document.body.appendChild(a); 
+            a.click(); 
+            document.body.removeChild(a); 
+
+            alert(`ডাউনলোড শুরু করার চেষ্টা করা হচ্ছে: ${currentVideoTitle || 'ভিডিও'}`);
+            closePlayerModal();
+        }
+
+        function openNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "250px";
+            if (mainContent && window.innerWidth > 768) {
+                mainContent.style.marginLeft = "250px";
+            }
+        }
+
+        function closeNav() {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (sidebar) sidebar.style.width = "0";
+            if (mainContent) mainContent.style.marginLeft = "0";
+        }
+
+        function openSearchModal() {
+            if (searchModal) {
+                searchModal.classList.remove('hidden');
+                searchInput.value = ''; 
+                searchInput.focus(); 
+            }
+        }
+
+        function closeSearchModal() {
+            if (searchModal) searchModal.classList.add('hidden');
+        }
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            closeSearchModal(); 
+            displayVideos(currentCategory, searchTerm); 
+        }
+
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. Initializing app.");
+            loadM3uFile();
+        });
+
+        window.onclick = function(event) {
+            if (playerSelectionModal && event.target == playerSelectionModal) {
+                closePlayerModal();
+            }
+            if (webPlayerModal && event.target == webPlayerModal) {
+                closeWebPlayerModal();
+            }
+            if (searchModal && event.target == searchModal) {
+                closeSearchModal();
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const sidebar = getElement("mySidebar");
+            const mainContent = getElement("main-content");
+            if (window.innerWidth <= 768) {
+                if (sidebar.style.width === "250px") { 
+                    mainContent.style.marginLeft = "0"; 
+                }
+            } else {
+                if (sidebar.style.width === "250px") { 
+                    mainContent.style.marginLeft = "250px"; 
+                }
+            }
+        });
+
+    </script>
+
+</body>
+</html>
