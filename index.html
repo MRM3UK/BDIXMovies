@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার ভিডিও লাইব্রেরি</title>
+    <title>BDIX ENTERTAINMENT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <script src="https://promoviex.vercel.app/playlist/playjs/playerjs.js"></script>
@@ -329,6 +329,12 @@
         .player-option.copy-url:hover {
             background-color: #45a049;
         }
+        .player-option.download-video {
+            background-color: #009688; /* Teal color for download button */
+        }
+        .player-option.download-video:hover {
+            background-color: #00796a;
+        }
 
         /* Video Player inside Modal Container */
         #videoPlayerContainer {
@@ -512,18 +518,18 @@
     <div id="playerSelectionModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button" onclick="closePlayerModal()">&times;</span>
-            <h2>পছন্দের প্লেয়ার নির্বাচন করুন</h2>
+            <h2>পছন্দের অপশন নির্বাচন করুন</h2>
             <button class="player-option" onclick="selectPlayer('vlc')">
                 <i class="fab fa-vlc"></i> VLC Player
-            </button>
-            <button class="player-option" onclick="selectPlayer('mxplayer')">
-                <i class="fas fa-play-circle"></i> MX Player
             </button>
             <button class="player-option" onclick="openWebPlayerModal()">
                 <i class="fas fa-globe"></i> ওয়েবসাইটে প্লে করুন
             </button>
             <button class="player-option copy-url" onclick="copyVideoUrl()">
                 <i class="fas fa-copy"></i> URL কপি করুন
+            </button>
+            <button class="player-option download-video" onclick="downloadVideo()">
+                <i class="fas fa-download"></i> ডাউনলোড করুন
             </button>
         </div>
     </div>
@@ -855,9 +861,7 @@
                 case 'vlc':
                     launchUrl = "vlc://" + encodeURIComponent(finalUrl);
                     break;
-                case 'mxplayer':
-                    launchUrl = "mxplayer://" + encodeURIComponent(finalUrl);
-                    break;
+                // MX Player case removed as per request
                 default:
                     alert("অজানা প্লেয়ার নির্বাচন করা হয়েছে।");
                     closePlayerModal();
@@ -867,6 +871,7 @@
             window.location.href = launchUrl;
             closePlayerModal();
 
+            // A small delay to allow the external app to attempt launching
             setTimeout(() => {
                 alert(`প্লে করার চেষ্টা করা হচ্ছে: ${playerType.toUpperCase()}\nআপনার ডিভাইসে এই প্লেয়ারটি ইনস্টল নাও থাকতে পারে, অথবা এটি স্বয়ংক্রিয়ভাবে খুলছে না।`);
             }, 500);
@@ -892,6 +897,7 @@
             videoPlayerContainer.innerHTML = ''; 
 
             if (currentVideoUrl.includes('pixeldrain.dev/u/') && !currentVideoUrl.includes('?download')) {
+                // For PixelDrain embeds
                 const embedUrl = currentVideoUrl + '?embed';
                 
                 const iframe = document.createElement('iframe');
@@ -902,6 +908,7 @@
                 videoPlayerContainer.appendChild(iframe);
             } 
             else {
+                // For PlayerJS
                 const playerDiv = document.createElement('div');
                 playerDiv.id = 'playerjs_container'; 
                 playerDiv.style.cssText = "width: 100%; height: 100%;"; 
@@ -912,10 +919,12 @@
                         id: 'playerjs_container',
                         file: currentVideoUrl,
                         autoplay: true, 
-                        // Add other PlayerJS options here if needed, e.g., poster: 'your-poster.jpg'
+                        // You can add poster image here: poster: 'path/to/your/poster.jpg'
+                        // The styling of the player controls depends on the PlayerJS script itself.
                     });
                     console.log('PlayerJS initialized with URL:', currentVideoUrl);
                 } else if (window.pjscnfgs) {
+                    // Fallback for async PlayerJS config
                     window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true };
                     console.log('PlayerJS config set for async initialization for URL:', currentVideoUrl);
                 } else {
@@ -930,12 +939,12 @@
             if (!webPlayerModal || !videoPlayerContainer) return; 
 
             if (playerJsInstance) {
-                // If PlayerJS has a specific destroy method, use it here.
-                // For now, setting to null and clearing container is the fallback.
+                // PlayerJS might have a .destroy() method. If so, use it for proper cleanup.
+                // For now, nulling the instance and clearing innerHTML is a common fallback.
                 playerJsInstance = null; 
             }
             
-            videoPlayerContainer.innerHTML = ''; 
+            videoPlayerContainer.innerHTML = ''; // Clear the player content
 
             webPlayerModal.classList.add('hidden');
         }
@@ -951,69 +960,3 @@
                 console.error('URL কপি করতে ব্যর্থ:', err);
                 alert('URL কপি করা যায়নি। ম্যানুয়ালি কপি করার চেষ্টা করুন।');
             }
-            closePlayerModal();
-        }
-
-        function openNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "250px";
-            if (mainContent && window.innerWidth > 768) {
-                mainContent.style.marginLeft = "250px";
-            }
-        }
-
-        function closeNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "0";
-            if (mainContent) mainContent.style.marginLeft = "0";
-        }
-
-        // Search Modal Functions
-        function openSearchModal() {
-            if (searchModal) {
-                searchModal.classList.remove('hidden');
-                searchInput.value = ''; // Clear previous search
-                searchInput.focus(); // Focus on the input field
-            }
-        }
-
-        function closeSearchModal() {
-            if (searchModal) searchModal.classList.add('hidden');
-        }
-
-        function performSearch() {
-            const searchTerm = searchInput.value.trim();
-            closeSearchModal(); // Close the search modal after search
-            displayVideos(currentCategory, searchTerm); // Filter by search term
-        }
-
-        // Event listener for Enter key in search input
-        searchInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                performSearch();
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM Content Loaded. Initializing app.");
-            loadM3uFile();
-        });
-
-        // Click outside modal to close
-        window.onclick = function(event) {
-            if (playerSelectionModal && event.target == playerSelectionModal) {
-                closePlayerModal();
-            }
-            if (webPlayerModal && event.target == webPlayerModal) {
-                closeWebPlayerModal();
-            }
-            if (searchModal && event.target == searchModal) {
-                closeSearchModal();
-            }
-        }
-    </script>
-
-</body>
-</html>
