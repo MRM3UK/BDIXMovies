@@ -1,961 +1,185 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার ভিডিও লাইব্রেরি</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-    
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    
+    <title>BDIX Movies</title>
     <style>
-        /* CSS Variables for Dark Blue 3D Theme */
-        :root {
-            --primary-dark: #0d1a26; /* Very dark blue background */
-            --secondary-dark: #1e3a52; /* Dark blue card background */
-            --accent-color: #38b6ff; /* Bright blue accent */
-            --text-color-light: #e0f7fa; /* Light text for readability */
-            --text-color-dark: #cdd8e2; /* Slightly darker text */
-            --shadow-dark: rgba(0, 0, 0, 0.3); /* Darker shadows for 3D effect */
-            --button-primary: #2979ff; /* Blue button */
-            --button-hover: #0277bd;
-            --border-color: #263238;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: var(--primary-dark);
-            color: var(--text-color-light);
-            line-height: 1.6;
-        }
-
-        /* Header */
-        header {
-            background-color: var(--secondary-dark);
-            color: var(--text-color-light);
-            padding: 15px 20px;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 2px 5px var(--shadow-dark);
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
             display: flex;
-            align-items: center;
             justify-content: center;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .menu-button {
-            position: absolute;
-            left: 20px;
-            background: none;
-            border: none;
-            color: var(--text-color-light);
-            font-size: 28px;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .menu-button:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        header h1 {
-            margin: 0;
-            font-size: 1.8em;
-            text-shadow: 1px 1px 2px var(--shadow-dark);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-            background-color: var(--primary-dark);
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 70px;
-            box-shadow: 2px 0 5px var(--shadow-dark);
-            border-right: 1px solid var(--border-color);
-        }
-        .sidebar h2 {
-            color: var(--accent-color);
-            padding: 15px 32px 10px;
-            margin-top: 0;
-            font-size: 1.5em;
-            border-bottom: 1px solid var(--border-color);
-            text-shadow: 1px 1px 1px var(--shadow-dark);
-        }
-        .sidebar a {
-            padding: 12px 8px 12px 32px;
-            text-decoration: none;
-            font-size: 1.1em;
-            color: var(--text-color-dark);
-            display: block;
-            transition: 0.3s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sidebar a:hover {
-            color: var(--accent-color);
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-        .sidebar .closebtn {
-            position: absolute;
-            top: 10px;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-            color: var(--text-color-light);
-        }
-        .sidebar .closebtn:hover {
-            color: var(--accent-color);
-        }
-
-        /* Main Content */
-        .content {
-            margin-left: 0;
+            align-items: center;
+            min-height: 100vh;
             padding: 20px;
-            transition: margin-left .5s;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 25px;
-            padding: 20px 0;
+            box-sizing: border-box;
         }
 
-        /* Video Item Card */
-        .item {
-            background-color: var(--secondary-dark);
-            border-radius: 10px;
-            box-shadow: 3px 5px 8px var(--shadow-dark);
-            text-align: center;
-            padding: 20px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .container {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-        .item:hover {
-            transform: translateY(-8px);
-            box-shadow: 5px 8px 12px var(--shadow-dark);
-        }
-        .item-thumbnail {
             width: 100%;
-            height: 120px;
+            max-width: 1200px; /* Max width for larger screens */
+            gap: 20px;
+        }
+
+        .video-player {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            background-color: #333; /* Placeholder for video area */
+            border-radius: 10px;
+            overflow: hidden; /* Ensures iframe respects border-radius */
+        }
+
+        .video-player iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 10px; /* Apply border-radius to iframe */
+        }
+
+        .playlist-container {
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
             justify-content: center;
-            margin-bottom: 15px;
-            background-color: #14283d;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .item-thumbnail img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-        .item h3 {
-            font-size: 1.2em;
-            margin: 0 0 10px;
-            color: var(--accent-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .item p {
-            font-size: 0.9em;
-            color: var(--text-color-dark);
-            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #1a1a1a;
+            border-radius: 10px;
         }
 
-        /* Season Details */
-        .season-details {
-            background-color: #14283d;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: left;
-            border: 1px solid var(--border-color);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .season-details h4 {
-            font-size: 1em;
-            margin: 0 0 10px;
-            color: var(--accent-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-        .season-details .episode-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed #263238;
-        }
-        .season-details .episode-item:last-child {
-            border-bottom: none;
-        }
-        .season-details .episode-info {
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .season-details .episode-info p {
-            margin: 0;
-            font-size: 0.9em;
-            color: var(--text-color-light);
-        }
-
-        /* Play Button */
-        .play-button {
-            background-color: var(--button-primary);
-            color: var(--text-color-light);
+        .playlist-button {
+            background-color: #333;
+            color: #fff;
+            border: none;
             padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
+            border-radius: 20px;
             cursor: pointer;
-            margin-top: 10px;
-            font-size: 1em;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            width: 100%;
-            box-shadow: 2px 2px 4px var(--shadow-dark);
-        }
-        .play-button:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-        }
-        .play-button:active {
-            transform: translateY(0);
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
 
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            background-color: var(--secondary-dark);
-            margin: auto;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px var(--shadow-dark);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            position: relative;
-            border: 1px solid var(--border-color);
-        }
-        .modal-content.video-player {
-            max-width: 900px; /* Wider for video player */
-            width: 95%;
-            height: auto;
-            max-height: 90%;
-            display: flex;
-            flex-direction: column;
-        }
-        .close-button {
-            color: var(--text-color-light);
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: var(--accent-color);
-            text-decoration: none;
-            cursor: pointer;
-            opacity: 1;
-        }
-        .modal-content h2 {
-            margin-top: 0;
-            margin-bottom: 25px;
-            color: var(--accent-color);
-            text-shadow: 1px 1px 1px var(--shadow-dark);
-        }
-        .player-option {
-            display: block;
-            width: 80%;
-            margin: 15px auto;
-            padding: 12px 20px;
-            background-color: var(--button-primary);
-            color: var(--text-color-light);
-            border: none;
-            border-radius: 5px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 1px 1px 3px var(--shadow-dark);
-        }
-        .player-option:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-        }
-        .player-option:active {
-            transform: translateY(0);
-        }
-        .player-option.copy-url {
-            background-color: #4CAF50; /* Green color for copy button */
-        }
-        .player-option.copy-url:hover {
-            background-color: #45a049;
+        .playlist-button:hover {
+            background-color: #555;
         }
 
-        /* Video Player inside Modal Container */
-        #videoPlayerContainer {
-            width: 100%;
-            flex-grow: 1; /* Allows video/iframe to take available space */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: black;
-            border-radius: 8px;
-            overflow: hidden; /* Ensures content stays within bounds */
-        }
-        /* Style for the <video> element when it's directly used */
-        #videoPlayerContainer video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Ensures video scales without cropping */
-        }
-        /* Style for the <iframe> element when it's directly used */
-        #videoPlayerContainer iframe {
-            width: 100%;
-            height: 100%;
-            border: none; /* Already in style, but good for safety */
+        .playlist-button.active {
+            background-color: #007bff; /* Highlight active video */
         }
 
-        /* Video.js specific styles (ensure it fits the container) */
-        .video-js {
-            width: 100% !important;
-            height: 100% !important;
-        }
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
 
-        /* Loading Spinner */
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-        }
-        .spinner {
-            border: 8px solid #263238;
-            border-top: 8px solid var(--accent-color);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .hidden {
-            display: none;
-        }
+            .video-player {
+                flex: 3; /* Take more space on larger screens */
+            }
 
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 15px;
-            }
-            .item {
-                padding: 15px;
-            }
-            .item h3 {
-                font-size: 1em;
-            }
-            .item-thumbnail {
-                height: 100px;
-                margin-bottom: 10px;
-            }
-            header h1 {
-                font-size: 1.5em;
-            }
-            .sidebar {
-                padding-top: 60px;
-            }
-            .sidebar h2 {
-                font-size: 1.3em;
-            }
-            .sidebar a {
-                font-size: 1em;
-            }
-            .content {
-                padding: 15px;
-            }
-            .menu-button {
-                font-size: 24px;
-                left: 10px;
-            }
-            .modal-content {
-                width: 95%;
-                padding: 20px;
-            }
-            .player-option {
-                width: 90%;
-                font-size: 1em;
-            }
-            .modal-content.video-player {
-                padding: 15px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 10px;
-            }
-            .item {
-                padding: 10px;
-            }
-            .item h3 {
-                font-size: 0.9em;
-            }
-            .item-thumbnail {
-                height: 80px;
-            }
-            .play-button {
-                padding: 8px 10px;
-                font-size: 0.9em;
+            .playlist-container {
+                flex: 1; /* Take less space for playlist */
+                flex-direction: column;
+                max-height: 500px; /* Limit height and add scroll if many videos */
+                overflow-y: auto;
             }
         }
     </style>
 </head>
 <body>
-
-    <header>
-        <button class="menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
-        <h1>BDIX MOVIES<h1>
-    </header>
-
-    <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <h2>ক্যাটাগরি</h2>
-        <div id="category-list">
+    <div class="container">
+        <div class="video-player">
+            <iframe id="videoFrame" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <div class="playlist-container" id="playlistContainer">
             </div>
-    </div>
-
-    <div id="main-content" class="content">
-        <div id="loading-spinner" class="loading-spinner">
-            <div class="spinner"></div>
-            <p style="margin-left: 15px; font-size: 1.1em; color: var(--text-color-light);">প্লেলিস্ট লোড হচ্ছে...</p>
-        </div>
-        <div id="video-grid" class="grid-container hidden">
-            </div>
-    </div>
-
-    <div id="playerSelectionModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-button" onclick="closePlayerModal()">&times;</span>
-            <h2>পছন্দের প্লেয়ার নির্বাচন করুন</h2>
-            <button class="player-option" onclick="selectPlayer('vlc')">
-                <i class="fab fa-vlc"></i> VLC Player
-            </button>
-            <button class="player-option" onclick="selectPlayer('mxplayer')">
-                <i class="fas fa-play-circle"></i> MX Player
-            </button>
-            <button class="player-option" onclick="openWebPlayerModal()">
-                <i class="fas fa-globe"></i> ওয়েবসাইটে প্লে করুন
-            </button>
-            <button class="player-option copy-url" onclick="copyVideoUrl()">
-                <i class="fas fa-copy"></i> URL কপি করুন
-            </button>
-        </div>
-    </div>
-
-    <div id="webPlayerModal" class="modal hidden">
-        <div class="modal-content video-player">
-            <span class="close-button" onclick="closeWebPlayerModal()">&times;</span>
-            <h2 id="webPlayerTitle"></h2>
-            <div id="videoPlayerContainer">
-                </div>
-        </div>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const m3uFileUrl = urlParams.get('link'); 
-
-        let videos = [];
-        let categories = new Set();
-        let currentCategory = 'All';
-        let currentVideoUrl = '';
-        let currentVideoTitle = ''; // To store the title for the web player modal
-        let videoJsPlayer = null; // Store Video.js instance
-
-        // Get DOM elements with defensive checks
-        const videoGrid = document.getElementById('video-grid');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const playerSelectionModal = document.getElementById('playerSelectionModal');
-        const categoryList = document.getElementById('category-list');
-        const webPlayerModal = document.getElementById('webPlayerModal');
-        const videoPlayerContainer = document.getElementById('videoPlayerContainer'); // Only the container
-        const webPlayerTitle = document.getElementById('webPlayerTitle');
-
-        // Function to safely get elements by ID (used for sidebar & main-content)
-        function getElement(id) {
-            const element = document.getElementById(id);
-            if (!element) {
-                console.error(`Error: Element with ID "${id}" not found.`);
-                return null;
-            }
-            return element;
-        }
-
-        async function loadM3uFile() {
-            if (!videoGrid || !loadingSpinner || !categoryList) {
-                console.error("Essential DOM elements not found. Script might be running too early or HTML is malformed.");
-                return;
-            }
-
-            if (!m3uFileUrl) {
-                loadingSpinner.classList.add('hidden');
-                videoGrid.innerHTML = '<p style="color: var(--accent-color); text-align: center;">কোনো প্লেলিস্ট URL প্রদান করা হয়নি। অনুগ্রহ করে ওয়েবসাইটের লিংকের সাথে <b>?link=আপনার_M3U_ফাইলের_URL</b> যোগ করুন।</p>';
-                videoGrid.classList.remove('hidden');
-                return;
-            }
-
-            loadingSpinner.classList.remove('hidden');
-            videoGrid.classList.add('hidden');
-            try {
-                const response = await fetch(m3uFileUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-                }
-                const text = await response.text();
-                parseM3u(text);
-                displayVideos(currentCategory);
-                displayCategories();
-            } catch (error) {
-                console.error("M3U ফাইল লোড করতে সমস্যা হয়েছে:", error);
-                loadingSpinner.classList.add('hidden');
-                videoGrid.innerHTML = `<p style="color: var(--accent-color); text-align: center;">প্লেলিস্ট লোড করা যায়নি: ${error.message}<br>M3U ফাইলের URL সঠিক আছে কিনা এবং CORS অনুমতি আছে কিনা তা নিশ্চিত করুন।</p>`;
-                videoGrid.classList.remove('hidden');
-            } finally {
-                loadingSpinner.classList.add('hidden');
-            }
-        }
-
-        function parseM3u(m3uText) {
-            const lines = m3uText.split('\n');
-            let currentItem = null;
-            let tempVideos = [];
-
-            for (const line of lines) {
-                if (line.startsWith('#EXTINF:')) {
-                    const parts = line.match(/#EXTINF:(-?\d+)(.*),(.*)/);
-                    if (parts) {
-                        const attributes = parseAttributes(parts[2]);
-                        const title = parts[3].trim();
-                        currentItem = {
-                            title: title,
-                            attributes: attributes,
-                            url: '',
-                            isEpisode: false,
-                        };
-                        tempVideos.push(currentItem);
-                    }
-                } else if (line.trim() !== '' && currentItem && !currentItem.url) {
-                    currentItem.url = line.trim();
-                    const episodeRegex = /(S\d+E\d+)|(Season\s*\d+\s*Episode\s*\d+)|(Ep\.\s*\d+)/i;
-                    if (episodeRegex.test(currentItem.title)) {
-                        currentItem.isEpisode = true;
-                    }
-                    currentItem = null;
-                }
-            }
-
-            const groupedVideos = {};
-
-            tempVideos.forEach(video => {
-                if (video.isEpisode) {
-                    const baseTitleMatch = video.title.match(/(.*?)((S\d+E\d+)|(Season\s*\d+\s*Episode\s*\d+)|(Ep\.\s*\d+))/i);
-                    let baseTitle = baseTitleMatch ? baseTitleMatch[1].trim() : video.title;
-                    if (baseTitle.endsWith('-')) baseTitle = baseTitle.slice(0, -1).trim();
-
-                    const seasonEpisodeMatch = video.title.match(/(S(\d+)E(\d+))|(Season\s*(\d+)\s*Episode\s*(\d+))/i);
-                    let seasonKey = 'Unknown Season';
-                    if (seasonEpisodeMatch) {
-                        const seasonNum = seasonEpisodeMatch[2] || seasonEpisodeMatch[5];
-                        seasonKey = `Season ${parseInt(seasonNum)}`;
-                    }
-
-                    if (!groupedVideos[baseTitle]) {
-                        groupedVideos[baseTitle] = {
-                            title: baseTitle,
-                            attributes: video.attributes,
-                            hasSeasons: true,
-                            seasons: {}
-                        };
-                        categories.add(video.attributes['group-title'] || 'অন্যান্য');
-                    }
-                    if (!groupedVideos[baseTitle].seasons[seasonKey]) {
-                        groupedVideos[baseTitle].seasons[seasonKey] = [];
-                    }
-                    groupedVideos[baseTitle].seasons[seasonKey].push({
-                        title: video.title,
-                        url: video.url,
-                        fileSize: 'N/A'
-                    });
-                } else {
-                    if (!groupedVideos[video.title]) {
-                        groupedVideos[video.title] = {
-                            title: video.title,
-                            attributes: video.attributes,
-                            url: video.url,
-                            hasSeasons: false
-                        };
-                        categories.add(video.attributes['group-title'] || 'অন্যান্য');
-                    }
-                }
-            });
-
-            videos = Object.values(groupedVideos);
-        }
-
-        function parseAttributes(attrString) {
-            const attributes = {};
-            const regex = /(\S+?)="([^"]*?)"/g;
-            let match;
-            while ((match = regex.exec(attrString)) !== null) {
-                attributes[match[1].toLowerCase()] = match[2];
-            }
-            return attributes;
-        }
-
-        function displayVideos(category) {
-            if (!videoGrid) return; // Defensive check
-            videoGrid.innerHTML = '';
-
-            const filteredVideos = videos.filter(video => {
-                if (category === 'All') return true;
-                return (video.attributes['group-title'] || 'অন্যান্য') === category;
-            });
-
-            if (filteredVideos.length === 0) {
-                videoGrid.innerHTML = '<p style="text-align: center; color: var(--text-color-dark);">এই ক্যাটাগরিতে কোনো ভিডিও খুঁজে পাওয়া যায়নি।</p>';
-                videoGrid.classList.remove('hidden');
-                return;
-            }
-
-            filteredVideos.forEach(video => {
-                const itemDiv = document.createElement('div');
-                itemDiv.classList.add('item');
-
-                const thumbnailDiv = document.createElement('div');
-                thumbnailDiv.classList.add('item-thumbnail');
-                const img = document.createElement('img');
-                img.src = video.attributes['tvg-logo'] || 'https://via.placeholder.com/150x100?text=No+Image';
-                img.alt = video.title;
-                img.onerror = function() { this.src = 'https://via.placeholder.com/150x100?text=No+Image'; };
-                thumbnailDiv.appendChild(img);
-                itemDiv.appendChild(thumbnailDiv);
-
-                const title = document.createElement('h3');
-                title.textContent = video.title;
-                itemDiv.appendChild(title);
-
-                if (video.hasSeasons && Object.keys(video.seasons).length > 0) {
-                    itemDiv.addEventListener('click', () => toggleSeasonDetails(itemDiv, video));
-                } else {
-                    const playButton = document.createElement('button');
-                    playButton.classList.add('play-button');
-                    playButton.textContent = 'প্লে করুন';
-                    playButton.onclick = (e) => {
-                        e.stopPropagation();
-                        openPlayerModal(video.url, video.title); // Pass title here
-                    };
-                    itemDiv.appendChild(playButton);
-
-                    const fileSize = document.createElement('p');
-                    fileSize.textContent = `ফাইল সাইজ: N/A`;
-                    itemDiv.appendChild(fileSize);
-                }
-
-                videoGrid.appendChild(itemDiv);
-            });
-            videoGrid.classList.remove('hidden');
-        }
-
-        function toggleSeasonDetails(itemDiv, video) {
-            let seasonDetailsDiv = itemDiv.querySelector('.season-details');
-            if (seasonDetailsDiv) {
-                itemDiv.removeChild(seasonDetailsDiv);
-            } else {
-                seasonDetailsDiv = document.createElement('div');
-                seasonDetailsDiv.classList.add('season-details');
-
-                const sortedSeasonNames = Object.keys(video.seasons).sort((a, b) => {
-                    const numA = parseInt(a.replace('Season ', ''));
-                    const numB = parseInt(b.replace('Season ', ''));
-                    return numA - numB;
-                });
-
-                sortedSeasonNames.forEach(seasonName => {
-                    const seasonHeading = document.createElement('h4');
-                    seasonHeading.textContent = seasonName;
-                    seasonDetailsDiv.appendChild(seasonHeading);
-
-                    const sortedEpisodes = video.seasons[seasonName].sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
-
-                    sortedEpisodes.forEach(episode => {
-                        const episodeItem = document.createElement('div');
-                        episodeItem.classList.add('episode-item');
-
-                        const episodeInfo = document.createElement('div');
-                        episodeInfo.classList.add('episode-info');
-                        episodeInfo.innerHTML = `<p>${episode.title} (ফাইল সাইজ: ${episode.fileSize})</p>`;
-                        episodeItem.appendChild(episodeInfo);
-
-                        const playButton = document.createElement('button');
-                        playButton.classList.add('play-button');
-                        playButton.textContent = 'প্লে করুন';
-                        playButton.onclick = (e) => {
-                            e.stopPropagation();
-                            openPlayerModal(episode.url, episode.title); // Pass title here
-                        };
-                        episodeItem.appendChild(playButton);
-                        seasonDetailsDiv.appendChild(episodeItem);
-                    });
-                });
-                itemDiv.appendChild(seasonDetailsDiv);
-            }
-        }
-
-        function displayCategories() {
-            if (!categoryList) return; // Defensive check
-            categoryList.innerHTML = '';
-
-            const allCategory = document.createElement('a');
-            allCategory.href = '#';
-            allCategory.textContent = 'সব ভিডিও';
-            allCategory.onclick = (e) => {
-                e.preventDefault();
-                currentCategory = 'All';
-                displayVideos('All');
-                closeNav();
-            };
-            categoryList.appendChild(allCategory);
-
-            const sortedCategories = Array.from(categories).sort();
-
-            sortedCategories.forEach(category => {
-                const categoryLink = document.createElement('a');
-                categoryLink.href = '#';
-                categoryLink.textContent = category;
-                categoryLink.onclick = (e) => {
-                    e.preventDefault();
-                    currentCategory = category;
-                    displayVideos(category);
-                    closeNav();
-                };
-                categoryList.appendChild(categoryLink);
-            });
-        }
-
-        // Modified: Now accepts title
-        function openPlayerModal(url, title) {
-            currentVideoUrl = url;
-            currentVideoTitle = title;
-            if (playerSelectionModal) playerSelectionModal.classList.remove('hidden');
-        }
-
-        function closePlayerModal() {
-            if (playerSelectionModal) playerSelectionModal.classList.add('hidden');
-            currentVideoUrl = '';
-            currentVideoTitle = '';
-        }
-
-        function selectPlayer(playerType) {
-            if (!currentVideoUrl) return;
-
-            let finalUrl = currentVideoUrl;
-            let launchUrl = '';
-            switch (playerType) {
-                case 'vlc':
-                    launchUrl = "vlc://" + encodeURIComponent(finalUrl);
-                    break;
-                case 'mxplayer':
-                    launchUrl = "mxplayer://" + encodeURIComponent(finalUrl);
-                    break;
-                default:
-                    alert("অজানা প্লেয়ার নির্বাচন করা হয়েছে।");
-                    closePlayerModal();
-                    return;
-            }
-
-            window.location.href = launchUrl;
-            closePlayerModal();
-
-            // Give a short delay before alert, in case the app launches quickly
-            setTimeout(() => {
-                alert(`প্লে করার চেষ্টা করা হচ্ছে: ${playerType.toUpperCase()}\nআপনার ডিভাইসে এই প্লেয়ারটি ইনস্টল নাও থাকতে পারে, অথবা এটি স্বয়ংক্রিয়ভাবে খুলছে না।`);
-            }, 500);
-        }
-
-        // Function to open the web player modal and load content (video or iframe)
-        function openWebPlayerModal() {
-            if (!currentVideoUrl || !webPlayerModal || !videoPlayerContainer || !webPlayerTitle) {
-                console.error("Critical DOM elements for web player not found.");
-                return;
-            }
-
-            closePlayerModal(); // Close player selection modal
-
-            webPlayerTitle.textContent = currentVideoTitle; // Set modal title
-            webPlayerModal.classList.remove('hidden'); // Show web player modal
-
-            // Clear previous content in videoPlayerContainer
-            // Important: Dispose Video.js player if it exists before clearing
-            if (videoJsPlayer) {
-                videoJsPlayer.dispose(); // Clean up Video.js instance
-                videoJsPlayer = null;
-            }
-            videoPlayerContainer.innerHTML = ''; 
-
-            // Check if it's a Pixeldrain embed link
-            if (currentVideoUrl.includes('pixeldrain.dev/u/') && !currentVideoUrl.includes('?download')) {
-                const embedUrl = currentVideoUrl + '?embed'; // Add ?embed for Pixeldrain's embed player
-                
-                const iframe = document.createElement('iframe');
-                iframe.src = embedUrl;
-                iframe.style.cssText = "border: none; width: 100%; height: 100%; border-radius: 8px;";
-                iframe.allowFullscreen = true;
-                iframe.setAttribute('loading', 'lazy'); // Optimize loading
-                videoPlayerContainer.appendChild(iframe);
-            } 
-            // Else, use Video.js for other video types (MP4, M3U8, etc.)
-            else {
-                // Create a <video> element that Video.js can initialize on
-                const videoElement = document.createElement('video');
-                videoElement.id = 'webVideoPlayer'; // Unique ID for Video.js
-                videoElement.classList.add('video-js', 'vjs-default-skin', 'vjs-big-play-centered'); // Essential classes
-                videoElement.controls = true;
-                videoElement.preload = 'auto';
-                videoElement.autoplay = true;
-                // You can add data-setup options here if needed, e.g., poster: 'your-poster.jpg'
-                
-                videoPlayerContainer.appendChild(videoElement); // Add to container
-
-                // Determine the video type for Video.js
-                let type = 'video/mp4'; // Default to MP4
-                if (currentVideoUrl.includes('.m3u8')) {
-                    type = 'application/x-mpegURL'; // For HLS (M3U8)
-                } else if (currentVideoUrl.includes('.webm')) {
-                    type = 'video/webm';
-                }
-
-                // Initialize Video.js player
-                videoJsPlayer = videojs(videoElement, {}, function() {
-                    console.log('Video.js player is ready');
-                    this.src({ src: currentVideoUrl, type: type });
-                    this.play();
-                });
-
-                // Handle common Video.js errors (optional but recommended)
-                videoJsPlayer.on('error', function() {
-                    const error = this.error();
-                    console.error('Video.js Error:', error.code, error.message);
-                    if (error.code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
-                        alert('এই ভিডিও ফরম্যাটটি প্লে করা যাচ্ছে না। উৎসটি সমর্থিত নয় অথবা ফাইলে সমস্যা আছে।');
-                    } else {
-                        alert('ভিডিও প্লে করতে সমস্যা হয়েছে: ' + error.message);
-                    }
-                    closeWebPlayerModal();
-                });
-            }
-        }
-
-        // Function to close the web player modal
-        function closeWebPlayerModal() {
-            if (!webPlayerModal || !videoPlayerContainer) return; 
-
-            // Dispose Video.js player if it exists
-            if (videoJsPlayer) {
-                videoJsPlayer.dispose(); // Properly destroy the player instance
-                videoJsPlayer = null;
-            }
-            
-            // Clear the container completely to remove video or iframe
-            videoPlayerContainer.innerHTML = ''; 
-
-            webPlayerModal.classList.add('hidden');
-        }
-
-
-        async function copyVideoUrl() {
-            if (!currentVideoUrl) return;
-
-            try {
-                await navigator.clipboard.writeText(currentVideoUrl);
-                alert('ভিডিও URL কপি করা হয়েছে!');
-            } catch (err) {
-                console.error('URL কপি করতে ব্যর্থ:', err);
-                alert('URL কপি করা যায়নি। ম্যানুয়ালি কপি করার চেষ্টা করুন।');
-            }
-            closePlayerModal();
-        }
-
-        function openNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "250px";
-            if (mainContent && window.innerWidth > 768) {
-                mainContent.style.marginLeft = "250px";
-            }
-        }
-
-        function closeNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "0";
-            if (mainContent) mainContent.style.marginLeft = "0";
-        }
-
-        // Ensure DOM is fully loaded before running script
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM Content Loaded. Initializing app.");
-            loadM3uFile();
+            const videoFrame = document.getElementById('videoFrame');
+            const playlistContainer = document.getElementById('playlistContainer');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const linkParam = urlParams.get('link');
+
+            const loadVideo = (url, autoPlay = true) => {
+                let embedUrl = url;
+                // Check if it's a Pixeldrain embed URL (example)
+                if (url.includes('pixeldrain.com/u/') || url.includes('pixeldrain.dev/u/')) {
+                    // Ensure it's an embed link
+                    if (!url.includes('?embed')) {
+                        embedUrl = url + '?embed';
+                    }
+                }
+                // Add other platform specific embed rules here if needed
+
+                videoFrame.src = embedUrl;
+                if (autoPlay) {
+                    // Some browsers/platforms might block autoplay if not user-initiated.
+                    console.log("Attempting to autoplay. Browser policies may prevent it.");
+                }
+            };
+
+            const loadPlaylist = async (jsonUrl) => {
+                try {
+                    const response = await fetch(jsonUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const playlist = await response.json();
+
+                    playlistContainer.innerHTML = ''; // Clear existing content
+
+                    playlist.forEach((video, index) => {
+                        const button = document.createElement('button');
+                        button.className = 'playlist-button';
+                        button.textContent = video.title;
+                        button.addEventListener('click', () => {
+                            loadVideo(video.url);
+                            // Update active button
+                            document.querySelectorAll('.playlist-button').forEach(btn => btn.classList.remove('active'));
+                            button.classList.add('active');
+                        });
+                        playlistContainer.appendChild(button);
+
+                        if (index === 0) {
+                            // Auto-play the first video and mark as active
+                            loadVideo(video.url, true);
+                            button.classList.add('active');
+                        }
+                    });
+                    playlistContainer.style.display = 'flex'; // Show playlist
+                } catch (error) {
+                    console.error('Error loading playlist:', error);
+                    playlistContainer.innerHTML = `<p>Error loading playlist: ${error.message}</p>`;
+                    playlistContainer.style.display = 'block';
+                }
+            };
+
+            if (linkParam) {
+                if (linkParam.toLowerCase().endsWith('.json')) {
+                    loadPlaylist(linkParam);
+                    playlistContainer.style.display = 'block'; // Ensure playlist container is visible
+                } else {
+                    loadVideo(linkParam);
+                    playlistContainer.style.display = 'none'; // Hide playlist if single video
+                }
+            } else {
+                // Default message if no link parameter
+                videoFrame.style.display = 'none'; // Hide iframe
+                playlistContainer.innerHTML = `<p>Please provide a video link using the 'link' URL parameter (e.g., ?link=https://example.com/video.mp4) or a playlist JSON file (e.g., ?link=playlist.json).</p>`;
+                playlistContainer.style.display = 'block';
+            }
         });
-
-        // Click outside modal to close
-        window.onclick = function(event) {
-            if (playerSelectionModal && event.target == playerSelectionModal) {
-                closePlayerModal();
-            }
-            if (webPlayerModal && event.target == webPlayerModal) {
-                closeWebPlayerModal();
-            }
-        }
     </script>
-
 </body>
 </html>
