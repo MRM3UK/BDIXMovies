@@ -44,9 +44,8 @@
             justify-content: center;
             border-bottom: 1px solid var(--border-color);
         }
-        .menu-button {
+        .header-button {
             position: absolute;
-            left: 20px;
             background: none;
             border: none;
             color: var(--text-color-light);
@@ -56,8 +55,14 @@
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-        .menu-button:hover {
+        .header-button:hover {
             background-color: rgba(255, 255, 255, 0.1);
+        }
+        .menu-button {
+            left: 20px;
+        }
+        .search-button {
+            right: 20px;
         }
         header h1 {
             margin: 0;
@@ -371,6 +376,41 @@
             display: none;
         }
 
+        /* Search Modal Specific Styles */
+        .search-input {
+            width: calc(100% - 40px);
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #14283d;
+            color: var(--text-color-light);
+            font-size: 1em;
+            box-shadow: inset 1px 1px 3px var(--shadow-dark);
+        }
+        .search-input::placeholder {
+            color: var(--text-color-dark);
+        }
+        .search-button-modal {
+            width: calc(100% - 40px);
+            padding: 12px 20px;
+            background-color: var(--button-primary);
+            color: var(--text-color-light);
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 1px 1px 3px var(--shadow-dark);
+        }
+        .search-button-modal:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+        }
+        .search-button-modal:active {
+            transform: translateY(0);
+        }
+
         /* Responsive Adjustments */
         @media (max-width: 768px) {
             .grid-container {
@@ -402,9 +442,14 @@
             .content {
                 padding: 15px;
             }
-            .menu-button {
+            .header-button {
                 font-size: 24px;
+            }
+            .menu-button {
                 left: 10px;
+            }
+            .search-button {
+                right: 10px;
             }
             .modal-content {
                 width: 95%;
@@ -443,8 +488,9 @@
 <body>
 
     <header>
-        <button class="menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
-        <h1>আমার ভিডিও লাইব্রেরি</h1>
+        <button class="header-button menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
+        <h1>BDIX MOVIES & TV</h1>
+        <button class="header-button search-button" onclick="openSearchModal()"><i class="fas fa-search"></i></button>
     </header>
 
     <div id="mySidebar" class="sidebar">
@@ -491,6 +537,17 @@
         </div>
     </div>
 
+    <div id="searchModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeSearchModal()">&times;</span>
+            <h2>ভিডিও খুঁজুন</h2>
+            <input type="text" id="searchInput" class="search-input" placeholder="ভিডিওর নাম দিয়ে খুঁজুন...">
+            <button class="search-button-modal" onclick="performSearch()">
+                <i class="fas fa-search"></i> খুঁজুন
+            </button>
+        </div>
+    </div>
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const m3uFileUrl = urlParams.get('link'); 
@@ -501,6 +558,7 @@
         let currentVideoUrl = '';
         let currentVideoTitle = ''; // To store the title for the web player modal
         let playerJsInstance = null; // Store PlayerJS instance
+        let allParsedVideos = []; // To store all parsed videos for search functionality
 
         // Get DOM elements with defensive checks
         const videoGrid = document.getElementById('video-grid');
@@ -510,6 +568,8 @@
         const webPlayerModal = document.getElementById('webPlayerModal');
         const videoPlayerContainer = document.getElementById('videoPlayerContainer'); // Only the container
         const webPlayerTitle = document.getElementById('webPlayerTitle');
+        const searchModal = document.getElementById('searchModal');
+        const searchInput = document.getElementById('searchInput');
 
         // Function to safely get elements by ID (used for sidebar & main-content)
         function getElement(id) {
@@ -630,6 +690,7 @@
             });
 
             videos = Object.values(groupedVideos);
+            allParsedVideos = [...videos]; // Store a copy for search
         }
 
         function parseAttributes(attrString) {
@@ -642,17 +703,18 @@
             return attributes;
         }
 
-        function displayVideos(category) {
-            if (!videoGrid) return; // Defensive check
+        function displayVideos(category, searchTerm = '') {
+            if (!videoGrid) return; 
             videoGrid.innerHTML = '';
 
-            const filteredVideos = videos.filter(video => {
-                if (category === 'All') return true;
-                return (video.attributes['group-title'] || 'অন্যান্য') === category;
+            let filteredVideos = allParsedVideos.filter(video => {
+                const matchesCategory = (category === 'All' || (video.attributes['group-title'] || 'অন্যান্য') === category);
+                const matchesSearch = searchTerm === '' || video.title.toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesCategory && matchesSearch;
             });
 
             if (filteredVideos.length === 0) {
-                videoGrid.innerHTML = '<p style="text-align: center; color: var(--text-color-dark);">এই ক্যাটাগরিতে কোনো ভিডিও খুঁজে পাওয়া যায়নি।</p>';
+                videoGrid.innerHTML = '<p style="text-align: center; color: var(--text-color-dark);">এই ক্যাটাগরিতে বা এই নামের কোনো ভিডিও খুঁজে পাওয়া যায়নি।</p>';
                 videoGrid.classList.remove('hidden');
                 return;
             }
@@ -682,7 +744,7 @@
                     playButton.textContent = 'প্লে করুন';
                     playButton.onclick = (e) => {
                         e.stopPropagation();
-                        openPlayerModal(video.url, video.title); // Pass title here
+                        openPlayerModal(video.url, video.title); 
                     };
                     itemDiv.appendChild(playButton);
 
@@ -731,7 +793,7 @@
                         playButton.textContent = 'প্লে করুন';
                         playButton.onclick = (e) => {
                             e.stopPropagation();
-                            openPlayerModal(episode.url, episode.title); // Pass title here
+                            openPlayerModal(episode.url, episode.title); 
                         };
                         episodeItem.appendChild(playButton);
                         seasonDetailsDiv.appendChild(episodeItem);
@@ -742,7 +804,7 @@
         }
 
         function displayCategories() {
-            if (!categoryList) return; // Defensive check
+            if (!categoryList) return; 
             categoryList.innerHTML = '';
 
             const allCategory = document.createElement('a');
@@ -772,7 +834,6 @@
             });
         }
 
-        // Modified: Now accepts title
         function openPlayerModal(url, title) {
             currentVideoUrl = url;
             currentVideoTitle = title;
@@ -806,67 +867,53 @@
             window.location.href = launchUrl;
             closePlayerModal();
 
-            // Give a short delay before alert, in case the app launches quickly
             setTimeout(() => {
                 alert(`প্লে করার চেষ্টা করা হচ্ছে: ${playerType.toUpperCase()}\nআপনার ডিভাইসে এই প্লেয়ারটি ইনস্টল নাও থাকতে পারে, অথবা এটি স্বয়ংক্রিয়ভাবে খুলছে না।`);
             }, 500);
         }
 
-        // Function to open the web player modal and load content (video or iframe)
         function openWebPlayerModal() {
             if (!currentVideoUrl || !webPlayerModal || !videoPlayerContainer || !webPlayerTitle) {
                 console.error("Critical DOM elements for web player not found.");
                 return;
             }
 
-            closePlayerModal(); // Close player selection modal
+            closePlayerModal(); 
 
-            webPlayerTitle.textContent = currentVideoTitle; // Set modal title
-            webPlayerModal.classList.remove('hidden'); // Show web player modal
+            webPlayerTitle.textContent = currentVideoTitle; 
+            webPlayerModal.classList.remove('hidden'); 
 
-            // Clear previous content and dispose PlayerJS instance if it exists
             if (playerJsInstance) {
-                // PlayerJS might not have a direct 'dispose' method like Video.js
-                // A common way to "destroy" it is to clear its container.
-                // If PlayerJS exposes a specific destroy method, it should be used here.
-                // For now, we'll rely on clearing the container.
-                playerJsInstance = null; // Clear reference
+                playerJsInstance = null; 
             }
             videoPlayerContainer.innerHTML = ''; 
 
-            // Check if it's a Pixeldrain embed link
             if (currentVideoUrl.includes('pixeldrain.dev/u/') && !currentVideoUrl.includes('?download')) {
-                const embedUrl = currentVideoUrl + '?embed'; // Add ?embed for Pixeldrain's embed player
+                const embedUrl = currentVideoUrl + '?embed';
                 
                 const iframe = document.createElement('iframe');
                 iframe.src = embedUrl;
                 iframe.style.cssText = "border: none; width: 100%; height: 100%; border-radius: 8px;";
                 iframe.allowFullscreen = true;
-                iframe.setAttribute('loading', 'lazy'); // Optimize loading
+                iframe.setAttribute('loading', 'lazy'); 
                 videoPlayerContainer.appendChild(iframe);
             } 
-            // Else, use PlayerJS for other video types (MP4, M3U8, etc.)
             else {
-                // Create a div for PlayerJS to attach to
                 const playerDiv = document.createElement('div');
-                playerDiv.id = 'playerjs_container'; // ID for PlayerJS
-                playerDiv.style.cssText = "width: 100%; height: 100%;"; // Ensure it fills the container
+                playerDiv.id = 'playerjs_container'; 
+                playerDiv.style.cssText = "width: 100%; height: 100%;"; 
                 videoPlayerContainer.appendChild(playerDiv);
 
-                // Initialize PlayerJS
-                // Based on common PlayerJS usage patterns from playerjs.com
                 if (window.Playerjs) {
                     playerJsInstance = new window.Playerjs({
                         id: 'playerjs_container',
                         file: currentVideoUrl,
-                        // You might need to add other options here based on your specific playerjs.js build
-                        // e.g., poster: 'your-poster.jpg', autoplay: true, etc.
+                        autoplay: true, // Added autoplay for better UX
+                        // Add other PlayerJS options here if needed, e.g., poster: 'your-poster.jpg'
                     });
                     console.log('PlayerJS initialized with URL:', currentVideoUrl);
                 } else if (window.pjscnfgs) {
-                    // Alternative initialization if Playerjs is not directly available
-                    // This is based on a pattern seen in PlayerJS React examples
-                    window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl };
+                    window.pjscnfgs['playerjs_container'] = { id: 'playerjs_container', file: currentVideoUrl, autoplay: true };
                     console.log('PlayerJS config set for async initialization for URL:', currentVideoUrl);
                 } else {
                     alert('PlayerJS লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি।');
@@ -876,18 +923,15 @@
             }
         }
 
-        // Function to close the web player modal
         function closeWebPlayerModal() {
             if (!webPlayerModal || !videoPlayerContainer) return; 
 
-            // Clear PlayerJS instance reference
             if (playerJsInstance) {
                 // If PlayerJS has a specific destroy method, use it here.
                 // For now, setting to null and clearing container is the fallback.
                 playerJsInstance = null; 
             }
             
-            // Clear the container completely to remove video or iframe
             videoPlayerContainer.innerHTML = ''; 
 
             webPlayerModal.classList.add('hidden');
@@ -923,7 +967,32 @@
             if (mainContent) mainContent.style.marginLeft = "0";
         }
 
-        // Ensure DOM is fully loaded before running script
+        // Search Modal Functions
+        function openSearchModal() {
+            if (searchModal) {
+                searchModal.classList.remove('hidden');
+                searchInput.value = ''; // Clear previous search
+                searchInput.focus(); // Focus on the input field
+            }
+        }
+
+        function closeSearchModal() {
+            if (searchModal) searchModal.classList.add('hidden');
+        }
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            closeSearchModal(); // Close the search modal after search
+            displayVideos(currentCategory, searchTerm);
+        }
+
+        // Event listener for Enter key in search input
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Content Loaded. Initializing app.");
             loadM3uFile();
@@ -936,6 +1005,9 @@
             }
             if (webPlayerModal && event.target == webPlayerModal) {
                 closeWebPlayerModal();
+            }
+            if (searchModal && event.target == searchModal) {
+                closeSearchModal();
             }
         }
     </script>
