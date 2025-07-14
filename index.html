@@ -323,22 +323,30 @@
             background-color: #45a049;
         }
 
-        /* Video Player inside Modal */
+        /* Video Player inside Modal Container */
         #videoPlayerContainer {
             width: 100%;
-            flex-grow: 1; /* Allows video to take available space */
+            flex-grow: 1; /* Allows video/iframe to take available space */
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: black;
             border-radius: 8px;
-            overflow: hidden; /* Ensures video controls stay within bounds */
+            overflow: hidden; /* Ensures content stays within bounds */
         }
-        #videoPlayer {
+        /* Style for the <video> element when it's directly used */
+        #videoPlayerContainer video {
             width: 100%;
             height: 100%;
             object-fit: contain; /* Ensures video scales without cropping */
         }
+        /* Style for the <iframe> element when it's directly used */
+        #videoPlayerContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none; /* Already in style, but good for safety */
+        }
+
 
         /* Loading Spinner */
         .loading-spinner {
@@ -479,7 +487,7 @@
             <span class="close-button" onclick="closeWebPlayerModal()">&times;</span>
             <h2 id="webPlayerTitle"></h2>
             <div id="videoPlayerContainer">
-                <video id="videoPlayer" controls autoplay></video>
+                <video id="videoPlayer" controls autoplay></video> 
             </div>
         </div>
     </div>
@@ -495,15 +503,19 @@
         let currentVideoTitle = ''; // To store the title for the web player modal
         let hlsInstance = null; // Store HLS.js instance
 
+        // Get DOM elements with defensive checks
         const videoGrid = document.getElementById('video-grid');
         const loadingSpinner = document.getElementById('loading-spinner');
         const playerSelectionModal = document.getElementById('playerSelectionModal');
         const categoryList = document.getElementById('category-list');
         const webPlayerModal = document.getElementById('webPlayerModal');
-        const videoPlayer = document.getElementById('videoPlayer');
+        // IMPORTANT: videoPlayer is referenced as a variable, but its actual DOM element
+        // might be removed/re-added. It's better to get it from videoPlayerContainer dynamically
+        // when needed for HLS.js or native playback.
+        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
         const webPlayerTitle = document.getElementById('webPlayerTitle');
 
-        // Function to safely get elements by ID
+        // Function to safely get elements by ID (used for sidebar & main-content)
         function getElement(id) {
             const element = document.getElementById(id);
             if (!element) {
@@ -514,7 +526,6 @@
         }
 
         async function loadM3uFile() {
-            // Ensure elements are available before proceeding
             if (!videoGrid || !loadingSpinner || !categoryList) {
                 console.error("Essential DOM elements not found. Script might be running too early or HTML is malformed.");
                 return;
@@ -805,127 +816,77 @@
             }, 500);
         }
 
-        // New function: Open web player modal
+        // Function to open the web player modal and load content (video or iframe)
         function openWebPlayerModal() {
-            if (!currentVideoUrl || !webPlayerModal || !videoPlayer || !webPlayerTitle) return;
+            if (!currentVideoUrl || !webPlayerModal || !videoPlayerContainer || !webPlayerTitle) {
+                console.error("Critical DOM elements for web player not found.");
+                return;
+            }
 
             closePlayerModal(); // Close player selection modal
 
             webPlayerTitle.textContent = currentVideoTitle; // Set modal title
             webPlayerModal.classList.remove('hidden'); // Show web player modal
 
-            // Ensure previous HLS instance is destroyed if it exists
-            if (hlsInstance) {
-                hlsInstance.destroy();
-                hlsInstance = null;
-            }
-            videoPlayer.src = ''; // Clear previous video source
-            videoPlayer.load(); // Load to clear internal state
+            // Clear previous content in videoPlayerContainer
+            videoPlayerContainer.innerHTML = ''; 
 
-            // Check if HLS.js is supported and needed
-            // A simple check if URL ends with .m3u8 for HLS, otherwise assume native support or MP4
-            if (Hls.isSupported() && currentVideoUrl.includes('.m3u8')) {
-                hlsInstance = new Hls();
-                hlsInstance.loadSource(currentVideoUrl);
-                hlsInstance.attachMedia(videoPlayer);
-                hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                    videoPlayer.play();
-                });
-                hlsInstance.on(Hls.Events.ERROR, function (event, data) {
-                    if (data.fatal) {
-                        switch(data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.error("Fatal network error encountered for HLS, trying to recover", data);
-                                hlsInstance.recoverMediaError();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.error("Fatal media error encountered for HLS, trying to recover", data);
-                                hlsInstance.recoverMediaError();
-                                break;
-                            default:
-                                console.error("Fatal HLS error, destroying HLS instance and trying native playback", data);
-                                hlsInstance.destroy();
-                                hlsInstance = null;
-                                videoPlayer.src = currentVideoUrl; // Fallback to native HTML5 if HLS fails
-                                videoPlayer.load();
-                                videoPlayer.play();
-                                break;
+            // Check if it's a Pixeldrain embed link
+            // We check for the '/u/' path and ensure it's not a '?download' link
+            if (currentVideoUrl.includes('pixeldrain.dev/u/') && !currentVideoUrl.includes('?download')) {
+                const embedUrl = currentVideoUrl + '?embed'; // Add ?embed for Pixeldrain's embed player
+                
+                const iframe = document.createElement('iframe');
+                iframe.src = embedUrl;
+                iframe.style.cssText = "border: none; width: 100%; height: 100%; border-radius: 8px;";
+                iframe.allowFullscreen = true;
+                iframe.setAttribute('loading', 'lazy'); // Optimize loading
+                videoPlayerContainer.appendChild(iframe);
+            } 
+            // Else, treat as a direct video file (HLS or native HTML5 video)
+            else {
+                // Create a new <video> tag dynamically, as the previous one might have been removed
+                const videoPlayer = document.createElement('video');
+                videoPlayer.id = 'videoPlayer'; // Give it an ID if needed for direct JS reference
+                videoPlayer.controls = true;
+                videoPlayer.autoplay = true;
+                videoPlayerContainer.appendChild(videoPlayer); // Add to container
+
+                // Ensure previous HLS instance is destroyed if it exists
+                if (hlsInstance) {
+                    hlsInstance.destroy();
+                    hlsInstance = null;
+                }
+
+                // Check if HLS.js is supported and needed (for .m3u8 files)
+                if (Hls.isSupported() && currentVideoUrl.includes('.m3u8')) {
+                    hlsInstance = new Hls();
+                    hlsInstance.loadSource(currentVideoUrl);
+                    hlsInstance.attachMedia(videoPlayer);
+                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoPlayer.play();
+                    });
+                    hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+                        if (data.fatal) {
+                            switch(data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    console.error("Fatal network error encountered for HLS, trying to recover", data);
+                                    hlsInstance.recoverMediaError();
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    console.error("Fatal media error encountered for HLS, trying to recover", data);
+                                    hlsInstance.recoverMediaError();
+                                    break;
+                                default:
+                                    console.error("Fatal HLS error, destroying HLS instance and trying native playback", data);
+                                    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; } // Destroy explicitly
+                                    videoPlayer.src = currentVideoUrl; // Fallback to native HTML5 if HLS fails
+                                    videoPlayer.load();
+                                    videoPlayer.play();
+                                    break;
+                            }
+                        } else {
+                            console.warn("Non-fatal HLS error:", data);
                         }
-                    } else {
-                        console.warn("Non-fatal HLS error:", data);
-                    }
-                });
-            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl') || videoPlayer.canPlayType('video/mp4') || videoPlayer.canPlayType('video/webm')) {
-                // For native HLS support (Safari/iOS) or direct MP4/WebM links
-                videoPlayer.src = currentVideoUrl;
-                videoPlayer.load();
-                videoPlayer.play();
-            } else {
-                // Fallback for unsupported formats
-                alert('এই ভিডিও ফরম্যাটটি ব্রাউজারে প্লে করার জন্য সমর্থিত নয়। অনুগ্রহ করে অন্য প্লেয়ার ব্যবহার করুন বা URL কপি করুন।');
-                closeWebPlayerModal();
-            }
-        }
-
-        // New function: Close web player modal
-        function closeWebPlayerModal() {
-            if (!webPlayerModal || !videoPlayer) return; // Defensive check
-
-            videoPlayer.pause();
-            videoPlayer.src = ''; // Clear video source
-            if (hlsInstance) { // If hls.js instance exists
-                hlsInstance.destroy(); // Destroy hls.js instance
-                hlsInstance = null;
-            }
-            webPlayerModal.classList.add('hidden');
-        }
-
-
-        async function copyVideoUrl() {
-            if (!currentVideoUrl) return;
-
-            try {
-                await navigator.clipboard.writeText(currentVideoUrl);
-                alert('ভিডিও URL কপি করা হয়েছে!');
-            } catch (err) {
-                console.error('URL কপি করতে ব্যর্থ:', err);
-                alert('URL কপি করা যায়নি। ম্যানুয়ালি কপি করার চেষ্টা করুন।');
-            }
-            closePlayerModal();
-        }
-
-        function openNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "250px";
-            if (mainContent && window.innerWidth > 768) {
-                mainContent.style.marginLeft = "250px";
-            }
-        }
-
-        function closeNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "0";
-            if (mainContent) mainContent.style.marginLeft = "0";
-        }
-
-        // Ensure DOM is fully loaded before running script
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM Content Loaded. Initializing app.");
-            loadM3uFile();
-        });
-
-        // Click outside modal to close
-        window.onclick = function(event) {
-            if (playerSelectionModal && event.target == playerSelectionModal) {
-                closePlayerModal();
-            }
-            if (webPlayerModal && event.target == webPlayerModal) {
-                closeWebPlayerModal();
-            }
-        }
-    </script>
-
-</body>
-</html>
+                    });
+                } else if (videoPlayer.can
