@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আমার ভিডিও লাইব্রেরি</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    
     <style>
         /* CSS Variables for Dark Blue 3D Theme */
         :root {
@@ -347,6 +351,11 @@
             border: none; /* Already in style, but good for safety */
         }
 
+        /* Video.js specific styles (ensure it fits the container) */
+        .video-js {
+            width: 100% !important;
+            height: 100% !important;
+        }
 
         /* Loading Spinner */
         .loading-spinner {
@@ -444,7 +453,7 @@
 
     <header>
         <button class="menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
-        <h1>BDIX MOVIES</h1>
+        <h1>BDIX MOVIES<h1>
     </header>
 
     <div id="mySidebar" class="sidebar">
@@ -500,7 +509,7 @@
         let currentCategory = 'All';
         let currentVideoUrl = '';
         let currentVideoTitle = ''; // To store the title for the web player modal
-        let hlsInstance = null; // Store HLS.js instance
+        let videoJsPlayer = null; // Store Video.js instance
 
         // Get DOM elements with defensive checks
         const videoGrid = document.getElementById('video-grid');
@@ -509,6 +518,7 @@
         const categoryList = document.getElementById('category-list');
         const webPlayerModal = document.getElementById('webPlayerModal');
         const videoPlayerContainer = document.getElementById('videoPlayerContainer'); // Only the container
+        const webPlayerTitle = document.getElementById('webPlayerTitle');
 
         // Function to safely get elements by ID (used for sidebar & main-content)
         function getElement(id) {
@@ -824,10 +834,14 @@
             webPlayerModal.classList.remove('hidden'); // Show web player modal
 
             // Clear previous content in videoPlayerContainer
+            // Important: Dispose Video.js player if it exists before clearing
+            if (videoJsPlayer) {
+                videoJsPlayer.dispose(); // Clean up Video.js instance
+                videoJsPlayer = null;
+            }
             videoPlayerContainer.innerHTML = ''; 
 
             // Check if it's a Pixeldrain embed link
-            // We check for the '/u/' path and ensure it's not a '?download' link
             if (currentVideoUrl.includes('pixeldrain.dev/u/') && !currentVideoUrl.includes('?download')) {
                 const embedUrl = currentVideoUrl + '?embed'; // Add ?embed for Pixeldrain's embed player
                 
@@ -838,61 +852,45 @@
                 iframe.setAttribute('loading', 'lazy'); // Optimize loading
                 videoPlayerContainer.appendChild(iframe);
             } 
-            // Else, treat as a direct video file (HLS or native HTML5 video)
+            // Else, use Video.js for other video types (MP4, M3U8, etc.)
             else {
-                // Create a new <video> tag dynamically, as the previous one might have been removed
-                const videoPlayer = document.createElement('video');
-                videoPlayer.id = 'videoPlayer'; // Give it an ID if needed for direct JS reference
-                videoPlayer.controls = true;
-                videoPlayer.autoplay = true;
-                videoPlayerContainer.appendChild(videoPlayer); // Add to container
+                // Create a <video> element that Video.js can initialize on
+                const videoElement = document.createElement('video');
+                videoElement.id = 'webVideoPlayer'; // Unique ID for Video.js
+                videoElement.classList.add('video-js', 'vjs-default-skin', 'vjs-big-play-centered'); // Essential classes
+                videoElement.controls = true;
+                videoElement.preload = 'auto';
+                videoElement.autoplay = true;
+                // You can add data-setup options here if needed, e.g., poster: 'your-poster.jpg'
+                
+                videoPlayerContainer.appendChild(videoElement); // Add to container
 
-                // Ensure previous HLS instance is destroyed if it exists
-                if (hlsInstance) {
-                    hlsInstance.destroy();
-                    hlsInstance = null;
+                // Determine the video type for Video.js
+                let type = 'video/mp4'; // Default to MP4
+                if (currentVideoUrl.includes('.m3u8')) {
+                    type = 'application/x-mpegURL'; // For HLS (M3U8)
+                } else if (currentVideoUrl.includes('.webm')) {
+                    type = 'video/webm';
                 }
 
-                // Check if HLS.js is supported and needed (for .m3u8 files)
-                if (Hls.isSupported() && currentVideoUrl.includes('.m3u8')) {
-                    hlsInstance = new Hls();
-                    hlsInstance.loadSource(currentVideoUrl);
-                    hlsInstance.attachMedia(videoPlayer);
-                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                        videoPlayer.play();
-                    });
-                    hlsInstance.on(Hls.Events.ERROR, function (event, data) {
-                        if (data.fatal) {
-                            switch(data.type) {
-                                case Hls.ErrorTypes.NETWORK_ERROR:
-                                    console.error("Fatal network error encountered for HLS, trying to recover", data);
-                                    hlsInstance.recoverMediaError();
-                                    break;
-                                case Hls.ErrorTypes.MEDIA_ERROR:
-                                    console.error("Fatal media error encountered for HLS, trying to recover", data);
-                                    hlsInstance.recoverMediaError();
-                                    break;
-                                default:
-                                    console.error("Fatal HLS error, destroying HLS instance and trying native playback", data);
-                                    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; } // Destroy explicitly
-                                    videoPlayer.src = currentVideoUrl; // Fallback to native HTML5 if HLS fails
-                                    videoPlayer.load();
-                                    videoPlayer.play();
-                                    break;
-                            }
-                        } else {
-                            console.warn("Non-fatal HLS error:", data);
-                        }
-                    });
-                } else if (videoPlayer.canPlayType('video/mp4') || videoPlayer.canPlayType('video/webm') || videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
-                    // For direct MP4/WebM or native HLS support (Safari/iOS)
-                    videoPlayer.src = currentVideoUrl;
-                    videoPlayer.load();
-                    videoPlayer.play();
-                } else {
-                    alert('এই ভিডিও ফরম্যাটটি ব্রাউজারে প্লে করার জন্য সমর্থিত নয়। অনুগ্রহ করে অন্য প্লেয়ার ব্যবহার করুন বা URL কপি করুন।');
+                // Initialize Video.js player
+                videoJsPlayer = videojs(videoElement, {}, function() {
+                    console.log('Video.js player is ready');
+                    this.src({ src: currentVideoUrl, type: type });
+                    this.play();
+                });
+
+                // Handle common Video.js errors (optional but recommended)
+                videoJsPlayer.on('error', function() {
+                    const error = this.error();
+                    console.error('Video.js Error:', error.code, error.message);
+                    if (error.code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        alert('এই ভিডিও ফরম্যাটটি প্লে করা যাচ্ছে না। উৎসটি সমর্থিত নয় অথবা ফাইলে সমস্যা আছে।');
+                    } else {
+                        alert('ভিডিও প্লে করতে সমস্যা হয়েছে: ' + error.message);
+                    }
                     closeWebPlayerModal();
-                }
+                });
             }
         }
 
@@ -900,22 +898,10 @@
         function closeWebPlayerModal() {
             if (!webPlayerModal || !videoPlayerContainer) return; 
 
-            // Find any existing video or iframe and stop/clear it
-            const currentVideoElement = videoPlayerContainer.querySelector('video, iframe'); // Select either video or iframe
-            if (currentVideoElement) {
-                if (currentVideoElement.tagName === 'VIDEO') {
-                    currentVideoElement.pause();
-                    currentVideoElement.src = ''; 
-                    currentVideoElement.load(); // Important to clear internal state
-                } else if (currentVideoElement.tagName === 'IFRAME') {
-                    // For iframes, simply removing it from DOM is enough to stop playback
-                    // No direct 'pause' or 'src' manipulation needed for iframes
-                }
-            }
-            
-            if (hlsInstance) { 
-                hlsInstance.destroy(); 
-                hlsInstance = null;
+            // Dispose Video.js player if it exists
+            if (videoJsPlayer) {
+                videoJsPlayer.dispose(); // Properly destroy the player instance
+                videoJsPlayer = null;
             }
             
             // Clear the container completely to remove video or iframe
