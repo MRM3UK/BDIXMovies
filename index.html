@@ -7,6 +7,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <style>
     body {
@@ -433,8 +434,7 @@
         <div class="p-2 m-4 card">
             <div id="player" tabindex="0" class="plyr">
                 <video playsinline controls>
-                    <source src="" type="video/mp4">
-                    <source src="" type="application/x-mpegURL"> </video>
+                    </video>
             </div>
         </div>
         <a id="currentVideoDownloadBtn" class="btn btn-warning btn-lg w-100 mt-3" target="_blank" download="" href="#" rel="noreferrer" style="display:none;">Download Current Video</a>
@@ -521,13 +521,13 @@
 
     const CURRENT_PLAYLIST_KEY = 'currentM3UChannels';
     const SAVED_PLAYLISTS_KEY = 'savedM3UPlaylists';
-    const AUTO_SAVE_PLAYLIST_NAME = "Auto Saved Session"; // ডিফল্ট অটো-সেভ প্লেলিস্টের নাম
+    const AUTO_SAVE_PLAYLIST_NAME = "Auto Saved Session"; 
 
     // --- Plyr Player Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
+        // Initialize player without a source
         player = new Plyr('#player', {
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
-            // Add other Plyr options as needed
         });
 
         // Initialize download button state
@@ -536,7 +536,8 @@
 
     function updateDownloadButton(url) {
         const downloadBtn = document.getElementById("currentVideoDownloadBtn");
-        if (url && (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg'))) {
+        // Only show download button for direct video files (mp4, webm, ogg)
+        if (url && (url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg'))) {
             downloadBtn.href = url;
             downloadBtn.style.display = 'block';
         } else {
@@ -553,41 +554,76 @@
         }
 
         const videoElement = player.media;
-        let sourceType = 'video/mp4'; // Default to mp4
+        
+        // Destroy existing Plyr instance to clean up
+        player.destroy();
 
-        if (url.includes('.m3u8')) {
-            sourceType = 'application/x-mpegURL';
-        } else if (url.includes('.mpd')) {
-            sourceType = 'application/dash+xml'; // For DASH streams
-        } else if (url.includes('.webm')) {
-            sourceType = 'video/webm';
-        } else if (url.includes('.ogg')) {
-            sourceType = 'video/ogg';
-        }
-
-        // Remove existing sources
+        // Clear existing sources from the video element
         while (videoElement.firstChild) {
             videoElement.removeChild(videoElement.firstChild);
         }
 
-        // Add the new source
-        const source = document.createElement('source');
-        source.src = url;
-        source.type = sourceType;
-        videoElement.appendChild(source);
-
-        // Load and play the new source
-        player.destroy(); // Destroy existing player to re-initialize with new source
-        player = new Plyr('#player', {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
-        });
+        if (Hls.isSupported() && url.includes('.m3u8')) {
+            // For HLS streams
+            const hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(videoElement);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                player.play().catch(error => {
+                    console.error("Error playing HLS video:", error);
+                    alert("Could not play the HLS stream. It might be offline or an issue with hls.js. Error: " + error.message);
+                });
+            });
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    switch(data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            // Try to recover network errors
+                            console.error('fatal network error encountered, trying to recover', data);
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.error('fatal media error encountered, trying to recover', data);
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            // Cannot recover
+                            alert("A critical error occurred with the HLS stream. Playback stopped.");
+                            hls.destroy();
+                            player.stop(); // Stop Plyr playback
+                            break;
+                    }
+                }
+            });
+        } else {
+            // For regular video files (MP4, WebM, OGG)
+            const source = document.createElement('source');
+            source.src = url;
+            // Determine type based on extension (basic)
+            if (url.includes('.mp4')) {
+                source.type = 'video/mp4';
+            } else if (url.includes('.webm')) {
+                source.type = 'video/webm';
+            } else if (url.includes('.ogg')) {
+                source.type = 'video/ogg';
+            } else {
+                // Fallback for unknown types or direct links that browsers might handle
+                source.type = 'video/mp4'; // Default to mp4 if type is ambiguous
+            }
+            videoElement.appendChild(source);
+            
+            // Re-initialize Plyr with the new source
+            player = new Plyr('#player', {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+            });
+            
+            player.play().catch(error => {
+                console.error("Error playing video:", error);
+                alert("Could not play the video. The stream might be offline or in an unsupported format. Error: " + error.message);
+            });
+        }
         
-        player.play().catch(error => {
-            console.error("Error playing video:", error);
-            alert("Could not play the video. The stream might be offline or in an unsupported format. Error: " + error.message);
-        });
-
-        // Update the download button
+        // Update the download button visibility based on the URL type
         updateDownloadButton(url);
     }
 
@@ -595,32 +631,30 @@
     // --- Local Storage Functions ---
     function saveCurrentChannels() {
       localStorage.setItem(CURRENT_PLAYLIST_KEY, JSON.stringify(currentChannels));
-      // যখনই currentChannels আপডেট হবে, তখনই এটি auto-save playlist এও সেভ হবে।
-      if (currentChannels.length > 0) { // শুধু যদি কোন চ্যানেল থাকে তাহলেই সেভ হবে
+      if (currentChannels.length > 0) { 
         savedPlaylists[AUTO_SAVE_PLAYLIST_NAME] = [...currentChannels];
         savePlaylistsToLocalStorage();
-      } else { // যদি currentChannels খালি হয়ে যায়, auto-save playlist থেকে এটি মুছে ফেলা হবে
+      } else { 
         if (savedPlaylists[AUTO_SAVE_PLAYLIST_NAME]) {
           delete savedPlaylists[AUTO_SAVE_PLAYLIST_NAME];
           savePlaylistsToLocalStorage();
         }
       }
-      renderSavedPlaylistsDropdown(); // সেভড প্লেলিস্ট ড্রপডাউন আপডেট করা
+      renderSavedPlaylistsDropdown(); 
     }
 
     function loadCurrentChannels() {
       const storedChannels = localStorage.getItem(CURRENT_PLAYLIST_KEY);
       if (storedChannels) {
         currentChannels = JSON.parse(storedChannels);
-        // নিশ্চিত করুন যে প্রতিটি চ্যানেলের জন্য একটি বৈধ লogo আছে
         currentChannels.forEach(channel => {
-            if (!channel.logo) { // লোগো না থাকলে ডিফল্ট বা গ্লোবাল লোগো ব্যবহার করুন
+            if (!channel.logo) { 
                 channel.logo = document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
             }
         });
         renderCurrentChannels();
       } else {
-        renderCurrentChannels(); // Show "No channels added yet" message on initial load
+        renderCurrentChannels(); 
       }
     }
 
@@ -640,7 +674,6 @@
     function renderCurrentChannels() {
       const previewList = document.getElementById("previewList");
       previewList.innerHTML = "";
-      // ফিল্টারিং এর জন্য একটি নতুন অ্যারে তৈরি করি
       const searchTerm = document.getElementById("channelSearchInput").value.toLowerCase();
       const filteredChannels = currentChannels.filter(ch => 
           ch.name.toLowerCase().includes(searchTerm) || 
@@ -650,7 +683,6 @@
 
 
       if (filteredChannels.length === 0) {
-        // এইখানে width: 100% যোগ করা হয়েছে যাতে টেক্সট মাঝখানে আসে
         previewList.innerHTML = `<p style="text-align: center; color: #777; padding: 20px; width: 100%;">No channels added yet.</p>`;
         if (currentChannels.length > 0 && searchTerm !== '') {
             previewList.innerHTML = `<p style="text-align: center; color: #777; padding: 20px; width: 100%;">No matching channels found.</p>`;
@@ -680,7 +712,7 @@
           previewList.appendChild(previewDiv);
         });
       }
-      generateM3U(); // Always regenerate output after rendering
+      generateM3U(); 
     }
 
     function confirmRemoveChannel(index) {
@@ -776,7 +808,7 @@
       }
       let fileName = document.getElementById("playlistFileNameInput").value.trim();
       if (!fileName) {
-          fileName = "playlist"; // ডিফল্ট নাম
+          fileName = "playlist"; 
       }
       const blob = new Blob([content], { type: "audio/x-mpegurl" });
       const a = document.createElement("a");
@@ -868,4 +900,18 @@
         if (name === AUTO_SAVE_PLAYLIST_NAME || confirm(`Loading "${name}" will replace your current playlist. Continue?`)) {
             currentChannels = [...savedPlaylists?.[name] || []]; 
             currentChannels.forEach(channel => {
-                if (!channel.logo) {
+                if (!channel.logo) { 
+                    channel.logo = document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
+                }
+            });
+            saveCurrentChannels(); 
+            renderCurrentChannels();
+            toggleSavedPlaylistsDropdown(); 
+            document.getElementById("playlistFileNameInput").value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name; 
+            if (name !== AUTO_SAVE_PLAYLIST_NAME) { 
+                alert(`Playlist "${name}" loaded.`);
+            }
+        }
+    }
+
+    function confirmDeleteSavedPlaylist(name, event) {
