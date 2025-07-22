@@ -1,1128 +1,871 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDIX ENTERTAINMENT</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <script src="https://promoviex.vercel.app/playlist/playjs/playerjs.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EXTM3U Playlist Creator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 
-    <style>
-        /* CSS Variables for Dark Blue 3D Theme */
-        :root {
-            --primary-dark: #0d1a26; /* Very dark blue background */
-            --secondary-dark: #1e3a52; /* Dark blue card background */
-            --accent-color: #38b6ff; /* Bright blue accent */
-            --text-color-light: #e0f7fa; /* Light text for readability */
-            --text-color-dark: #cdd8e2; /* Slightly darker text */
-            --shadow-dark: rgba(0, 0, 0, 0.3); /* Darker shadows for 3D effect */
-            --button-primary: #2979ff; /* Blue button */
-            --button-hover: #0277bd;
-            --border-color: #263238;
-        }
+  <style>
+    body {
+      background-color: #121212; /* গাঢ় কালো ব্যাকগ্রাউন্ড */
+      font-family: 'Segoe UI', sans-serif;
+      color: #f8f8f8; /* উজ্জ্বল সাদা টেক্সট */
+      padding: 15px; /* মোবাইল ফ্রেন্ডলি করার জন্য প্যাডিং */
+    }
+    .container {
+      background-color: #1e1e1e; /* সামান্য হালকা কালো কন্টেইনার */
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* গাঢ় শ্যাডো */
+      padding: 35px;
+      margin-top: 20px; /* মার্জিন কমানো */
+      margin-bottom: 20px; /* মার্জিন কমানো */
+    }
+    h3 {
+      color: #e0e0e0;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .form-label {
+        color: #bdbdbd;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    .form-control, .btn {
+      border-radius: 10px;
+      transition: all 0.2s ease-in-out;
+      border: 1px solid #333;
+      font-size: 1rem; /* ফন্ট সাইজ সামঞ্জস্য করা */
+    }
+    .form-control {
+      background-color: #2c2c2c;
+      color: #f0f0f0;
+      padding: 12px 18px;
+    }
+    .form-control::placeholder {
+        color: #777;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #64b5f6; /* হালকা নীল ফোকাস */
+      box-shadow: 0 0 5px rgba(100, 181, 246, 0.5);
+      background-color: #383838; /* ফোকাসে কিছুটা গাঢ় ব্যাকগ্রাউন্ড */
+      color: #ffffff; /* ফোকাসে সাদা লেখা */
+    }
+    .btn {
+      padding: 12px 20px; /* প্যাডিং সামঞ্জস্য করা */
+      font-weight: bold;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+    }
+    .btn i { /* আইকনের মার্জিন */
+        margin-right: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 7px rgba(0, 0, 0, 0.7);
+    }
+    .btn:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    }
+    .btn-success {
+      background-color: #4caf50;
+      color: #fff;
+    }
+    .btn-info {
+      background-color: #2196f3;
+      color: #fff;
+    }
+    .btn-dark {
+      background-color: #424242;
+      color: #fff;
+    }
+    .btn-secondary {
+        background-color: #757575;
+        color: #fff;
+    }
+    .btn-primary {
+        background-color: #3f51b5;
+        color: #fff;
+    }
+    .btn-copy { /* নতুন কপি বাটনের স্টাইল */
+        background-color: #607d8b; /* গাঢ় নীল-ধূসর */
+        color: #fff;
+    }
+    .btn-copy:hover {
+        background-color: #455a64;
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--primary-dark);
-            color: var(--text-color-light);
-            line-height: 1.6;
-        }
+    /* চ্যানেল গ্রিড লেআউট এবং বক্স */
+    .channel-list-box {
+        background-color: #2c2c2c; /* আউটপুট বক্সের মতো ব্যাকগ্রাউন্ড */
+        border-radius: 10px;
+        border: 1px solid #444;
+        padding: 15px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
 
-        /* Header */
-        header {
-            background-color: var(--secondary-dark);
-            color: var(--text-color-light);
-            padding: 15px 20px;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 2px 5px var(--shadow-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .header-button {
-            position: absolute;
-            background: none;
-            border: none;
-            color: var(--text-color-light);
-            font-size: 28px;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .header-button:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        .menu-button {
-            left: 20px;
-        }
-        .search-button {
-            right: 20px;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 1.8em;
-            text-shadow: 1px 1px 2px var(--shadow-dark);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-            background-color: var(--primary-dark);
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 70px;
-            box-shadow: 2px 0 5px var(--shadow-dark);
-            border-right: 1px solid var(--border-color);
-        }
-        .sidebar h2 {
-            color: var(--accent-color);
-            padding: 15px 32px 10px;
-            margin-top: 0;
-            font-size: 1.5em;
-            border-bottom: 1px solid var(--border-color);
-            text-shadow: 1px 1px 1px var(--shadow-dark);
-        }
-        .sidebar a {
-            padding: 12px 8px 12px 32px;
-            text-decoration: none;
-            font-size: 1.1em;
-            color: var(--text-color-dark);
-            display: block;
-            transition: 0.3s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .sidebar a:hover {
-            color: var(--accent-color);
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-        .sidebar .closebtn {
-            position: absolute;
-            top: 10px;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-            color: var(--text-color-light);
-        }
-        .sidebar .closebtn:hover {
-            color: var(--accent-color);
-        }
-
-        /* Main Content */
-        .content {
-            margin-left: 0;
-            padding: 20px;
-            transition: margin-left .5s;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 25px;
-            padding: 20px 0;
-        }
-
-        /* Video Item Card */
-        .item {
-            background-color: var(--secondary-dark);
-            border-radius: 10px;
-            box-shadow: 3px 5px 8px var(--shadow-dark);
-            text-align: center;
-            padding: 20px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
+    .channel-list-box .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap; /* ছোট স্ক্রিনের জন্য */
+    }
+    .channel-list-box .header h5 {
+        margin: 0;
+        color: #e0e0e0;
+        font-weight: 600;
+        flex-grow: 1;
+        min-width: 150px; /* ছোট স্ক্রিনে যাতে ঠিক থাকে */
+    }
+    .channel-list-box .header .search-box {
+        display: flex;
+        gap: 10px;
+        flex-grow: 1; /* সার্চ বার যাতে প্রসারিত হয় */
+        max-width: 300px; /* সর্বোচ্চ প্রস্থ */
+    }
+    @media (max-width: 576px) {
+        .channel-list-box .header {
             flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
+            align-items: flex-start;
+            gap: 10px;
         }
-        .item:hover {
-            transform: translateY(-8px);
-            box-shadow: 5px 8px 12px var(--shadow-dark);
-        }
-        .item-thumbnail {
+        .channel-list-box .header .search-box {
             width: 100%;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            background-color: #14283d;
-            border-radius: 8px;
-            overflow: hidden;
+            max-width: none;
         }
-        .item-thumbnail img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-        .item h3 {
-            font-size: 1.2em;
-            margin: 0 0 10px;
-            color: var(--accent-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .item p {
-            font-size: 0.9em;
-            color: var(--text-color-dark);
-            margin-bottom: 10px;
-        }
+    }
 
-        /* Season Details */
-        .season-details {
-            background-color: #14283d;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: left;
-            border: 1px solid var(--border-color);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .season-details h4 {
-            font-size: 1em;
-            margin: 0 0 10px;
-            color: var(--accent-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-        .season-details .episode-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed #263238;
-        }
-        .season-details .episode-item:last-child {
-            border-bottom: none;
-        }
-        .season-details .episode-info {
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .season-details .episode-info p {
-            margin: 0;
-            font-size: 0.9em;
-            color: var(--text-color-light);
-        }
+    #previewList {
+        display: flex;
+        flex-direction: column; /* চ্যানেলগুলো উল্লম্বভাবে থাকবে */
+        gap: 10px; /* চ্যানেলগুলির মধ্যে ফাঁকা স্থান */
+        max-height: 300px; /* নির্দিষ্ট উচ্চতা */
+        overflow-y: auto; /* উচ্চতা বেশি হলে স্ক্রলবার */
+        padding-right: 5px; /* স্ক্রলবার এর জন্য প্যাডিং */
+    }
 
-        /* Play Button */
-        .play-button {
-            background-color: var(--button-primary);
-            color: var(--text-color-light);
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            font-size: 1em;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            width: 100%;
-            box-shadow: 2px 2px 4px var(--shadow-dark);
-        }
-        .play-button:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-        }
-        .play-button:active {
-            transform: translateY(0);
-        }
+    /* কাস্টম স্ক্রলবার */
+    #previewList::-webkit-scrollbar {
+        width: 8px;
+    }
+    #previewList::-webkit-scrollbar-track {
+        background: #333;
+        border-radius: 10px;
+    }
+    #previewList::-webkit-scrollbar-thumb {
+        background-color: #64b5f6;
+        border-radius: 10px;
+        border: 2px solid #333;
+    }
+    #previewList::-webkit-scrollbar-thumb:hover {
+        background-color: #42a5f5;
+    }
 
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            background-color: var(--secondary-dark);
-            margin: auto;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px var(--shadow-dark);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            position: relative;
-            border: 1px solid var(--border-color);
-        }
-        .modal-content.video-player {
-            /* Desktop/Larger screen max size for the player modal */
-            max-width: 90vw; 
-            max-height: 90vh; 
-            width: 95%; /* Make it take more width within the max */
-            height: 90%; /* Make it take more height within the max */
-            display: flex;
-            flex-direction: column; /* Arrange title and player vertically */
-            padding: 15px; 
-            box-sizing: border-box; /* Include padding in width/height calculation */
-        }
-        .close-button {
-            color: var(--text-color-light);
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: var(--accent-color);
-            text-decoration: none;
-            cursor: pointer;
-            opacity: 1;
-        }
-        .modal-content h2 {
-            margin-top: 0;
-            margin-bottom: 15px; 
-            color: var(--accent-color);
-            text-shadow: 1px 1px 1px var(--shadow-dark);
-            flex-shrink: 0; /* Prevent title from shrinking in player modal */
-        }
-        .player-option {
-            display: block;
-            width: 80%;
-            margin: 15px auto;
-            padding: 12px 20px;
-            background-color: var(--button-primary);
-            color: var(--text-color-light);
-            border: none;
-            border-radius: 5px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 1px 1px 3px var(--shadow-dark);
-        }
-        .player-option:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-        }
-        .player-option:active {
-            transform: translateY(0);
-        }
-        .player-option.copy-url {
-            background-color: #4CAF50; /* Green color for copy button */
-        }
-        .player-option.copy-url:hover {
-            background-color: #45a049;
-        }
-        .player-option.download-video {
-            background-color: #009688; /* Teal color for download button */
-        }
-        .player-option.download-video:hover {
-            background-color: #00796a;
-        }
 
-        /* Video Player inside Modal Container */
-        #videoPlayerContainer {
-            width: 100%;
-            flex-grow: 1; /* Allows the player container to take up remaining vertical space in flex column */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: black;
-            border-radius: 8px;
-            overflow: hidden; 
-            position: relative; /* Needed for absolute positioning if using error message inside */
-        }
-        /* নিশ্চিত করুন iframe এবং playerjs_container তাদের parent (#videoPlayerContainer) এর সম্পূর্ণ জায়গা নিচ্ছে */
-        #videoPlayerContainer iframe,
-        #playerjs_container { 
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block; /* Ensure it's a block element */
-        }
+    .channel-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px; /* প্যাডিং সামঞ্জস্য করা */
+      background-color: #1e1e1e; /* কন্টেইনারের মতো ব্যাকগ্রাউন্ড */
+      border-radius: 8px;
+      border: 1px solid #333;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .channel-preview img {
+      height: 30px; /* লোগোর আকার সামঞ্জস্য করা */
+      width: 30px; /* লোগোর আকার সামঞ্জস্য করা */
+      object-fit: contain;
+      border-radius: 6px;
+      background-color: #383838;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .channel-preview span {
+      font-weight: 400;
+      color: #e0e0e0;
+      flex-grow: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 0.95rem;
+    }
 
-        /* Loading Spinner */
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-        }
-        .spinner {
-            border: 8px solid #263238;
-            border-top: 8px solid var(--accent-color);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .hidden {
-            display: none;
-        }
+    /* ডিলিট, এডিট, প্লে বাটন */
+    .channel-preview .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-shrink: 0;
+    }
+    .channel-preview .action-buttons button {
+      background: none;
+      border: none;
+      border-radius: 50%; /* গোলাকার বাটন */
+      width: 28px; /* ছোট আকার */
+      height: 28px; /* ছোট আকার */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1em; /* আইকনের আকার */
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .channel-preview .delete-btn {
+        color: #dc3545;
+    }
+    .channel-preview .delete-btn:hover {
+        background-color: rgba(220, 53, 69, 0.2);
+        transform: scale(1.1);
+    }
+    .channel-preview .edit-btn {
+        color: #ffc107; /* হলুদ রং */
+    }
+    .channel-preview .edit-btn:hover {
+        background-color: rgba(255, 193, 7, 0.2);
+        transform: scale(1.1);
+    }
+    /* নতুন প্লে বাটন */
+    .channel-preview .play-btn {
+        color: #4CAF50; /* সবুজ রং */
+    }
+    .channel-preview .play-btn:hover {
+        background-color: rgba(76, 175, 80, 0.2);
+        transform: scale(1.1);
+    }
 
-        /* Search Modal Specific Styles */
-        .search-input {
-            width: calc(100% - 40px);
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            background-color: #14283d;
-            color: var(--text-color-light);
-            font-size: 1em;
-            box-shadow: inset 1px 1px 3px var(--shadow-dark);
-        }
-        .search-input::placeholder {
-            color: var(--text-color-dark);
-        }
-        .search-button-modal {
-            width: calc(100% - 40px);
-            padding: 12px 20px;
-            background-color: var(--button-primary);
-            color: var(--text-color-light);
-            border: none;
-            border-radius: 5px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 1px 1px 3px var(--shadow-dark);
-        }
-        .search-button-modal:hover {
-            background-color: var(--button-hover);
-            transform: translateY(-2px);
-        }
-        .search-button-modal:active {
-            transform: translateY(0);
-        }
 
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 15px;
-            }
-            .item {
-                padding: 15px;
-            }
-            .item h3 {
-                font-size: 1em;
-            }
-            .item-thumbnail {
-                height: 100px;
-                margin-bottom: 10px;
-            }
-            header h1 {
-                font-size: 1.5em;
-            }
-            .sidebar {
-                padding-top: 60px;
-            }
-            .sidebar h2 {
-                font-size: 1.3em;
-            }
-            .sidebar a {
-                font-size: 1em;
-            }
-            .content {
-                padding: 15px;
-            }
-            .header-button {
-                font-size: 24px;
-            }
-            .menu-button {
-                left: 10px;
-            }
-            .search-button {
-                right: 10px;
-            }
-            .modal-content {
-                width: 95%;
-                padding: 20px;
-            }
-            .player-option {
-                width: 90%;
-                font-size: 1em;
-            }
-            .modal-content.video-player {
-                /* On smaller screens, make player modal nearly full screen for better viewing */
-                width: 98vw; /* Almost full viewport width */
-                height: 98vh; /* Almost full viewport height */
-                max-width: 98vw;
-                max-height: 98vh;
-                padding: 5px; /* Reduce padding to maximize player space */
-            }
-            /* Adjust title margin in player modal for small screens */
-            .modal-content.video-player h2 {
-                margin-bottom: 10px;
-            }
-        }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+      margin-top: 20px;
+      border-radius: 10px;
+      background-color: #2c2c2c;
+      color: #f0f0f0;
+      padding: 18px;
+      border: 1px solid #444;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #64b5f6;
+      box-shadow: 0 0 5px rgba(100, 181, 246, 0.5);
+      background-color: #383838;
+      color: #ffffff;
+    }
+    h5 {
+        color: #bdbdbd;
+        font-weight: 600;
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+      text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.7);
+    }
+    .footer a {
+        color: #64b5f6;
+        text-decoration: none;
+    }
+    .footer a:hover {
+        text-decoration: underline;
+    }
 
-        @media (max-width: 480px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 10px;
-            }
-            .item {
-                padding: 10px;
-            }
-            .item h3 {
-                font-size: 0.9em;
-            }
-            .item-thumbnail {
-                height: 80px;
-            }
-            .play-button {
-                padding: 8px 10px;
-                font-size: 0.9em;
-            }
+    /* Saved Playlists Styling */
+    .dropdown {
+        position: relative;
+        display: block; /* ডিসপ্লে ব্লক করা হয়েছে */
+        width: 100%; /* সম্পূর্ণ উইডথ নেবে */
+        margin-bottom: 25px; /* সেকশনের নিচে মার্জিন */
+    }
+    .dropdown > button {
+        width: 100%; /* মোবাইল ফ্রেন্ডলি */
+        text-align: left;
+        background-color: #3f51b5;
+        color: #fff;
+        border: none;
+    }
+    .dropdown > button:hover {
+        background-color: #303f9f;
+    }
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #2c2c2c;
+        min-width: 250px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        border: 1px solid #444;
+        border-radius: 10px;
+        z-index: 1;
+        max-height: 300px;
+        overflow-y: auto;
+        left: 0;
+        right: 0; /* মোবাইল ফ্রেন্ডলি, পুরো উইডথ নেবে */
+        top: 100%;
+        margin-top: 10px; /* Space from button */
+        padding: 10px 0;
+    }
+    .dropdown-content.show {
+        display: block;
+    }
+    .dropdown-content button {
+        color: #f0f0f0;
+        padding: 10px 15px;
+        text-decoration: none;
+        display: block;
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-weight: 500;
+        border-bottom: 1px solid #444;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .dropdown-content button:last-child {
+        border-bottom: none;
+    }
+    .dropdown-content button:hover {
+        background-color: #333;
+        transform: translateX(5px);
+    }
+    .dropdown-item-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
+    }
+    .dropdown-item-actions .playlist-name-text {
+        flex-grow: 1;
+        text-align: left;
+        padding: 10px 0;
+        cursor: pointer;
+        color: #e0e0e0;
+    }
+    .dropdown-item-actions .delete-playlist-btn {
+        background: none;
+        border: none;
+        color: #f44336;
+        font-size: 1.1em;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        padding: 5px;
+        border-radius: 5px;
+    }
+    .dropdown-item-actions .delete-playlist-btn:hover {
+        opacity: 1;
+        background-color: rgba(244, 67, 54, 0.1);
+    }
+
+    .playlist-actions-section {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #252525;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .playlist-actions-section .form-control {
+        margin-bottom: 15px;
+    }
+
+    /* নতুন বাটন লেআউট */
+    .button-group-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+        justify-content: center; /* বাটনগুলো সেন্টারে থাকবে */
+    }
+    .button-group-row .btn {
+        flex: 1 1 auto; /* ফ্লেক্স আইটেম হিসেবে আচরণ করবে */
+        min-width: 120px; /* ছোট স্ক্রিনেও নির্দিষ্ট চওড়া থাকবে */
+    }
+    @media (max-width: 576px) { /* Extra small devices (portrait phones) */
+        .button-group-row .btn {
+            width: 100%; /* প্রতিটি বাটন পুরো প্রস্থ নেবে */
+            flex-grow: 0;
         }
-    </style>
+    }
+
+    /* Player Specific Styles */
+    #player-container {
+        background-color: #000;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 30px; /* চ্যানেল লিস্টের উপরে প্লেয়ারের জন্য মার্জিন */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+    }
+    .plyr {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .p-2.m-4.card { /* remove default card styling from original player HTML */
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
+    .plyr__video-wrapper {
+        background-color: #000; /* Ensure black background for video */
+    }
+  </style>
 </head>
 <body>
+  <div class="container py-4">
+    <h3 class="text-center mb-4">📺 EXTM3U Playlist Creator</h3>
 
-    <header>
-        <button class="header-button menu-button" onclick="openNav()"><i class="fas fa-bars"></i></button>
-        <h1>BDIX ENTERTAINMENT</h1>
-        <button class="header-button search-button" onclick="openSearchModal()"><i class="fas fa-search"></i></button>
-    </header>
-
-    <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <h2>ক্যাটাগরি</h2>
-        <div id="category-list">
-            </div>
-    </div>
-
-    <div id="main-content" class="content">
-        <div id="loading-spinner" class="loading-spinner">
-            <div class="spinner"></div>
-            <p style="margin-left: 15px; font-size: 1.1em; color: var(--text-color-light);">প্লেলিস্ট লোড হচ্ছে...</p>
-        </div>
-        <div id="video-grid" class="grid-container hidden">
-            </div>
-    </div>
-
-    <div id="playerSelectionModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-button" onclick="closePlayerModal()">&times;</span>
-            <h2>পছন্দের অপশন নির্বাচন করুন</h2>
-            <button class="player-option" onclick="selectPlayer('vlc')">
-                <i class="fab fa-vlc"></i> VLC Player
-            </button>
-            <button class="player-option" onclick="openWebPlayerModal()">
-                <i class="fas fa-globe"></i> ওয়েবসাইটে প্লে করুন
-            </button>
-            <button class="player-option copy-url" onclick="copyVideoUrl()">
-                <i class="fas fa-copy"></i> URL কপি করুন
-            </button>
-            <button class="player-option download-video" onclick="downloadVideo()">
-                <i class="fas fa-download"></i> ডাউনলোড করুন
-            </button>
-        </div>
-    </div>
-
-    <div id="webPlayerModal" class="modal hidden">
-        <div class="modal-content video-player">
-            <span class="close-button" onclick="closeWebPlayerModal()">&times;</span>
-            <h2 id="webPlayerTitle"></h2>
-            <div id="videoPlayerContainer">
-                <p id="playerJsError" style="color: yellow; text-align: center; margin-top: 20px; display: none;">ভিডিও লোড করা যায়নি। প্লেয়ার স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা ভিডিও ফরম্যাট সমর্থিত নয়।</p>
+    <div id="player-container">
+        <div class="p-2 m-4 card">
+            <div id="player" tabindex="0" class="plyr">
+                <video playsinline controls>
+                    <source src="" type="video/mp4">
+                    <source src="" type="application/x-mpegURL"> </video>
             </div>
         </div>
+        <a id="currentVideoDownloadBtn" class="btn btn-warning btn-lg w-100 mt-3" target="_blank" download="" href="#" rel="noreferrer" style="display:none;">Download Current Video</a>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">🌐 Global Logo URL (default for all)</label>
+      <input type="text" id="logoAll" class="form-control" placeholder="https://example.com/logo.png" />
     </div>
 
-    <div id="searchModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeSearchModal()">&times;</span>
-            <h2>ভিডিও খুঁজুন</h2>
-            <input type="text" id="searchInput" class="search-input" placeholder="ভিডিওর নাম দিয়ে খুঁজুন...">
-            <button class="search-button-modal" onclick="performSearch()">
-                <i class="fas fa-search"></i> খুঁজুন
+    <div class="mb-3">
+      <label class="form-label">🗂️ Global Group Name (default for all channels)</label>
+      <input type="text" id="globalGroup" class="form-control" placeholder="e.g., Movies, Sports, News" />
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input id="channelName" class="form-control" placeholder="📺 Channel Name" />
+      </div>
+      <div class="col-md-4">
+        <input id="channelURL" class="form-control" placeholder="🔗 Stream URL" />
+      </div>
+      <div class="col-md-4">
+        <input id="channelLogo" class="form-control" placeholder="🖼️ Optional Logo URL" />
+      </div>
+    </div>
+    <button class="btn btn-success w-100 mb-4" onclick="addChannel()">+ Add Channel</button>
+
+    <div class="channel-list-box">
+        <div class="header">
+            <h5>📊 Added Channels</h5>
+            <div class="search-box">
+                <input type="text" id="channelSearchInput" class="form-control" placeholder="🔍 Search channels..." onkeyup="filterChannels()">
+            </div>
+        </div>
+        <div id="previewList" class="mb-4">
+            <p style="text-align: center; color: #777; padding: 20px; width: 100%;">No channels added yet.</p>
+        </div>
+    </div>
+    <div class="mb-3">
+        <div class="dropdown">
+            <button class="btn btn-primary" onclick="toggleSavedPlaylistsDropdown()">
+                <i class="fas fa-list-ul"></i> Saved Playlists <span id="savedPlaylistsCount"></span>
+            </button>
+            <div id="savedPlaylistsDropdown" class="dropdown-content">
+                <p style="padding: 10px 15px; color: #777;">No saved playlists yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="playlist-actions-section">
+        <label class="form-label">📝 Playlist Name (for saving & downloading)</label>
+        <input type="text" id="playlistFileNameInput" class="form-control" placeholder="Enter playlist name (e.g., MyChannels)" value="playlist" />
+
+        <div class="button-group-row">
+            <button class="btn btn-primary" onclick="saveCurrentPlaylist()">
+                <i class="fas fa-save"></i> Save Playlist
+            </button>
+            <button class="btn btn-info" onclick="generateM3U()">
+                <i class="fas fa-cogs"></i> Generate
+            </button>
+            <button class="btn btn-dark" onclick="downloadM3U()">
+                <i class="fas fa-download"></i> Download M3U
+            </button>
+            <button class="btn btn-secondary" onclick="clearCurrentChannels()">
+                <i class="fas fa-trash-alt"></i> Clear Current
             </button>
         </div>
     </div>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        let m3uFileUrl = urlParams.get('link'); 
-
-        // !!! আপনার M3U ফাইলটি লোড না হলে এই অংশটি দেখুন !!!
-        // যদি আপনি ব্রাউজারের URL এ ?link=YOUR_M3U_URL যোগ করে ফাইল লোড করতে চান:
-        // তাহলে নিচের 'if (!m3uFileUrl)' ব্লকটি আনকমেন্ট করার দরকার নেই।
-
-        // যদি আপনি কোডের মধ্যে একটি ডিফল্ট M3U ফাইল ব্যবহার করে টেস্ট করতে চান,
-        // তাহলে 'let m3uFileUrl = urlParams.get('link');' এই লাইনটি কমেন্ট আউট করুন (// যোগ করুন)
-        // এবং নিচের 'if (!m3uFileUrl)' ব্লকটি আনকমেন্ট করে আপনার M3U URL টি দিন।
-
-        // উদাহরণস্বরূপ, যদি আপনি আপনার Gist M3U ব্যবহার করতে চান:
-        if (!m3uFileUrl) { // এই লাইনটি আনকমেন্ট করুন এবং উপরের 'let m3uFileUrl' লাইনটি কমেন্ট করুন যদি আপনি ডিফল্ট ব্যবহার করতে চান
-             m3uFileUrl = 'https://gist.githubusercontent.com/mdmrezaul/a712eb60b730594a9b6c00d667c42732/raw/0edc8004f2f45145b206ee85b1c5520e1762c26d/test_m3u.m3u'; 
-        }
-        // অথবা, একটি পাবলিক M3U (যেমন IPTV Org থেকে):
-        // if (!m3uFileUrl) {
-        //      m3uFileUrl = 'https://raw.githubusercontent.com/iptv-org/iptv/master/channels/bd.m3u'; 
-        // }
-
-
-        let videos = [];
-        let categories = new Set();
-        let currentCategory = 'All';
-        let currentVideoUrl = '';
-        let currentVideoTitle = ''; 
-        let playerJsInstance = null; 
-        let allParsedVideos = []; 
-
-        // DOM element references. এগুলো স্ক্রিপ্ট লোড হওয়ার সময় নাও থাকতে পারে, তাই লোডM3uFile এ চেক করা হয়েছে
-        const videoGrid = document.getElementById('video-grid');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const playerSelectionModal = document.getElementById('playerSelectionModal');
-        const categoryList = document.getElementById('category-list');
-        const webPlayerModal = document.getElementById('webPlayerModal');
-        const videoPlayerContainer = document.getElementById('videoPlayerContainer');
-        const webPlayerTitle = document.getElementById('webPlayerTitle');
-        const searchModal = document.getElementById('searchModal');
-        const searchInput = document.getElementById('searchInput');
-        const playerJsErrorElement = document.getElementById('playerJsError');
-
-
-        // Function to safely get elements by ID
-        function getElement(id) {
-            const element = document.getElementById(id);
-            if (!element) {
-                console.error(`Error: Element with ID "${id}" not found.`);
-                return null;
-            }
-            return element;
-        }
-
-        async function loadM3uFile() {
-            // নিশ্চিত করা হচ্ছে প্রয়োজনীয় DOM উপাদানগুলো বিদ্যমান।
-            if (!videoGrid || !loadingSpinner || !categoryList) {
-                console.error("গুরুত্বপূর্ণ DOM উপাদান খুঁজে পাওয়া যায়নি। স্ক্রিপ্টটি খুব তাড়াতাড়ি চলছে বা HTML টি ভুলভাবে গঠিত হতে পারে।");
-                const body = document.querySelector('body');
-                if (body) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.style.cssText = "color: red; text-align: center; padding: 20px; font-size: 1.2em; background-color: #333; margin: 20px;";
-                    errorDiv.textContent = "গুরুত্বপূর্ণ HTML উপাদান খুঁজে পাওয়া যায়নি। কোড সঠিক ভাবে লোড হচ্ছে কিনা যাচাই করুন।";
-                    body.prepend(errorDiv);
-                }
-                return;
-            }
-
-            if (!m3uFileUrl) {
-                loadingSpinner.classList.add('hidden');
-                videoGrid.innerHTML = '<p style="color: var(--accent-color); text-align: center;">কোনো প্লেলিস্ট URL প্রদান করা হয়নি। অনুগ্রহ করে ওয়েবসাইটের লিংকের সাথে <b>?link=আপনার_M3U_ফাইলের_URL</b> যোগ করুন। অথবা, কোডে একটি ডিফল্ট M3U লিঙ্ক সেট করুন।</p>';
-                videoGrid.classList.remove('hidden');
-                return;
-            }
-
-            loadingSpinner.classList.remove('hidden');
-            videoGrid.classList.add('hidden');
-            try {
-                const response = await fetch(m3uFileUrl);
-                if (!response.ok) {
-                    let errorMessage = `HTTP error! status: ${response.status}`;
-                    if (response.statusText) {
-                        errorMessage += ` - ${response.statusText}`;
-                    }
-                    if (response.status === 0 || response.status === 404) {
-                        errorMessage += "। নিশ্চিত করুন যে M3U URL সঠিক এবং পাবলিকলি অ্যাক্সেসযোগ্য।";
-                    } else if (response.status === 200 && !response.headers.get('Content-Type')?.includes('text/plain') && !response.headers.get('Content-Type')?.includes('application/x-mpegurl')) {
-                         errorMessage += "। সার্ভার থেকে ফাইলটি M3U ফরম্যাটে আসছে না।";
-                    } else if (response.type === 'opaque' || (response.status === 0 && !response.ok)) { // Common for CORS issues when request is blocked (status 0)
-                        errorMessage += "। (সম্ভাব্য CORS নীতি সমস্যা) অনুগ্রহ করে M3U ফাইলটি হোস্ট করা সার্ভার থেকে অ্যাক্সেসের অনুমতি নিশ্চিত করুন।";
-                    }
-                    throw new Error(errorMessage);
-                }
-                const text = await response.text();
-                parseM3u(text);
-                displayVideos(currentCategory);
-                displayCategories();
-            } catch (error) {
-                console.error("M3U ফাইল লোড করতে সমস্যা হয়েছে:", error);
-                loadingSpinner.classList.add('hidden');
-                videoGrid.innerHTML = `<p style="color: var(--accent-color); text-align: center;">প্লেলিস্ট লোড করা যায়নি: ${error.message}<br>M3U ফাইলের URL সঠিক আছে কিনা এবং CORS অনুমতি আছে কিনা তা নিশ্চিত করুন।</p>`;
-                videoGrid.classList.remove('hidden');
-            } finally {
-                loadingSpinner.classList.add('hidden');
-            }
-        }
-
-        function parseM3u(m3uText) {
-            const lines = m3uText.split('\n');
-            let currentItem = null;
-            let tempVideos = [];
-
-            for (const line of lines) {
-                if (line.startsWith('#EXTINF:')) {
-                    const parts = line.match(/#EXTINF:(-?\d+)(.*),(.*)/);
-                    if (parts) {
-                        const attributes = parseAttributes(parts[2]);
-                        const title = parts[3].trim();
-                        currentItem = {
-                            title: title,
-                            attributes: attributes,
-                            url: '',
-                            isEpisode: false,
-                        };
-                        tempVideos.push(currentItem);
-                    }
-                } else if (line.trim() !== '' && currentItem && !currentItem.url) {
-                    currentItem.url = line.trim();
-                    const episodeRegex = /(S\d+E\d+)|(Season\s*\d+\s*Episode\s*\d+)|(Ep\.\s*\d+)/i;
-                    if (episodeRegex.test(currentItem.title)) {
-                        currentItem.isEpisode = true;
-                    }
-                    currentItem = null;
-                }
-            }
-
-            const groupedVideos = {};
-
-            tempVideos.forEach(video => {
-                if (video.isEpisode) {
-                    const baseTitleMatch = video.title.match(/(.*?)((S\d+E\d+)|(Season\s*\d+\s*Episode\s*\d+)|(Ep\.\s*\d+))/i);
-                    let baseTitle = baseTitleMatch ? baseTitleMatch[1].trim() : video.title;
-                    if (baseTitle.endsWith('-')) baseTitle = baseTitle.slice(0, -1).trim();
-
-                    const seasonEpisodeMatch = video.title.match(/(S(\d+)E(\d+))|(Season\s*(\d+)\s*Episode\s*(\d+))/i);
-                    let seasonKey = 'Unknown Season';
-                    if (seasonEpisodeMatch) {
-                        const seasonNum = seasonEpisodeMatch[2] || seasonEpisodeMatch[5];
-                        seasonKey = `Season ${parseInt(seasonNum)}`;
-                    }
-
-                    if (!groupedVideos[baseTitle]) {
-                        groupedVideos[baseTitle] = {
-                            title: baseTitle,
-                            attributes: video.attributes,
-                            hasSeasons: true,
-                            seasons: {}
-                        };
-                        categories.add(video.attributes['group-title'] || 'অন্যান্য');
-                    }
-                    if (!groupedVideos[baseTitle].seasons[seasonKey]) {
-                        groupedVideos[baseTitle].seasons[seasonKey] = [];
-                    }
-                    groupedVideos[baseTitle].seasons[seasonKey].push({
-                        title: video.title,
-                        url: video.url,
-                        fileSize: 'N/A' // M3U does not inherently provide file size
-                    });
-                } else {
-                    if (!groupedVideos[video.title]) {
-                        groupedVideos[video.title] = {
-                            title: video.title,
-                            attributes: video.attributes,
-                            url: video.url,
-                            hasSeasons: false
-                        };
-                        categories.add(video.attributes['group-title'] || 'অন্যান্য');
-                    }
-                }
-            });
-
-            videos = Object.values(groupedVideos);
-            allParsedVideos = [...videos]; // Store a copy for search
-        }
-
-        function parseAttributes(attrString) {
-            const attributes = {};
-            const regex = /(\S+?)="([^"]*?)"/g;
-            let match;
-            while ((match = regex.exec(attrString)) !== null) {
-                attributes[match[1].toLowerCase()] = match[2];
-            }
-            return attributes;
-        }
-
-        function displayVideos(category, searchTerm = '') {
-            if (!videoGrid) return; 
-            videoGrid.innerHTML = '';
-
-            let filteredVideos = allParsedVideos.filter(video => {
-                const matchesCategory = (category === 'All' || (video.attributes['group-title'] || 'অন্যান্য') === category);
-                const matchesSearch = searchTerm === '' || video.title.toLowerCase().includes(searchTerm.toLowerCase());
-                return matchesCategory && matchesSearch;
-            });
-
-            if (filteredVideos.length === 0) {
-                videoGrid.innerHTML = '<p style="text-align: center; color: var(--text-color-dark);">এই ক্যাটাগরিতে বা এই নামের কোনো ভিডিও খুঁজে পাওয়া যায়নি।</p>';
-                videoGrid.classList.remove('hidden');
-                return;
-            }
-
-            filteredVideos.forEach(video => {
-                const itemDiv = document.createElement('div');
-                itemDiv.classList.add('item');
-
-                const thumbnailDiv = document.createElement('div');
-                thumbnailDiv.classList.add('item-thumbnail');
-                const img = document.createElement('img');
-                img.src = video.attributes['tvg-logo'] || 'https://via.placeholder.com/150x100?text=No+Image';
-                img.alt = video.title;
-                img.onerror = function() { this.src = 'https://via.placeholder.com/150x100?text=No+Image'; };
-                thumbnailDiv.appendChild(img);
-                itemDiv.appendChild(thumbnailDiv);
-
-                const title = document.createElement('h3');
-                title.textContent = video.title;
-                itemDiv.appendChild(title);
-
-                if (video.hasSeasons && Object.keys(video.seasons).length > 0) {
-                    itemDiv.addEventListener('click', () => toggleSeasonDetails(itemDiv, video));
-                } else {
-                    const playButton = document.createElement('button');
-                    playButton.classList.add('play-button');
-                    playButton.textContent = 'প্লে করুন';
-                    playButton.onclick = (e) => {
-                        e.stopPropagation();
-                        openPlayerModal(video.url, video.title); 
-                    };
-                    itemDiv.appendChild(playButton);
-
-                    const fileSize = document.createElement('p');
-                    fileSize.textContent = `ফাইল সাইজ: N/A`;
-                    itemDiv.appendChild(fileSize);
-                }
-
-                videoGrid.appendChild(itemDiv);
-            });
-            videoGrid.classList.remove('hidden');
-        }
-
-        function toggleSeasonDetails(itemDiv, video) {
-            let seasonDetailsDiv = itemDiv.querySelector('.season-details');
-            if (seasonDetailsDiv) {
-                itemDiv.removeChild(seasonDetailsDiv);
-            } else {
-                seasonDetailsDiv = document.createElement('div');
-                seasonDetailsDiv.classList.add('season-details');
-
-                const sortedSeasonNames = Object.keys(video.seasons).sort((a, b) => {
-                    const numA = parseInt(a.replace('Season ', ''));
-                    const numB = parseInt(b.replace('Season ', ''));
-                    return numA - numB;
-                });
-
-                sortedSeasonNames.forEach(seasonName => {
-                    const seasonHeading = document.createElement('h4');
-                    seasonHeading.textContent = seasonName;
-                    seasonDetailsDiv.appendChild(seasonHeading);
-
-                    const sortedEpisodes = video.seasons[seasonName].sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
-
-                    sortedEpisodes.forEach(episode => {
-                        const episodeItem = document.createElement('div');
-                        episodeItem.classList.add('episode-item');
-
-                        const episodeInfo = document.createElement('div');
-                        episodeInfo.classList.add('episode-info');
-                        episodeInfo.innerHTML = `<p>${episode.title} (ফাইল সাইজ: ${episode.fileSize})</p>`;
-                        episodeItem.appendChild(episodeInfo);
-
-                        const playButton = document.createElement('button');
-                        playButton.classList.add('play-button');
-                        playButton.textContent = 'প্লে করুন';
-                        playButton.onclick = (e) => {
-                            e.stopPropagation();
-                            openPlayerModal(episode.url, episode.title); 
-                        };
-                        episodeItem.appendChild(playButton);
-                        seasonDetailsDiv.appendChild(episodeItem);
-                    });
-                });
-                itemDiv.appendChild(seasonDetailsDiv);
-            }
-        }
-
-        function displayCategories() {
-            if (!categoryList) return; 
-            categoryList.innerHTML = '';
-
-            const allCategory = document.createElement('a');
-            allCategory.href = '#';
-            allCategory.textContent = 'সব ভিডিও';
-            allCategory.onclick = (e) => {
-                e.preventDefault();
-                currentCategory = 'All';
-                displayVideos('All');
-                closeNav();
-            };
-            categoryList.appendChild(allCategory);
-
-            const sortedCategories = Array.from(categories).sort();
-
-            sortedCategories.forEach(category => {
-                const categoryLink = document.createElement('a');
-                categoryLink.href = '#';
-                categoryLink.textContent = category;
-                categoryLink.onclick = (e) => {
-                    e.preventDefault();
-                    currentCategory = category;
-                    displayVideos(category);
-                    closeNav();
-                };
-                categoryList.appendChild(categoryLink);
-            });
-        }
-
-        function openPlayerModal(url, title) {
-            currentVideoUrl = url;
-            currentVideoTitle = title;
-            if (playerSelectionModal) playerSelectionModal.classList.remove('hidden');
-        }
-
-        function closePlayerModal() {
-            if (playerSelectionModal) playerSelectionModal.classList.add('hidden');
-            currentVideoUrl = '';
-            currentVideoTitle = '';
-        }
-
-        function selectPlayer(playerType) {
-            if (!currentVideoUrl) {
-                alert("ভিডিও URL পাওয়া যায়নি।");
-                return;
-            }
-
-            let finalUrl = currentVideoUrl;
-            let launchUrl = '';
-            switch (playerType) {
-                case 'vlc':
-                    launchUrl = "vlc://" + encodeURIComponent(finalUrl);
-                    break;
-                default:
-                    alert("অজানা প্লেয়ার নির্বাচন করা হয়েছে।");
-                    closePlayerModal();
-                    return;
-            }
-
-            window.location.href = launchUrl;
-            closePlayerModal();
-
-            // একটি ছোট বিরতির পর ব্যবহারকারীকে জানানো হচ্ছে প্লেয়ার চালু নাও হতে পারে
-            setTimeout(() => {
-                alert(`প্লে করার চেষ্টা করা হচ্ছে: ${playerType.toUpperCase()}\nআপনার ডিভাইসে এই প্লেয়ারটি ইনস্টল নাও থাকতে পারে, অথবা এটি স্বয়ংক্রিয়ভাবে খুলছে না।`);
-            }, 500);
-        }
-
-        function openWebPlayerModal() {
-            if (!currentVideoUrl || !webPlayerModal || !videoPlayerContainer || !webPlayerTitle || !playerJsErrorElement) {
-                console.error("ওয়েব প্লেয়ারের জন্য গুরুত্বপূর্ণ DOM উপাদান খুঁজে পাওয়া যায়নি।");
-                return;
-            }
-
-            closePlayerModal(); 
-            playerJsErrorElement.style.display = 'none'; // ত্রুটির মেসেজ শুরুতেই লুকিয়ে রাখা হচ্ছে।
-
-            webPlayerTitle.textContent = currentVideoTitle; 
-            webPlayerModal.classList.remove('hidden'); 
-
-            // পূর্ববর্তী PlayerJS ইনস্ট্যান্স থাকলে তা ধ্বংস করা হচ্ছে এবং কন্টেন্ট পরিষ্কার করা হচ্ছে।
-            if (playerJsInstance) {
-                if (typeof playerJsInstance.destroy === 'function') {
-                    playerJsInstance.destroy();
-                }
-                playerJsInstance = null; 
-            }
-            videoPlayerContainer.innerHTML = ''; // প্লেয়ারের কন্টেন্ট পরিষ্কার করা হচ্ছে।
-
-            // PlayerJS এর জন্য div তৈরি করা হচ্ছে।
-            const playerDiv = document.createElement('div');
-            playerDiv.id = 'playerjs_container'; 
-            playerDiv.style.cssText = "width: 100%; height: 100%;"; // নিশ্চিত করা হচ্ছে div তার parent এর সম্পূর্ণ জায়গা নিচ্ছে
-            videoPlayerContainer.appendChild(playerDiv);
-
-            // Playerjs লোড হয়েছে কিনা তা পরীক্ষা করা হচ্ছে।
-            if (typeof window.Playerjs === 'function') {
-                try {
-                    playerJsInstance = new window.Playerjs({
-                        id: 'playerjs_container',
-                        file: currentVideoUrl,
-                        autoplay: true, 
-                        fullscreen: false, // প্লেয়ার লোড হওয়ার সাথে সাথে ফুলস্ক্রিন না হওয়ার জন্য false সেট করা হয়েছে। ব্যবহারকারী নিজে চাইলে ফুলস্ক্রিন করতে পারবে।
-                        // poster: 'your-poster.jpg' // ভিডিও লোড হওয়ার আগে একটি ছবি দেখাতে চাইলে এখানে URL দিন
-                    });
-                    console.log('PlayerJS URL দিয়ে শুরু হয়েছে:', currentVideoUrl);
-                    
-                    // PlayerJS এর ইভেন্ট লিসেনার যোগ করা হচ্ছে ত্রুটি বা সাফল্যের জন্য
-                    playerJsInstance.api('ready', () => {
-                        console.log('PlayerJS প্রস্তুত।');
-                    });
-                    playerJsInstance.api('error', (err) => {
-                        console.error('PlayerJS প্লেব্যাক ত্রুটি:', err);
-                        playerJsErrorElement.textContent = "ভিডিও প্লেব্যাক ব্যর্থ হয়েছে। এটি একটি সার্ভার সমস্যা, অসমর্থিত ফরম্যাট, অথবা CORS সমস্যার কারণে হতে পারে।";
-                        playerJsErrorElement.style.display = 'block';
-                    });
-
-                } catch (e) {
-                    console.error("PlayerJS শুরু করতে ত্রুটি:", e);
-                    playerJsErrorElement.textContent = "প্লেয়ার লোড হতে পারেনি: " + e.message + "। নিশ্চিত করুন ভিডিও URL এবং ফরম্যাট সঠিক।";
-                    playerJsErrorElement.style.display = 'block';
-                }
-            } else {
-                playerJsErrorElement.textContent = 'PlayerJS স্ক্রিপ্ট লোড হতে ব্যর্থ হয়েছে অথবা এর গ্লোবাল অবজেক্ট খুঁজে পাওয়া যায়নি। PlayerJS CDN URL সঠিক আছে কিনা যাচাই করুন।';
-                playerJsErrorElement.style.display = 'block';
-                console.error('PlayerJS object (window.Playerjs) খুঁজে পাওয়া যায়নি। PlayerJS স্ক্রিপ্ট URL এবং লোডিং সঠিকভাবে হয়েছে কিনা নিশ্চিত করুন।');
-            }
-        }
-
-        function closeWebPlayerModal() {
-            if (!webPlayerModal || !videoPlayerContainer) return; 
-
-            // PlayerJS ইনস্ট্যান্স ধ্বংস করা হচ্ছে যখন মডেল বন্ধ করা হয়।
-            if (playerJsInstance) {
-                if (typeof playerJsInstance.destroy === 'function') {
-                    playerJsInstance.destroy(); 
-                }
-                playerJsInstance = null; 
-            }
-            
-            videoPlayerContainer.innerHTML = ''; // প্লেয়ারের কন্টেন্ট পরিষ্কার করা হচ্ছে।
-            if (playerJsErrorElement) playerJsErrorElement.style.display = 'none'; // ত্রুটির মেসেজ লুকিয়ে রাখা হচ্ছে।
-
-            webPlayerModal.classList.add('hidden');
-        }
-
-
-        async function copyVideoUrl() {
-            if (!currentVideoUrl) {
-                alert("কপি করার জন্য কোনো ভিডিও URL নেই।");
-                return;
-            }
-
-            try {
-                await navigator.clipboard.writeText(currentVideoUrl);
-                alert('ভিডিও URL কপি করা হয়েছে!');
-            } catch (err) {
-                console.error('URL কপি করতে ব্যর্থ:', err);
-                alert('URL কপি করা যায়নি। অনুগ্রহ করে ম্যানুয়ালি কপি করুন: ' + currentVideoUrl);
-            }
-            closePlayerModal();
-        }
-
-        function downloadVideo() {
-            if (!currentVideoUrl) {
-                alert("ডাউনলোড করার জন্য কোনো ভিডিও URL নেই।");
-                return;
-            }
-
-            const a = document.createElement('a');
-            a.href = currentVideoUrl;
-            // একটি ভালো ফাইলনেম তৈরি করার চেষ্টা করা হচ্ছে
-            let filename = currentVideoUrl.substring(currentVideoUrl.lastIndexOf('/') + 1);
-            if (!filename || filename.indexOf('?') !== -1 || filename.indexOf('.') === -1) { 
-                // যদি URL শেষ হয় '/' দিয়ে, বা query parameters থাকে, অথবা কোন extension না থাকে
-                filename = (currentVideoTitle || 'video') + '.mp4'; // ডিফল্ট হিসাবে .mp4 ব্যবহার করা হচ্ছে
-            }
-            a.download = currentVideoTitle ? `${currentVideoTitle}_${filename}` : filename; 
-            document.body.appendChild(a); 
-            a.click(); 
-            document.body.removeChild(a); 
-
-            alert(`ডাউনলোড শুরু করার চেষ্টা করা হচ্ছে: ${currentVideoTitle || 'ভিডিও'}`);
-            closePlayerModal();
-        }
-
-        function openNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "250px";
-            if (mainContent && window.innerWidth > 768) {
-                mainContent.style.marginLeft = "250px";
-            }
-        }
-
-        function closeNav() {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (sidebar) sidebar.style.width = "0";
-            if (mainContent) mainContent.style.marginLeft = "0";
-        }
-
-        function openSearchModal() {
-            if (searchModal) {
-                searchModal.classList.remove('hidden');
-                searchInput.value = ''; 
-                searchInput.focus(); 
-            }
-        }
-
-        function closeSearchModal() {
-            if (searchModal) searchModal.classList.add('hidden');
-        }
-
-        function performSearch() {
-            const searchTerm = searchInput.value.trim();
-            closeSearchModal(); 
-            displayVideos(currentCategory, searchTerm); 
-        }
-
-        searchInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                performSearch();
-            }
+    <h5>📄 Output</h5>
+    <textarea id="output" readonly></textarea>
+    <button class="btn btn-copy w-100 mt-3" onclick="copyOutput()"><i class="fas fa-copy"></i> Copy Output</button>
+
+    <div class="footer">
+        Made with ❤️ — By MR X (AI) | ENJOY  <a href="https://new-try-theta.vercel.app/?link=https%3A%2F%2Fnew-try-theta.vercel.app%2Fplaylist.m3u" target="_blank">LIVE TV 📺</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+  <script>
+    let currentChannels = [];
+    let savedPlaylists = {};
+    let player; // Plyr player instance
+
+    const CURRENT_PLAYLIST_KEY = 'currentM3UChannels';
+    const SAVED_PLAYLISTS_KEY = 'savedM3UPlaylists';
+    const AUTO_SAVE_PLAYLIST_NAME = "Auto Saved Session"; // ডিফল্ট অটো-সেভ প্লেলিস্টের নাম
+
+    // --- Plyr Player Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+            // Add other Plyr options as needed
         });
 
-        // DOM কন্টেন্ট লোড হওয়ার পর লোডM3uFile ফাংশন কল করা হচ্ছে
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("DOM Content Loaded. অ্যাপ্লিকেশন শুরু হচ্ছে।");
-            loadM3uFile();
+        // Initialize download button state
+        updateDownloadButton(null); 
+    });
+
+    function updateDownloadButton(url) {
+        const downloadBtn = document.getElementById("currentVideoDownloadBtn");
+        if (url && (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg'))) {
+            downloadBtn.href = url;
+            downloadBtn.style.display = 'block';
+        } else {
+            downloadBtn.style.display = 'none';
+            downloadBtn.href = '#'; // Clear href
+        }
+    }
+
+    // Function to play a channel in Plyr
+    function playChannel(url) {
+        if (!player) {
+            console.error("Plyr player not initialized.");
+            return;
+        }
+
+        const videoElement = player.media;
+        let sourceType = 'video/mp4'; // Default to mp4
+
+        if (url.includes('.m3u8')) {
+            sourceType = 'application/x-mpegURL';
+        } else if (url.includes('.mpd')) {
+            sourceType = 'application/dash+xml'; // For DASH streams
+        } else if (url.includes('.webm')) {
+            sourceType = 'video/webm';
+        } else if (url.includes('.ogg')) {
+            sourceType = 'video/ogg';
+        }
+
+        // Remove existing sources
+        while (videoElement.firstChild) {
+            videoElement.removeChild(videoElement.firstChild);
+        }
+
+        // Add the new source
+        const source = document.createElement('source');
+        source.src = url;
+        source.type = sourceType;
+        videoElement.appendChild(source);
+
+        // Load and play the new source
+        player.destroy(); // Destroy existing player to re-initialize with new source
+        player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+        });
+        
+        player.play().catch(error => {
+            console.error("Error playing video:", error);
+            alert("Could not play the video. The stream might be offline or in an unsupported format. Error: " + error.message);
         });
 
-        // মডেলের বাইরে ক্লিক করলে মডেল বন্ধ করার জন্য
-        window.onclick = function(event) {
-            if (playerSelectionModal && event.target == playerSelectionModal) {
-                closePlayerModal();
+        // Update the download button
+        updateDownloadButton(url);
+    }
+
+
+    // --- Local Storage Functions ---
+    function saveCurrentChannels() {
+      localStorage.setItem(CURRENT_PLAYLIST_KEY, JSON.stringify(currentChannels));
+      // যখনই currentChannels আপডেট হবে, তখনই এটি auto-save playlist এও সেভ হবে।
+      if (currentChannels.length > 0) { // শুধু যদি কোন চ্যানেল থাকে তাহলেই সেভ হবে
+        savedPlaylists[AUTO_SAVE_PLAYLIST_NAME] = [...currentChannels];
+        savePlaylistsToLocalStorage();
+      } else { // যদি currentChannels খালি হয়ে যায়, auto-save playlist থেকে এটি মুছে ফেলা হবে
+        if (savedPlaylists[AUTO_SAVE_PLAYLIST_NAME]) {
+          delete savedPlaylists[AUTO_SAVE_PLAYLIST_NAME];
+          savePlaylistsToLocalStorage();
+        }
+      }
+      renderSavedPlaylistsDropdown(); // সেভড প্লেলিস্ট ড্রপডাউন আপডেট করা
+    }
+
+    function loadCurrentChannels() {
+      const storedChannels = localStorage.getItem(CURRENT_PLAYLIST_KEY);
+      if (storedChannels) {
+        currentChannels = JSON.parse(storedChannels);
+        // নিশ্চিত করুন যে প্রতিটি চ্যানেলের জন্য একটি বৈধ লogo আছে
+        currentChannels.forEach(channel => {
+            if (!channel.logo) { // লোগো না থাকলে ডিফল্ট বা গ্লোবাল লোগো ব্যবহার করুন
+                channel.logo = document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
             }
-            if (webPlayerModal && event.target == webPlayerModal) {
-                closeWebPlayerModal();
-            }
-            if (searchModal && event.target == searchModal) {
-                closeSearchModal();
+        });
+        renderCurrentChannels();
+      } else {
+        renderCurrentChannels(); // Show "No channels added yet" message on initial load
+      }
+    }
+
+    function savePlaylistsToLocalStorage() {
+        localStorage.setItem(SAVED_PLAYLISTS_KEY, JSON.stringify(savedPlaylists));
+    }
+
+    function loadPlaylistsFromLocalStorage() {
+        const storedPlaylists = localStorage.getItem(SAVED_PLAYLISTS_KEY);
+        if (storedPlaylists) {
+            savedPlaylists = JSON.parse(storedPlaylists);
+        }
+        renderSavedPlaylistsDropdown();
+    }
+
+    // --- Channel Management Functions (Current Playlist) ---
+    function renderCurrentChannels() {
+      const previewList = document.getElementById("previewList");
+      previewList.innerHTML = "";
+      // ফিল্টারিং এর জন্য একটি নতুন অ্যারে তৈরি করি
+      const searchTerm = document.getElementById("channelSearchInput").value.toLowerCase();
+      const filteredChannels = currentChannels.filter(ch => 
+          ch.name.toLowerCase().includes(searchTerm) || 
+          ch.url.toLowerCase().includes(searchTerm) ||
+          (ch.group && ch.group.toLowerCase().includes(searchTerm))
+      );
+
+
+      if (filteredChannels.length === 0) {
+        // এইখানে width: 100% যোগ করা হয়েছে যাতে টেক্সট মাঝখানে আসে
+        previewList.innerHTML = `<p style="text-align: center; color: #777; padding: 20px; width: 100%;">No channels added yet.</p>`;
+        if (currentChannels.length > 0 && searchTerm !== '') {
+            previewList.innerHTML = `<p style="text-align: center; color: #777; padding: 20px; width: 100%;">No matching channels found.</p>`;
+        }
+      } else {
+        filteredChannels.forEach((ch) => {
+          const originalIndex = currentChannels.indexOf(ch); 
+          if (originalIndex === -1) return; 
+
+          const previewDiv = document.createElement("div");
+          previewDiv.className = "channel-preview";
+          previewDiv.innerHTML = `
+            <img src="${ch.logo}" alt="Logo">
+            <span>${ch.name} ${ch.group ? `(${ch.group})` : ''}</span>
+            <div class="action-buttons">
+                <button class="play-btn" onclick="playChannel('${ch.url}')">
+                    <i class="fas fa-play"></i> 
+                </button>
+                <button class="edit-btn" onclick="editChannel(${originalIndex})">
+                    <i class="fas fa-edit"></i> 
+                </button>
+                <button class="delete-btn" onclick="confirmRemoveChannel(${originalIndex})">
+                    <i class="fas fa-times"></i> 
+                </button>
+            </div>
+          `;
+          previewList.appendChild(previewDiv);
+        });
+      }
+      generateM3U(); // Always regenerate output after rendering
+    }
+
+    function confirmRemoveChannel(index) {
+        if (confirm("Are you sure you want to delete this channel?")) {
+            removeChannel(index);
+        }
+    }
+    
+    function addChannel() {
+      const name = document.getElementById("channelName").value.trim();
+      const url = document.getElementById("channelURL").value.trim();
+      let customLogo = document.getElementById("channelLogo").value.trim(); 
+
+      const globalLogo = document.getElementById("logoAll").value.trim();
+      const globalGroup = document.getElementById("globalGroup").value.trim();
+
+      if (!name || !url) {
+        alert("Channel name and URL are required!");
+        return;
+      }
+
+      const finalLogo = customLogo || globalLogo || "https://via.placeholder.com/30";
+      const finalGroup = globalGroup; 
+
+      currentChannels.push({ name, url, logo: finalLogo, group: finalGroup });
+      saveCurrentChannels();
+      renderCurrentChannels(); 
+      
+      document.getElementById("channelName").value = "";
+      document.getElementById("channelURL").value = "";
+      document.getElementById("channelLogo").value = ""; 
+    }
+
+    function removeChannel(index) {
+      currentChannels.splice(index, 1);
+      saveCurrentChannels(); 
+      renderCurrentChannels();
+    }
+
+    function editChannel(index) {
+        const channel = currentChannels[index];
+        if (!channel) return;
+
+        const newName = prompt("Edit Channel Name:", channel.name);
+        if (newName === null) return; 
+
+        const newUrl = prompt("Edit Stream URL:", channel.url);
+        if (newUrl === null) return; 
+
+        const newLogo = prompt("Edit Logo URL (leave empty for global):", channel.logo);
+        if (newLogo === null) return; 
+
+        const newGroup = prompt("Edit Group Name:", channel.group || '');
+        if (newGroup === null) return; 
+
+
+        channel.name = newName.trim();
+        channel.url = newUrl.trim();
+        channel.logo = newLogo.trim() || document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
+        channel.group = newGroup.trim();
+
+        saveCurrentChannels();
+        renderCurrentChannels();
+        alert("Channel updated successfully!");
+    }
+
+    function filterChannels() {
+        renderCurrentChannels(); 
+    }
+
+    function clearCurrentChannels() {
+      if (confirm("Are you sure you want to clear all channels from the current playlist?")) {
+        currentChannels = [];
+        saveCurrentChannels(); 
+        renderCurrentChannels();
+      }
+    }
+
+    // --- M3U Generation & Download ---
+    function generateM3U() {
+      let output = "#EXTM3U\n";
+      currentChannels.forEach(ch => {
+        output += `#EXTINF:-1 tvg-logo="${ch.logo}"${ch.group ? ` group-title="${ch.group}"` : ''},${ch.name}\n${ch.url}\n`;
+      });
+      document.getElementById("output").value = output;
+    }
+
+    function downloadM3U() {
+      const content = document.getElementById("output").value;
+      if (currentChannels.length === 0) {
+          alert("Add some channels before downloading a playlist!");
+          return;
+      }
+      let fileName = document.getElementById("playlistFileNameInput").value.trim();
+      if (!fileName) {
+          fileName = "playlist"; // ডিফল্ট নাম
+      }
+      const blob = new Blob([content], { type: "audio/x-mpegurl" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${fileName}.m3u`; 
+      a.click();
+    }
+
+    function copyOutput() {
+        const outputTextarea = document.getElementById("output");
+        outputTextarea.select();
+        outputTextarea.setSelectionRange(0, 99999); 
+
+        try {
+            document.execCommand("copy");
+            alert("Output copied to clipboard!");
+        } catch (err) {
+            console.error("Failed to copy text: ", err);
+            alert("Failed to copy text. Please copy manually.");
+        }
+    }
+
+    // --- Saved Playlists Menu Functions ---
+    function toggleSavedPlaylistsDropdown() {
+        const dropdown = document.getElementById("savedPlaylistsDropdown");
+        dropdown.classList.toggle("show");
+        if (dropdown.classList.contains("show")) {
+            renderSavedPlaylistsDropdown(); 
+        }
+    }
+
+    function renderSavedPlaylistsDropdown() {
+        const dropdownContent = document.getElementById("savedPlaylistsDropdown");
+        dropdownContent.innerHTML = "";
+        const playlistNames = Object.keys(savedPlaylists).sort((a, b) => {
+            if (a === AUTO_SAVE_PLAYLIST_NAME) return -1;
+            if (b === AUTO_SAVE_PLAYLIST_NAME) return 1;
+            return a.localeCompare(b); 
+        });
+        document.getElementById('savedPlaylistsCount').textContent = `(${playlistNames.length})`;
+
+        if (playlistNames.length === 0) {
+            dropdownContent.innerHTML = `<p style="padding: 10px 15px; color: #777; margin: 0;">No saved playlists yet.</p>`;
+        } else {
+            playlistNames.forEach(name => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "dropdown-item-actions";
+                itemDiv.innerHTML = `
+                    <span class="playlist-name-text" onclick="loadSavedPlaylist('${name}')">${name}</span>
+                    ${name !== AUTO_SAVE_PLAYLIST_NAME ? `<button class="delete-playlist-btn" onclick="confirmDeleteSavedPlaylist('${name}', event)">✖</button>` : ''}
+                `;
+                dropdownContent.appendChild(itemDiv);
+            });
+        }
+    }
+
+    function saveCurrentPlaylist() {
+        const playlistNameInput = document.getElementById("playlistFileNameInput"); 
+        let playlistName = playlistNameInput.value.trim();
+
+        if (currentChannels.length === 0) {
+            alert("No channels to save. Add channels to the current playlist first.");
+            return;
+        }
+
+        if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) { 
+            playlistName = prompt("Please enter a name for this playlist:", `My Playlist ${Object.keys(savedPlaylists).length + 1}`);
+            if (!playlistName) return; 
+            playlistName = playlistName.trim();
+            if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
+                alert("Invalid playlist name. Cannot be empty or 'Auto Saved Session'.");
+                return;
             }
         }
 
-        // স্ক্রিন সাইজ পরিবর্তনের সাথে sidebar এর আচরণ ঠিক করার জন্য
-        window.addEventListener('resize', () => {
-            const sidebar = getElement("mySidebar");
-            const mainContent = getElement("main-content");
-            if (window.innerWidth <= 768) {
-                if (sidebar.style.width === "250px") { 
-                    mainContent.style.marginLeft = "0"; 
-                }
-            } else {
-                if (sidebar.style.width === "250px") { 
-                    mainContent.style.marginLeft = "250px"; 
-                }
+        if (savedPlaylists?.[playlistName]) {
+            if (!confirm(`A playlist named "${playlistName}" already exists. Do you want to overwrite it?`)) {
+                return;
             }
-        });
+        }
 
-    </script>
+        savedPlaylists = {...savedPlaylists, [playlistName]: [...currentChannels]}; 
+        savePlaylistsToLocalStorage();
+        renderSavedPlaylistsDropdown();
+        alert(`Playlist "${playlistName}" saved successfully!`);
+    }
 
-</body>
-</html>
+    function loadSavedPlaylist(name) {
+        if (name === AUTO_SAVE_PLAYLIST_NAME || confirm(`Loading "${name}" will replace your current playlist. Continue?`)) {
+            currentChannels = [...savedPlaylists?.[name] || []]; 
+            currentChannels.forEach(channel => {
+                if (!channel.logo) {
