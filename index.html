@@ -517,7 +517,7 @@
   <script>
     let currentChannels = [];
     let savedPlaylists = {};
-    let player; // Plyr player instance
+    let playerInstance; // Renamed 'player' to 'playerInstance' for clarity and to avoid conflict
 
     const CURRENT_PLAYLIST_KEY = 'currentM3UChannels';
     const SAVED_PLAYLISTS_KEY = 'savedM3UPlaylists';
@@ -525,8 +525,10 @@
 
     // --- Plyr Player Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize player without a source
-        player = new Plyr('#player', {
+        // Initialize playerInstance without a source initially.
+        // It will be re-initialized with sources in playChannel.
+        // This ensures the Plyr controls are set up from the start.
+        playerInstance = new Plyr('#player', {
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
         });
 
@@ -551,40 +553,47 @@
 
     // Function to play a channel in Plyr
     function playChannel(url) {
-        if (!player) {
-            console.error("Plyr player not initialized.");
+        console.log("Attempting to play URL:", url);
+
+        const videoElement = document.querySelector('#player video'); // Get the actual video element
+        if (!videoElement) {
+            console.error("Video element not found for Plyr.");
+            alert("Error: Video player component not found.");
             return;
         }
 
-        const videoElement = player.media;
-
-        // Destroy existing Plyr instance to clean up
-        if (player) { // Ensure player exists before destroying
-             player.destroy();
+        // Destroy existing Plyr instance if it exists
+        if (playerInstance) {
+             playerInstance.destroy();
+             console.log("Existing Plyr instance destroyed.");
         }
 
         // Clear existing sources from the video element
         while (videoElement.firstChild) {
             videoElement.removeChild(videoElement.firstChild);
         }
+        console.log("Video element cleared of old sources.");
 
+        // Check if the URL is an HLS stream (.m3u8)
         if (Hls.isSupported() && url.includes('.m3u8')) {
-            // For HLS streams
+            console.log("HLS stream detected. Using hls.js.");
             const hls = new Hls();
             hls.loadSource(url);
             hls.attachMedia(videoElement);
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                // Re-initialize Plyr with the new HLS source
-                player = new Plyr('#player', {
+                console.log("HLS Manifest parsed. Initializing Plyr and attempting to play.");
+                // Re-initialize Plyr *after* hls.js has attached the media
+                playerInstance = new Plyr('#player', {
                     controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
                 });
-                player.play().catch(error => {
-                    console.error("Error playing HLS video:", error);
+                playerInstance.play().catch(error => {
+                    console.error("Error playing HLS video after manifest parsed:", error);
                     alert("Could not play the HLS stream. It might be offline or an issue with hls.js. Error: " + error.message);
                 });
             });
             hls.on(Hls.Events.ERROR, function(event, data) {
                 if (data.fatal) {
+                    console.error('HLS.js fatal error:', data);
                     switch(data.type) {
                         case Hls.ErrorTypes.NETWORK_ERROR:
                             console.error('Fatal network error encountered, trying to recover', data);
@@ -597,12 +606,13 @@
                         default:
                             alert("A critical error occurred with the HLS stream. Playback stopped.");
                             hls.destroy();
-                            if (player) player.stop(); // Stop Plyr playback if active
+                            if (playerInstance) playerInstance.stop(); // Stop Plyr playback if active
                             break;
                     }
                 }
             });
         } else {
+            console.log("Non-HLS stream. Setting direct source.");
             // For regular video files (MP4, WebM, OGG)
             const source = document.createElement('source');
             source.src = url;
@@ -617,14 +627,16 @@
                 source.type = 'video/mp4'; // Default to mp4 if type is ambiguous
             }
             videoElement.appendChild(source);
+            console.log("Source appended:", source);
 
             // Re-initialize Plyr with the new source
-            player = new Plyr('#player', {
+            playerInstance = new Plyr('#player', {
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
             });
+            console.log("New Plyr instance created for direct video.");
 
-            player.play().catch(error => {
-                console.error("Error playing video:", error);
+            playerInstance.play().catch(error => {
+                console.error("Error playing direct video:", error);
                 alert("Could not play the video. The stream might be offline or in an unsupported format. Error: " + error.message);
             });
         }
@@ -692,275 +704,4 @@
       if (filteredChannels.length === 0) {
         // Updated message if there are channels but none match search
         if (currentChannels.length > 0 && searchTerm !== '') {
-            previewList.innerHTML = `<p style="text-align: center; color: #777; padding: 20px; width: 100%;">No matching channels found.</p>`;
-        } else {
-            previewList.innerHTML = `<p style="text-align: center; color: #777; padding: 20px; width: 100%;">No channels added yet.</p>`;
-        }
-      } else {
-        filteredChannels.forEach((ch) => {
-          const originalIndex = currentChannels.indexOf(ch);
-          if (originalIndex === -1) return;
-
-          const previewDiv = document.createElement("div");
-          previewDiv.className = "channel-preview";
-          previewDiv.innerHTML = `
-            <img src="${ch.logo}" alt="Logo">
-            <span>${ch.name} ${ch.group ? `(${ch.group})` : ''}</span>
-            <div class="action-buttons">
-                <button class="play-btn" onclick="playChannel('${ch.url}')">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="edit-btn" onclick="editChannel(${originalIndex})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="delete-btn" onclick="confirmRemoveChannel(${originalIndex})">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-          `;
-          previewList.appendChild(previewDiv);
-        });
-      }
-      generateM3U(); // Always regenerate output after rendering
-    }
-
-    function confirmRemoveChannel(index) {
-        if (confirm("Are you sure you want to delete this channel?")) {
-            removeChannel(index);
-        }
-    }
-
-    function addChannel() {
-      const name = document.getElementById("channelName").value.trim();
-      const url = document.getElementById("channelURL").value.trim();
-      let customLogo = document.getElementById("channelLogo").value.trim();
-
-      const globalLogo = document.getElementById("logoAll").value.trim();
-      const globalGroup = document.getElementById("globalGroup").value.trim();
-
-      if (!name || !url) {
-        alert("Channel name and URL are required!");
-        return;
-      }
-
-      const finalLogo = customLogo || globalLogo || "https://via.placeholder.com/30";
-      const finalGroup = globalGroup;
-
-      currentChannels.push({ name, url, logo: finalLogo, group: finalGroup });
-      saveCurrentChannels(); // Save to local storage
-      renderCurrentChannels(); // Re-render the list
-      console.log("Channel added:", { name, url, logo: finalLogo, group: finalGroup }); // Debugging line
-
-      // Clear input fields
-      document.getElementById("channelName").value = "";
-      document.getElementById("channelURL").value = "";
-      document.getElementById("channelLogo").value = "";
-    }
-
-    function removeChannel(index) {
-      currentChannels.splice(index, 1);
-      saveCurrentChannels();
-      renderCurrentChannels();
-    }
-
-    function editChannel(index) {
-        const channel = currentChannels[index];
-        if (!channel) return;
-
-        const newName = prompt("Edit Channel Name:", channel.name);
-        if (newName === null) return;
-
-        const newUrl = prompt("Edit Stream URL:", channel.url);
-        if (newUrl === null) return;
-
-        // Provide current logo as default for consistency
-        const newLogo = prompt("Edit Logo URL (leave empty for global):", channel.logo || '');
-        if (newLogo === null) return;
-
-        const newGroup = prompt("Edit Group Name:", channel.group || '');
-        if (newGroup === null) return;
-
-
-        channel.name = newName.trim();
-        channel.url = newUrl.trim();
-        // Recalculate logo based on new input and global setting
-        channel.logo = newLogo.trim() || document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
-        channel.group = newGroup.trim();
-
-        saveCurrentChannels();
-        renderCurrentChannels();
-        alert("Channel updated successfully!");
-    }
-
-    function filterChannels() {
-        renderCurrentChannels();
-    }
-
-    function clearCurrentChannels() {
-      if (confirm("Are you sure you want to clear all channels from the current playlist?")) {
-        currentChannels = [];
-        saveCurrentChannels();
-        renderCurrentChannels();
-      }
-    }
-
-    // --- M3U Generation & Download ---
-    function generateM3U() {
-      let output = "#EXTM3U\n";
-      currentChannels.forEach(ch => {
-        output += `#EXTINF:-1 tvg-logo="${ch.logo}"${ch.group ? ` group-title="${ch.group}"` : ''},${ch.name}\n${ch.url}\n`;
-      });
-      document.getElementById("output").value = output;
-    }
-
-    function downloadM3U() {
-      const content = document.getElementById("output").value;
-      if (currentChannels.length === 0) {
-          alert("Add some channels before downloading a playlist!");
-          return;
-      }
-      let fileName = document.getElementById("playlistFileNameInput").value.trim();
-      if (!fileName) {
-          fileName = "playlist";
-      }
-      const blob = new Blob([content], { type: "audio/x-mpegurl" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${fileName}.m3u`;
-      a.click();
-    }
-
-    function copyOutput() {
-        const outputTextarea = document.getElementById("output");
-        outputTextarea.select();
-        outputTextarea.setSelectionRange(0, 99999);
-
-        try {
-            document.execCommand("copy");
-            alert("Output copied to clipboard!");
-        } catch (err) {
-            console.error("Failed to copy text: ", err);
-            alert("Failed to copy text. Please copy manually.");
-        }
-    }
-
-    // --- Saved Playlists Menu Functions ---
-    function toggleSavedPlaylistsDropdown() {
-        const dropdown = document.getElementById("savedPlaylistsDropdown");
-        dropdown.classList.toggle("show");
-        if (dropdown.classList.contains("show")) {
-            renderSavedPlaylistsDropdown();
-        }
-    }
-
-    function renderSavedPlaylistsDropdown() {
-        const dropdownContent = document.getElementById("savedPlaylistsDropdown");
-        dropdownContent.innerHTML = "";
-        const playlistNames = Object.keys(savedPlaylists).sort((a, b) => {
-            if (a === AUTO_SAVE_PLAYLIST_NAME) return -1;
-            if (b === AUTO_SAVE_PLAYLIST_NAME) return 1;
-            return a.localeCompare(b);
-        });
-        document.getElementById('savedPlaylistsCount').textContent = `(${playlistNames.length})`;
-
-        if (playlistNames.length === 0) {
-            dropdownContent.innerHTML = `<p style="padding: 10px 15px; color: #777; margin: 0;">No saved playlists yet.</p>`;
-        } else {
-            playlistNames.forEach(name => {
-                const itemDiv = document.createElement("div");
-                itemDiv.className = "dropdown-item-actions";
-                itemDiv.innerHTML = `
-                    <span class="playlist-name-text" onclick="loadSavedPlaylist('${name}')">${name}</span>
-                    ${name !== AUTO_SAVE_PLAYLIST_NAME ? `<button class="delete-playlist-btn" onclick="confirmDeleteSavedPlaylist('${name}', event)">✖</button>` : ''}
-                `;
-                dropdownContent.appendChild(itemDiv);
-            });
-        }
-    }
-
-    function saveCurrentPlaylist() {
-        const playlistNameInput = document.getElementById("playlistFileNameInput");
-        let playlistName = playlistNameInput.value.trim();
-
-        if (currentChannels.length === 0) {
-            alert("No channels to save. Add channels to the current playlist first.");
-            return;
-        }
-
-        if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
-            playlistName = prompt("Please enter a name for this playlist:", `My Playlist ${Object.keys(savedPlaylists).length + 1}`);
-            if (!playlistName) return;
-            playlistName = playlistName.trim();
-            if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
-                alert("Invalid playlist name. Cannot be empty or 'Auto Saved Session'.");
-                return;
-            }
-        }
-
-        if (savedPlaylists?.[playlistName]) {
-            if (!confirm(`A playlist named "${playlistName}" already exists. Do you want to overwrite it?`)) {
-                return;
-            }
-        }
-
-        savedPlaylists = {...savedPlaylists, [playlistName]: [...currentChannels]};
-        savePlaylistsToLocalStorage();
-        renderSavedPlaylistsDropdown();
-        alert(`Playlist "${playlistName}" saved successfully!`);
-    }
-
-    function loadSavedPlaylist(name) {
-        // Confirm before loading if not the auto-saved session
-        if (name === AUTO_SAVE_PLAYLIST_NAME || confirm(`Loading "${name}" will replace your current playlist. Continue?`)) {
-            currentChannels = [...savedPlaylists?.[name] || []];
-            currentChannels.forEach(channel => {
-                // Ensure valid logo URL when loading from saved playlist
-                if (!channel.logo || channel.logo === "") {
-                    channel.logo = document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
-                }
-            });
-            saveCurrentChannels(); // Save loaded playlist as current session
-            renderCurrentChannels();
-            toggleSavedPlaylistsDropdown();
-            // Update the playlist name input field
-            document.getElementById("playlistFileNameInput").value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name;
-            if (name !== AUTO_SAVE_PLAYLIST_NAME) {
-                alert(`Playlist "${name}" loaded.`);
-            }
-        }
-    }
-
-    function confirmDeleteSavedPlaylist(name, event) {
-        event.stopPropagation(); // Prevent dropdown from closing immediately
-        if (name === AUTO_SAVE_PLAYLIST_NAME) {
-          alert("The 'Auto Saved Session' playlist cannot be manually deleted.");
-          return;
-        }
-        if (confirm(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone."`)) {
-            deleteSavedPlaylist(name);
-        }
-    }
-
-    function deleteSavedPlaylist(name) {
-        const {[name]: deleted, ...rest} = savedPlaylists;
-        savedPlaylists = rest;
-        savePlaylistsToLocalStorage();
-        renderSavedPlaylistsDropdown();
-        alert(`Playlist "${name}" deleted.`);
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-      if (!event.target.matches('.dropdown > button') && !event.target.closest('.dropdown-content')) {
-        const dropdowns = document.getElementsByClassName("dropdown-content");
-        for (let i = 0; i < dropdowns.length; i++) {
-          const openDropdown = dropdowns [i];
-          if (openDropdown.classList.contains('show')) {
-            openDropdown.classList.remove('show');
-          }
-        }
-      }
-    }
-  </script>
-</body>
-</html>
+            previewList.innerHTML = `<p
