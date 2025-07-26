@@ -410,7 +410,7 @@
         <input id="channelName" class="form-control" placeholder="📺 Channel Name" />
       </div>
       <div class="col-md-4">
-        <input id="channelURL" class="form-control" placeholder="🔗 Stream URL" />
+        <input id="channelURL" class="form-control" placeholder="🔗 Stream URL (or Pixeldrain Folder Link)" />
       </div>
       <div class="col-md-4">
         <input id="channelLogo" class="form-control" placeholder="🖼️ Optional Logo URL" />
@@ -472,6 +472,7 @@
   <script>
     let currentChannels = [];
     let savedPlaylists = {};
+    let isProcessingFolder = false; // To prevent multiple simultaneous folder processing
 
     const CURRENT_PLAYLIST_KEY = 'currentM3UChannels';
     const SAVED_PLAYLISTS_KEY = 'savedM3UPlaylists';
@@ -481,15 +482,88 @@
     const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; // <--- এখানে আপনার TMDB API Key যোগ করুন!
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200'; // ছোট লোগোর জন্য w200, বড় চাইলে w500 বা original
 
-    // Helper function to convert Pixeldrain URL
-    function convertPixeldrainUrl(originalUrl) {
-        const pixeldrainRegex = /^https:\/\/pixeldrain\.com\/u\/([a-zA-Z0-9]+)$/;
-        const match = originalUrl.match(pixeldrainRegex);
+    // Helper function to convert Pixeldrain file URL (u/ to api/file/)
+    function convertPixeldrainFileUrl(originalUrl) {
+        const pixeldrainFileRegex = /^https:\/\/pixeldrain\.com\/u\/([a-zA-Z0-9]+)$/;
+        const match = originalUrl.match(pixeldrainFileRegex);
         if (match && match[1]) {
             return `https://pixeldrain.com/api/file/${match[1]}`;
         }
         return originalUrl; // Return original if no match
     }
+
+    // New function to process Pixeldrain folder links
+    async function processPixeldrainFolder(folderUrl) {
+        if (isProcessingFolder) {
+            alert("Already processing a folder. Please wait.");
+            return [];
+        }
+
+        const folderIdRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
+        const match = folderUrl.match(folderIdRegex);
+        if (!match || !match[1]) {
+            console.error("Invalid Pixeldrain folder URL format.");
+            alert("Invalid Pixeldrain folder URL. Please use a link like: https://pixeldrain.com/l/FOLDER_ID");
+            return [];
+        }
+
+        const folderId = match[1];
+        const apiUrl = `https://pixeldrain.com/api/list/${folderId}`;
+        const addedChannelsFromFolder = [];
+
+        try {
+            isProcessingFolder = true;
+            document.getElementById("channelURL").value = "Loading folder content...";
+            document.getElementById("channelURL").disabled = true;
+            document.getElementById("channelName").disabled = true;
+            document.getElementById("channelLogo").disabled = true;
+            document.querySelector(".btn-success").disabled = true; // Add Channel button
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Pixeldrain folder not found or invalid ID.");
+                }
+                throw new Error(`Failed to fetch Pixeldrain folder: ${response.statusText}`);
+            }
+            const data = await response.json();
+
+            if (data && data.files && data.files.length > 0) {
+                let channelCount = currentChannels.length + 1; // Start numbering from existing channels + 1
+
+                for (const file of data.files) {
+                    if (file.id) {
+                        const fileName = file.name || `Channel ${channelCount}`; // Use filename, or fallback to sequential number
+                        const fileApiUrl = `https://pixeldrain.com/api/file/${file.id}`;
+                        const logo = document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
+                        const group = document.getElementById("globalGroup").value.trim();
+
+                        addedChannelsFromFolder.push({
+                            name: fileName,
+                            url: fileApiUrl,
+                            logo: logo,
+                            group: group
+                        });
+                        channelCount++;
+                    }
+                }
+            } else {
+                alert("No files found in the Pixeldrain folder.");
+            }
+        } catch (error) {
+            console.error("Error processing Pixeldrain folder:", error);
+            alert(`Error processing Pixeldrain folder: ${error.message}. Please check the URL and try again.`);
+        } finally {
+            isProcessingFolder = false;
+            document.getElementById("channelURL").value = "";
+            document.getElementById("channelURL").disabled = false;
+            document.getElementById("channelName").disabled = false;
+            document.getElementById("channelLogo").disabled = false;
+            document.querySelector(".btn-success").disabled = false; // Add Channel button
+        }
+        return addedChannelsFromFolder;
+    }
+
 
     // --- Local Storage Functions ---
     function saveCurrentChannels() {
@@ -499,7 +573,7 @@
         savedPlaylists[AUTO_SAVE_PLAYLIST_NAME] = [...currentChannels];
         savePlaylistsToLocalStorage();
       } else { // যদি currentChannels খালি হয়ে যায়, auto-save playlist থেকে এটি মুছে ফেলা হবে
-        if (savedPlayists[AUTO_SAVE_PLAYLIST_NAME]) {
+        if (savedPlaylists[AUTO_SAVE_PLAYLIST_NAME]) { // fixed typo 'savedPlayists' to 'savedPlaylists'
           delete savedPlaylists[AUTO_SAVE_PLAYLIST_NAME];
           savePlaylistsToLocalStorage();
         }
@@ -609,19 +683,53 @@
     }
 
     async function addChannel() {
-      const name = document.getElementById("channelName").value.trim();
-      let url = document.getElementById("channelURL").value.trim(); // Make 'url' mutable
-      let customLogo = document.getElementById("channelLogo").value.trim();
+      const nameInput = document.getElementById("channelName");
+      const urlInput = document.getElementById("channelURL");
+      const logoInput = document.getElementById("channelLogo");
+
+      let name = nameInput.value.trim();
+      let url = urlInput.value.trim();
+      let customLogo = logoInput.value.trim();
       const globalLogo = document.getElementById("logoAll").value.trim();
       const globalGroup = document.getElementById("globalGroup").value.trim();
 
-      if (!name || !url) {
-        alert("Channel name and URL are required!");
+      if (!url) {
+        alert("Stream URL (or Pixeldrain Folder Link) is required!");
         return;
       }
 
-      // Convert Pixeldrain URL before adding
-      url = convertPixeldrainUrl(url);
+      const pixeldrainFolderRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
+
+      if (pixeldrainFolderRegex.test(url)) {
+          // It's a Pixeldrain folder link
+          if (name) {
+              alert("When adding a Pixeldrain folder, channel name input will be ignored. Names will be taken from file names or numbered.");
+              nameInput.value = ""; // Clear name input
+          }
+          if (customLogo) {
+              alert("When adding a Pixeldrain folder, custom logo input will be ignored. Global logo will be used.");
+              logoInput.value = ""; // Clear logo input
+          }
+
+          const channelsFromFolder = await processPixeldrainFolder(url);
+          if (channelsFromFolder.length > 0) {
+              currentChannels.push(...channelsFromFolder); // Add all channels from folder
+              saveCurrentChannels();
+              renderCurrentChannels();
+              alert(`Added ${channelsFromFolder.length} channels from Pixeldrain folder!`);
+          }
+          urlInput.value = ""; // Clear URL input after processing folder
+          return; // Exit as folder processing handles adding channels
+      }
+
+      // If not a folder link, proceed with single channel addition
+      if (!name) {
+        alert("Channel name is required for single channel entries!");
+        return;
+      }
+
+      // Convert Pixeldrain file URL if applicable
+      url = convertPixeldrainFileUrl(url);
 
       let finalLogo = customLogo;
       // যদি কাস্টম লোগো না থাকে এবং চ্যানেলের নাম 'movie' অন্তর্ভুক্ত করে, তবে TMDB থেকে লোগো সার্চ করুন
@@ -638,7 +746,7 @@
           
           // Update the specific channel with the fetched logo
           currentChannels[channelIndex].logo = fetchedLogo;
-          document.getElementById("channelLogo").value = fetchedLogo; // Update input for next use
+          logoInput.value = fetchedLogo; // Update input for next use
           
           // Re-render after a short delay to ensure UI updates
           setTimeout(() => {
@@ -654,10 +762,10 @@
       }
       
       // Clear inputs (except customLogo if it was just fetched by TMDB)
-      document.getElementById("channelName").value = "";
-      document.getElementById("channelURL").value = "";
+      nameInput.value = "";
+      urlInput.value = "";
       if (!name.toLowerCase().includes("movie") || customLogo) { // Only clear if not TMDB fetched
-        document.getElementById("channelLogo").value = ""; 
+        logoInput.value = ""; 
       }
     }
 
@@ -678,8 +786,8 @@
         let newUrl = prompt("Edit Stream URL:", channel.url);
         if (newUrl === null) return; // User cancelled
 
-        // Convert Pixeldrain URL on edit
-        newUrl = convertPixeldrainUrl(newUrl);
+        // Convert Pixeldrain file URL on edit (folder links are not editable this way)
+        newUrl = convertPixeldrainFileUrl(newUrl);
 
         const newLogo = prompt("Edit Logo URL (leave empty for global/TMDB if applicable):", channel.logo);
         if (newLogo === null) return; // User cancelled
