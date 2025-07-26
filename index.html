@@ -515,13 +515,13 @@
 
     <div class="row g-2 mb-3">
       <div class="col-md-4">
-        <input id="channelName" class="form-control" placeholder="📺 Channel Name" />
+        <input type="text" id="channelName" class="form-control" placeholder="📺 Channel Name" />
       </div>
       <div class="col-md-4">
-        <input id="channelURL" class="form-control" placeholder="🔗 Stream URL (or Pixeldrain Folder Link)" />
+        <input type="text" id="channelURL" class="form-control" placeholder="🔗 Stream URL (or Pixeldrain Folder/File Link)" />
       </div>
       <div class="col-md-4">
-        <input id="channelLogo" class="form-control" placeholder="🖼️ Optional Logo URL" />
+        <input type="text" id="channelLogo" class="form-control" placeholder="🖼️ Optional Logo URL" />
       </div>
     </div>
     <button class="btn btn-success w-100 mb-4" onclick="addChannel()">+ Add Channel</button>
@@ -585,6 +585,7 @@
       <ul>
         <li><i class="fas fa-stream"></i> Add **individual channels** with names, URLs, and custom logos.</li>
         <li><i class="fas fa-folder"></i> **Automate from Pixeldrain Folder Links:** Simply paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`), and all files within that folder will be added as individual channels with their API links!</li>
+        <li><i class="fas fa-file"></i> **Automate from Pixeldrain File Links:** Paste a single Pixeldrain file link (e.g., `https://pixeldrain.com/u/FILE_ID`), and the channel name will be automatically fetched from the file's metadata!</li>
         <li><i class="fas fa-film"></i> **Smart Logo Fetching:** If you add a channel containing "movie" in its name and no custom logo, we'll try to fetch a relevant movie poster from TMDB!</li>
         <li><i class="fas fa-sliders-h"></i> Set **global default logo and group names** for all channels.</li>
         <li><i class="fas fa-search"></i> **Search and manage** your added channels with ease.</li>
@@ -690,6 +691,34 @@
             document.querySelector(".btn-success").disabled = false; // Add Channel button
         }
         return addedChannelsFromFolder;
+    }
+
+    // New function to fetch file name from a single Pixeldrain file link
+    async function fetchPixeldrainFileName(fileUrl) {
+        const fileIdRegex = /^https:\/\/pixeldrain\.com\/u\/([a-zA-Z0-9]+)$/;
+        const match = fileUrl.match(fileIdRegex);
+        if (!match || !match[1]) {
+            return null; // Not a valid Pixeldrain file URL
+        }
+
+        const fileId = match[1];
+        const apiUrl = `https://pixeldrain.com/api/file/${fileId}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Pixeldrain file not found or invalid ID.");
+                }
+                throw new Error(`Failed to fetch Pixeldrain file info: ${response.statusText}`);
+            }
+            const data = await response.json();
+            return data.name || null; // Return the file name
+        } catch (error) {
+            console.error("Error fetching Pixeldrain file name:", error);
+            alert(`Error fetching Pixeldrain file name: ${error.message}.`);
+            return null;
+        }
     }
 
 
@@ -822,11 +851,13 @@
       const globalGroup = document.getElementById("globalGroup").value.trim();
 
       if (!url) {
-        alert("Stream URL (or Pixeldrain Folder Link) is required!");
+        alert("Stream URL (or Pixeldrain Folder/File Link) is required!");
         return;
       }
 
       const pixeldrainFolderRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
+      const pixeldrainFileRegex = /^https:\/\/pixeldrain\.com\/u\/([a-zA-Z0-9]+)$/;
+
 
       if (pixeldrainFolderRegex.test(url)) {
           // It's a Pixeldrain folder link
@@ -848,15 +879,34 @@
           }
           urlInput.value = ""; // Clear URL input after processing folder
           return; // Exit as folder processing handles adding channels
+      } else if (pixeldrainFileRegex.test(url)) {
+          // It's a single Pixeldrain file link
+          try {
+              nameInput.disabled = true; // Disable name input during fetch
+              nameInput.placeholder = "Fetching name...";
+              const fetchedName = await fetchPixeldrainFileName(url);
+              if (fetchedName) {
+                  name = fetchedName;
+                  nameInput.value = fetchedName; // Set the fetched name
+              } else {
+                  alert("Could not fetch name for Pixeldrain file. Please enter manually.");
+                  nameInput.placeholder = "📺 Channel Name";
+                  nameInput.disabled = false; // Re-enable if fetch fails
+                  return; // Stop if name couldn't be fetched and user needs to input
+              }
+          } finally {
+              nameInput.disabled = false; // Re-enable name input
+              nameInput.placeholder = "📺 Channel Name";
+          }
+      } else {
+          // If not a Pixeldrain link (folder or file), channel name is required
+          if (!name) {
+              alert("Channel name is required for regular stream entries!");
+              return;
+          }
       }
 
-      // If not a folder link, proceed with single channel addition
-      if (!name) {
-        alert("Channel name is required for single channel entries!");
-        return;
-      }
-
-      // Convert Pixeldrain file URL if applicable
+      // Convert Pixeldrain file URL if applicable (will convert u/ to api/file/ for single files too)
       url = convertPixeldrainFileUrl(url);
 
       let finalLogo = customLogo;
