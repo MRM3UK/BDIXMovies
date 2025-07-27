@@ -20,6 +20,7 @@
       padding: 35px;
       margin-top: 20px; /* মার্জিন কমানো */
       margin-bottom: 20px; /* মার্জিন কমানো */
+      position: relative; /* For positioning the new button */
     }
     h3 {
       color: #e0e0e0;
@@ -497,10 +498,39 @@
             right: 15px;
         }
     }
+
+    /* New Help Button */
+    .help-button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #2196f3; /* Blue color */
+      color: #fff;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2em;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      z-index: 10; /* Ensure it's above other elements */
+    }
+
+    .help-button:hover {
+      background-color: #1976d2;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body>
   <div class="container py-4">
+    <button class="help-button" onclick="showHelpModal()">
+      <i class="fas fa-question"></i>
+    </button>
     <h3 class="text-center mb-4">📺 EXTM3U Playlist Creator</h3>
 
     <div class="mb-3">
@@ -584,8 +614,8 @@
       <p style="text-align: center; color: #f0f0f0;">Easily create and manage your M3U playlists with these features:</p>
       <ul>
         <li><i class="fas fa-stream"></i> Add **individual channels** with names, URLs, and custom logos.</li>
-        <li><i class="fas fa-folder"></i> **Automate from Pixeldrain Folder Links:** Simply paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`), and all files within that folder will be added as individual channels with their API links!</li>
-        <li><i class="fas fa-film"></i> **Smart Logo Fetching:** If you add a channel containing "movie" in its name and no custom logo, we'll try to fetch a relevant movie poster from TMDB!</li>
+        <li><i class="fas fa-folder"></i> **Automate from Pixeldrain Folder Links:** Simply paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`), and only **video files** within that folder will be added as individual channels with their API links!</li>
+        <li><i class="fas fa-film"></i> **Smart Logo Fetching (Currently OFF):** If you add a channel containing "movie" in its name and no custom logo, it *would* try to fetch a relevant movie poster from TMDB. This feature is currently disabled.</li>
         <li><i class="fas fa-sliders-h"></i> Set **global default logo and group names** for all channels.</li>
         <li><i class="fas fa-search"></i> **Search and manage** your added channels with ease.</li>
         <li><i class="fas fa-save"></i> **Save and load multiple playlists** locally in your browser.</li>
@@ -595,6 +625,35 @@
       <p class="modal-footer-text">Get started by adding your first channel or Pixeldrain folder link!</p>
     </div>
   </div>
+
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close-btn" onclick="closeHelpModal()">&times;</span>
+      <h4>How to Use This Creator</h4>
+      
+      <h5>English Instructions:</h5>
+      <ul>
+        <li><i class="fas fa-plus-circle"></i> **Add Individual Channels:** Enter a **Channel Name**, **Stream URL**, and optionally a **Logo URL**. Click "Add Channel".</li>
+        <li><i class="fas fa-folder-open"></i> **Add from Pixeldrain Folder:** Paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`) into the "Stream URL" field. The tool will automatically add all **video files** from that folder as separate channels.</li>
+        <li><i class="fas fa-globe"></i> **Global Settings:** Use "Global Logo URL" and "Global Group Name" to set defaults for new channels.</li>
+        <li><i class="fas fa-search"></i> **Manage Channels:** Use the search bar to find specific channels. You can edit or delete channels from the "Added Channels" list.</li>
+        <li><i class="fas fa-floppy-disk"></i> **Save/Load Playlists:** Enter a "Playlist Name" and click "Save Playlist" to save your current list. Click "Saved Playlists" to load or delete saved lists.</li>
+        <li><i class="fas fa-file-export"></i> **Generate & Download:** Click "Generate" to see the M3U output. Click "Download" to save it as an M3U file.</li>
+      </ul>
+
+      <h5>বাংলা নির্দেশাবলী:</h5>
+      <ul>
+        <li><i class="fas fa-plus-circle"></i> **একক চ্যানেল যোগ করুন:** একটি **চ্যানেলের নাম**, **স্ট্রিম ইউআরএল** এবং ঐচ্ছিকভাবে একটি **লোগো ইউআরএল** লিখুন। "Add Channel" এ ক্লিক করুন।</li>
+        <li><i class="fas fa-folder-open"></i> **পিক্সেলড্রেইন ফোল্ডার থেকে যোগ করুন:** "Stream URL" ফিল্ডে একটি পিক্সেলড্রেইন ফোল্ডার লিঙ্ক পেস্ট করুন (যেমন: `https://pixeldrain.com/l/FOLDER_ID`)। টুলটি স্বয়ংক্রিয়ভাবে সেই ফোল্ডারের সমস্ত **ভিডিও ফাইল** আলাদা চ্যানেল হিসাবে যোগ করবে।</li>
+        <li><i class="fas fa-globe"></i> **গ্লোবাল সেটিংস:** নতুন চ্যানেলগুলির জন্য ডিফল্ট সেট করতে "Global Logo URL" এবং "Global Group Name" ব্যবহার করুন।</li>
+        <li><i class="fas fa-search"></i> **চ্যানেল পরিচালনা করুন:** নির্দিষ্ট চ্যানেল খুঁজতে সার্চ বার ব্যবহার করুন। আপনি "Added Channels" তালিকা থেকে চ্যানেল এডিট বা ডিলিট করতে পারবেন।</li>
+        <li><i class="fas fa-floppy-disk"></i> **প্লেলিস্ট সেভ/লোড করুন:** "Playlist Name" এ একটি নাম দিন এবং আপনার বর্তমান তালিকা সেভ করতে "Save Playlist" এ ক্লিক করুন। সেভ করা তালিকা লোড বা ডিলিট করতে "Saved Playlists" এ ক্লিক করুন।</li>
+        <li><i class="fas fa-file-export"></i> **জেনারেট ও ডাউনলোড করুন:** M3U আউটপুট দেখতে "Generate" এ ক্লিক করুন। এটিকে একটি M3U ফাইল হিসাবে সেভ করতে "Download" এ ক্লিক করুন।</li>
+      </ul>
+      <p class="modal-footer-text">শুভ হোক আপনার প্লেলিস্ট তৈরি!</p>
+    </div>
+  </div>
+
 
   <script>
     let currentChannels = [];
@@ -607,8 +666,17 @@
     const WELCOME_MODAL_SHOWN_KEY = 'welcomeModalShown'; // For popup
 
     // TMDB API Key (এখানে আপনার TMDB API কী বসান)
-    const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; // <--- এখানে আপনার TMDB API Key যোগ করুন!
+    // TMDB বৈশিষ্ট্যটি বর্তমানে বন্ধ আছে। এটি চালু করতে, 'YOUR_TMDB_API_KEY' এর জায়গায় আপনার API Key বসান এবং `isTmdbEnabled` কে `true` করুন।
+    const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; 
+    const isTmdbEnabled = false; // Set to true to enable TMDB movie logo fetching
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200'; // ছোট লোগোর জন্য w200, বড় চাইলে w500 বা original
+
+    // List of common video file extensions
+    const videoFileExtensions = [
+        '.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mpeg', '.mpg', '.3gp',
+        '.ts', '.m2ts', '.ogg', '.ogv', '.f4v', '.swf', '.vob', '.qt', '.rm', '.rmvb',
+        '.divx', '.xvid', '.m4v', '.asf', '.dat', '.evo', '.hevc', '.h264', '.h265'
+    ];
 
     // Helper function to convert Pixeldrain file URL (u/ to api/file/)
     function convertPixeldrainFileUrl(originalUrl) {
@@ -660,7 +728,9 @@
                 let channelCount = currentChannels.length + 1; // Start numbering from existing channels + 1
 
                 for (const file of data.files) {
-                    if (file.id) {
+                    // Check if the file has a video extension
+                    const fileExtension = file.name ? '.' + file.name.split('.').pop().toLowerCase() : '';
+                    if (file.id && videoFileExtensions.includes(fileExtension)) {
                         const fileName = file.name || `Channel ${channelCount}`; // Use filename, or fallback to sequential number
                         const fileApiUrl = `https://pixeldrain.com/api/file/${file.id}`;
                         // Pixeldrain থাম্বনেইল URL তৈরি করুন
@@ -677,6 +747,9 @@
                         });
                         channelCount++;
                     }
+                }
+                if (addedChannelsFromFolder.length === 0) {
+                    alert("No video files found in the Pixeldrain folder.");
                 }
             } else {
                 alert("No files found in the Pixeldrain folder.");
@@ -790,8 +863,8 @@
     }
 
     async function searchMovieLogo(movieName) {
-        if (!movieName || TMDB_API_KEY === 'YOUR_TMDB_API_KEY' || !TMDB_API_KEY) {
-            console.warn("TMDB API Key is not set or movie name is empty. Using placeholder logo.");
+        if (!isTmdbEnabled || !movieName || TMDB_API_KEY === 'YOUR_TMDB_API_KEY' || !TMDB_API_KEY) {
+            console.warn("TMDB API Key is not set, TMDB is disabled, or movie name is empty. Using placeholder logo.");
             return "https://via.placeholder.com/30"; 
         }
 
@@ -847,7 +920,7 @@
               currentChannels.push(...channelsFromFolder); // Add all channels from folder
               saveCurrentChannels();
               renderCurrentChannels();
-              alert(`Added ${channelsFromFolder.length} channels from Pixeldrain folder!`);
+              alert(`Added ${channelsFromFolder.length} video channels from Pixeldrain folder!`);
           }
           urlInput.value = ""; // Clear URL input after processing folder
           return; // Exit as folder processing handles adding channels
@@ -864,7 +937,7 @@
 
       let finalLogo = customLogo;
       // যদি কাস্টম লোগো না থাকে এবং চ্যানেলের নাম 'movie' অন্তর্ভুক্ত করে, তবে TMDB থেকে লোগো সার্চ করুন
-      if (!customLogo && name.toLowerCase().includes("movie")) {
+      if (isTmdbEnabled && !customLogo && name.toLowerCase().includes("movie")) {
           // Add channel with a temporary loading logo first
           const tempLogo = "https://via.placeholder.com/30?text=Loading...";
           const channelIndex = currentChannels.length; // Get the index before pushing
@@ -895,7 +968,7 @@
       // Clear inputs (except customLogo if it was just fetched by TMDB)
       nameInput.value = "";
       urlInput.value = "";
-      if (!name.toLowerCase().includes("movie") || customLogo) { // Only clear if not TMDB fetched
+      if (!name.toLowerCase().includes("movie") || customLogo || !isTmdbEnabled) { // Only clear if not TMDB fetched or TMDB is off
         logoInput.value = ""; 
       }
     }
@@ -1084,7 +1157,7 @@
           alert("The 'Auto Saved Session' playlist cannot be manually deleted.");
           return;
         }
-        if (confirm(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone.`)) {
+        if (confirm(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone."`)) {
             deleteSavedPlaylist(name);
         }
     }
@@ -1121,6 +1194,18 @@
         modal.style.display = 'none';
         localStorage.setItem(WELCOME_MODAL_SHOWN_KEY, 'true'); // Mark that the modal has been shown
     }
+
+    // New Help Modal Functions
+    function showHelpModal() {
+        const modal = document.getElementById('helpModal');
+        modal.style.display = 'block';
+    }
+
+    function closeHelpModal() {
+        const modal = document.getElementById('helpModal');
+        modal.style.display = 'none';
+    }
+
 
     // --- Initialize on Load ---
     window.onload = () => {
