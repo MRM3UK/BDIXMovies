@@ -499,30 +499,38 @@
         }
     }
 
-    /* New Help Button */
+    /* Enhanced Help Button Style */
     .help-button {
       position: absolute;
       top: 15px;
       right: 15px;
-      width: 40px;
-      height: 40px;
+      width: 45px; /* Slightly larger */
+      height: 45px; /* Slightly larger */
       border-radius: 50%;
-      background-color: #2196f3; /* Blue color */
+      background: linear-gradient(135deg, #64b5f6, #2196f3); /* Gradient background */
       color: #fff;
-      border: none;
+      border: 2px solid rgba(255, 255, 255, 0.4); /* Subtle border */
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 1.2em;
+      font-size: 1.3em; /* Larger icon */
+      font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-      transition: background-color 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(100, 181, 246, 0.4); /* Enhanced shadow */
+      transition: all 0.3s ease-in-out;
       z-index: 10; /* Ensure it's above other elements */
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Text shadow for icon */
     }
 
     .help-button:hover {
-      background-color: #1976d2;
-      transform: scale(1.05);
+      background: linear-gradient(135deg, #42a5f5, #1976d2); /* Darker gradient on hover */
+      transform: scale(1.1) rotate(5deg); /* Slight rotation on hover */
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6), 0 0 20px rgba(66, 165, 245, 0.6); /* More prominent shadow on hover */
+    }
+
+    .help-button:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
     }
   </style>
 </head>
@@ -615,7 +623,7 @@
       <ul>
         <li><i class="fas fa-stream"></i> Add **individual channels** with names, URLs, and custom logos.</li>
         <li><i class="fas fa-folder"></i> **Automate from Pixeldrain Folder Links:** Simply paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`), and only **video files** within that folder will be added as individual channels with their API links!</li>
-        <li><i class="fas fa-film"></i> **Smart Logo Fetching (Currently OFF):** If you add a channel containing "movie" in its name and no custom logo, it *would* try to fetch a relevant movie poster from TMDB. This feature is currently disabled.</li>
+        <li><i class="fas fa-film"></i> **Smart Logo Fetching (Currently ON):** If you add a channel containing "movie" in its name and no custom logo, it will try to fetch a relevant movie poster from TMDB.</li>
         <li><i class="fas fa-sliders-h"></i> Set **global default logo and group names** for all channels.</li>
         <li><i class="fas fa-search"></i> **Search and manage** your added channels with ease.</li>
         <li><i class="fas fa-save"></i> **Save and load multiple playlists** locally in your browser.</li>
@@ -630,7 +638,7 @@
     <div class="modal-content">
       <span class="modal-close-btn" onclick="closeHelpModal()">&times;</span>
       <h4>How to Use This Creator</h4>
-      
+
       <h5>English Instructions:</h5>
       <ul>
         <li><i class="fas fa-plus-circle"></i> **Add Individual Channels:** Enter a **Channel Name**, **Stream URL**, and optionally a **Logo URL**. Click "Add Channel".</li>
@@ -665,10 +673,9 @@
     const AUTO_SAVE_PLAYLIST_NAME = "Auto Saved Session"; // ডিফল্ট অটো-সেভ প্লেলিস্টের নাম
     const WELCOME_MODAL_SHOWN_KEY = 'welcomeModalShown'; // For popup
 
-    // TMDB API Key (এখানে আপনার TMDB API কী বসান)
-    // TMDB বৈশিষ্ট্যটি বর্তমানে বন্ধ আছে। এটি চালু করতে, 'YOUR_TMDB_API_KEY' এর জায়গায় আপনার API Key বসান এবং `isTmdbEnabled` কে `true` করুন।
-    const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; 
-    const isTmdbEnabled = false; // Set to true to enable TMDB movie logo fetching
+    // TMDB API Key (আপনার TMDB API কী এখানে বসানো হয়েছে)
+    const TMDB_API_KEY = '88649105198c3eecb4d2d6091d7ce972';
+    const isTmdbEnabled = true; // TMDB বৈশিষ্ট্যটি চালু করা হয়েছে
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200'; // ছোট লোগোর জন্য w200, বড় চাইলে w500 বা original
 
     // List of common video file extensions
@@ -734,8 +741,8 @@
                         const fileName = file.name || `Channel ${channelCount}`; // Use filename, or fallback to sequential number
                         const fileApiUrl = `https://pixeldrain.com/api/file/${file.id}`;
                         // Pixeldrain থাম্বনেইল URL তৈরি করুন
-                        const fileThumbnailUrl = `https://pixeldrain.com/api/file/${file.id}/thumbnail`; 
-                        
+                        const fileThumbnailUrl = `https://pixeldrain.com/api/file/${file.id}/thumbnail`;
+
                         const logo = fileThumbnailUrl; // থাম্বনেইলকে লোগো হিসেবে ব্যবহার করুন
                         const group = document.getElementById("globalGroup").value.trim();
 
@@ -777,7 +784,7 @@
         savedPlaylists[AUTO_SAVE_PLAYLIST_NAME] = [...currentChannels];
         savePlaylistsToLocalStorage();
       } else { // যদি currentChannels খালি হয়ে যায়, auto-save playlist থেকে এটি মুছে ফেলা হবে
-        if (savedPlaylists[AUTO_SAVE_PLAYLIST_NAME]) { 
+        if (savedPlaylists[AUTO_SAVE_PLAYLIST_NAME]) {
           delete savedPlaylists[AUTO_SAVE_PLAYLIST_NAME];
           savePlaylistsToLocalStorage();
         }
@@ -819,8 +826,8 @@
       previewList.innerHTML = "";
       // ফিল্টারিং এর জন্য একটি নতুন অ্যারে তৈরি করি
       const searchTerm = document.getElementById("channelSearchInput").value.toLowerCase();
-      const filteredChannels = currentChannels.filter(ch => 
-          ch.name.toLowerCase().includes(searchTerm) || 
+      const filteredChannels = currentChannels.filter(ch =>
+          ch.name.toLowerCase().includes(searchTerm) ||
           ch.url.toLowerCase().includes(searchTerm) ||
           (ch.group && ch.group.toLowerCase().includes(searchTerm))
       );
@@ -835,7 +842,7 @@
       } else {
         filteredChannels.forEach((ch, index) => {
           // original index খুঁজে বের করি, কারণ filterChannels() নতুন অ্যারে তৈরি করে
-          const originalIndex = currentChannels.indexOf(ch); 
+          const originalIndex = currentChannels.indexOf(ch);
           const previewDiv = document.createElement("div");
           previewDiv.className = "channel-preview";
           previewDiv.innerHTML = `
@@ -843,10 +850,10 @@
             <span>${ch.name} ${ch.group ? `(${ch.group})` : ''}</span>
             <div class="action-buttons">
                 <button class="edit-btn" onclick="editChannel(${originalIndex})">
-                    <i class="fas fa-edit"></i> 
+                    <i class="fas fa-edit"></i>
                 </button>
                 <button class="delete-btn" onclick="confirmRemoveChannel(${originalIndex})">
-                    <i class="fas fa-times"></i> 
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
           `;
@@ -865,7 +872,7 @@
     async function searchMovieLogo(movieName) {
         if (!isTmdbEnabled || !movieName || TMDB_API_KEY === 'YOUR_TMDB_API_KEY' || !TMDB_API_KEY) {
             console.warn("TMDB API Key is not set, TMDB is disabled, or movie name is empty. Using placeholder logo.");
-            return "https://via.placeholder.com/30"; 
+            return "https://via.placeholder.com/30";
         }
 
         try {
@@ -947,16 +954,16 @@
 
           // Fetch logo asynchronously
           const fetchedLogo = await searchMovieLogo(name);
-          
+
           // Update the specific channel with the fetched logo
           currentChannels[channelIndex].logo = fetchedLogo;
           logoInput.value = fetchedLogo; // Update input for next use
-          
+
           // Re-render after a short delay to ensure UI updates
           setTimeout(() => {
             saveCurrentChannels();
             renderCurrentChannels();
-          }, 100); 
+          }, 100);
 
       } else {
           finalLogo = customLogo || globalLogo || "https://via.placeholder.com/30";
@@ -964,12 +971,12 @@
           saveCurrentChannels();
           renderCurrentChannels();
       }
-      
+
       // Clear inputs (except customLogo if it was just fetched by TMDB)
       nameInput.value = "";
       urlInput.value = "";
       if (!name.toLowerCase().includes("movie") || customLogo || !isTmdbEnabled) { // Only clear if not TMDB fetched or TMDB is off
-        logoInput.value = ""; 
+        logoInput.value = "";
       }
     }
 
@@ -1175,7 +1182,7 @@
       if (!event.target.matches('.btn-primary') && !event.target.closest('.dropdown-content')) {
         const dropdowns = document.getElementsByClassName("dropdown-content");
         for (let i = 0; i < dropdowns.length; i++) {
-          const openDropdown = dropdowns [i];
+          const openDropdown = dropdowns[i];
           if (openDropdown.classList.contains('show')) {
             openDropdown.classList.remove('show');
           }
