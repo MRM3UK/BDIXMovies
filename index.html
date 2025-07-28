@@ -556,7 +556,7 @@
         <input id="channelName" class="form-control" placeholder="📺 Channel Name" />
       </div>
       <div class="col-md-4">
-        <input id="channelURL" class="form-control" placeholder="🔗 Stream URL (or Pixeldrain Folder Link)" />
+        <input id="channelURL" class="form-control" placeholder="🔗 Stream URL (Pixeldrain Folder or .m3u/.m3u8 Link)" />
       </div>
       <div class="col-md-4">
         <input id="channelLogo" class="form-control" placeholder="🖼️ Optional Logo URL" />
@@ -623,6 +623,7 @@
       <ul>
         <li><i class="fas fa-stream"></i> Add **individual channels** with names, URLs, and custom logos.</li>
         <li><i class="fas fa-folder"></i> **Automate from Pixeldrain Folder Links:** Simply paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`), and only **video files** within that folder will be added as individual channels with their API links!</li>
+        <li><i class="fas fa-file-alt"></i> **Import from .m3u/.m3u8 Links:** Paste a direct `.m3u` or `.m3u8` playlist URL (e.g., `https://example.com/playlist.m3u`). The tool will parse the playlist and add its channels.</li>
         <li><i class="fas fa-film"></i> **Smart Logo Fetching (Currently ON):** If you add a channel containing "movie" in its name and no custom logo, it will try to fetch a relevant movie poster from TMDB.</li>
         <li><i class="fas fa-sliders-h"></i> Set **global default logo and group names** for all channels.</li>
         <li><i class="fas fa-search"></i> **Search and manage** your added channels with ease.</li>
@@ -643,6 +644,7 @@
       <ul>
         <li><i class="fas fa-plus-circle"></i> **Add Individual Channels:** Enter a **Channel Name**, **Stream URL**, and optionally a **Logo URL**. Click "Add Channel".</li>
         <li><i class="fas fa-folder-open"></i> **Add from Pixeldrain Folder:** Paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`) into the "Stream URL" field. The tool will automatically add all **video files** from that folder as separate channels.</li>
+        <li><i class="fas fa-file-alt"></i> **Add from .m3u/.m3u8 Link:** Paste a direct `.m3u` or `.m3u8` playlist URL (e.g., `https://raw.githubusercontent.com/.../playlist.m3u`) into the "Stream URL" field. The tool will parse the playlist and add its channels.</li>
         <li><i class="fas fa-globe"></i> **Global Settings:** Use "Global Logo URL" and "Global Group Name" to set defaults for new channels.</li>
         <li><i class="fas fa-search"></i> **Manage Channels:** Use the search bar to find specific channels. You can edit or delete channels from the "Added Channels" list.</li>
         <li><i class="fas fa-floppy-disk"></i> **Save/Load Playlists:** Enter a "Playlist Name" and click "Save Playlist" to save your current list. Click "Saved Playlists" to load or delete saved lists.</li>
@@ -653,6 +655,7 @@
       <ul>
         <li><i class="fas fa-plus-circle"></i> **একক চ্যানেল যোগ করুন:** একটি **চ্যানেলের নাম**, **স্ট্রিম ইউআরএল** এবং ঐচ্ছিকভাবে একটি **লোগো ইউআরএল** লিখুন। "Add Channel" এ ক্লিক করুন।</li>
         <li><i class="fas fa-folder-open"></i> **পিক্সেলড্রেইন ফোল্ডার থেকে যোগ করুন:** "Stream URL" ফিল্ডে একটি পিক্সেলড্রেইন ফোল্ডার লিঙ্ক পেস্ট করুন (যেমন: `https://pixeldrain.com/l/FOLDER_ID`)। টুলটি স্বয়ংক্রিয়ভাবে সেই ফোল্ডারের সমস্ত **ভিডিও ফাইল** আলাদা চ্যানেল হিসাবে যোগ করবে।</li>
+        <li><i class="fas fa-file-alt"></i> **.m3u/.m3u8 লিঙ্ক থেকে যোগ করুন:** "Stream URL" ফিল্ডে একটি সরাসরি `.m3u` বা `.m3u8` প্লেলিস্ট ইউআরএল (যেমন: `https://raw.githubusercontent.com/.../playlist.m3u`) পেস্ট করুন। টুলটি প্লেলিস্টটি পার্স করবে এবং এর চ্যানেলগুলি যোগ করবে।</li>
         <li><i class="fas fa-globe"></i> **গ্লোবাল সেটিংস:** নতুন চ্যানেলগুলির জন্য ডিফল্ট সেট করতে "Global Logo URL" এবং "Global Group Name" ব্যবহার করুন।</li>
         <li><i class="fas fa-search"></i> **চ্যানেল পরিচালনা করুন:** নির্দিষ্ট চ্যানেল খুঁজতে সার্চ বার ব্যবহার করুন। আপনি "Added Channels" তালিকা থেকে চ্যানেল এডিট বা ডিলিট করতে পারবেন।</li>
         <li><i class="fas fa-floppy-disk"></i> **প্লেলিস্ট সেভ/লোড করুন:** "Playlist Name" এ একটি নাম দিন এবং আপনার বর্তমান তালিকা সেভ করতে "Save Playlist" এ ক্লিক করুন। সেভ করা তালিকা লোড বা ডিলিট করতে "Saved Playlists" এ ক্লিক করুন।</li>
@@ -667,6 +670,7 @@
     let currentChannels = [];
     let savedPlaylists = {};
     let isProcessingFolder = false; // To prevent multiple simultaneous folder processing
+    let isProcessingM3U = false; // To prevent multiple simultaneous M3U processing
 
     const CURRENT_PLAYLIST_KEY = 'currentM3UChannels';
     const SAVED_PLAYLISTS_KEY = 'savedM3UPlaylists';
@@ -678,7 +682,7 @@
     const isTmdbEnabled = true; // TMDB বৈশিষ্ট্যটি চালু করা হয়েছে
     const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200'; // ছোট লোগোর জন্য w200, বড় চাইলে w500 বা original
 
-    // List of common video file extensions
+    // List of common video file extensions for Pixeldrain
     const videoFileExtensions = [
         '.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mpeg', '.mpg', '.3gp',
         '.ts', '.m2ts', '.ogg', '.ogv', '.f4v', '.swf', '.vob', '.qt', '.rm', '.rmvb',
@@ -695,7 +699,7 @@
         return originalUrl; // Return original if no match
     }
 
-    // New function to process Pixeldrain folder links
+    // Function to process Pixeldrain folder links
     async function processPixeldrainFolder(folderUrl) {
         if (isProcessingFolder) {
             alert("Already processing a folder. Please wait.");
@@ -716,11 +720,7 @@
 
         try {
             isProcessingFolder = true;
-            document.getElementById("channelURL").value = "Loading folder content...";
-            document.getElementById("channelURL").disabled = true;
-            document.getElementById("channelName").disabled = true;
-            document.getElementById("channelLogo").disabled = true;
-            document.querySelector(".btn-success").disabled = true; // Add Channel button
+            disableInputs(true, "Loading Pixeldrain folder content...");
 
             const response = await fetch(apiUrl);
             if (!response.ok) {
@@ -732,25 +732,20 @@
             const data = await response.json();
 
             if (data && data.files && data.files.length > 0) {
-                let channelCount = currentChannels.length + 1; // Start numbering from existing channels + 1
+                let channelCount = 1; // Start numbering for new channels
 
                 for (const file of data.files) {
-                    // Check if the file has a video extension
                     const fileExtension = file.name ? '.' + file.name.split('.').pop().toLowerCase() : '';
                     if (file.id && videoFileExtensions.includes(fileExtension)) {
-                        const fileName = file.name || `Channel ${channelCount}`; // Use filename, or fallback to sequential number
+                        const fileName = file.name || `Channel ${channelCount}`;
                         const fileApiUrl = `https://pixeldrain.com/api/file/${file.id}`;
-                        // Pixeldrain থাম্বনেইল URL তৈরি করুন
                         const fileThumbnailUrl = `https://pixeldrain.com/api/file/${file.id}/thumbnail`;
-
-                        const logo = fileThumbnailUrl; // থাম্বনেইলকে লোগো হিসেবে ব্যবহার করুন
-                        const group = document.getElementById("globalGroup").value.trim();
 
                         addedChannelsFromFolder.push({
                             name: fileName,
                             url: fileApiUrl,
-                            logo: logo,
-                            group: group
+                            logo: fileThumbnailUrl, // Use thumbnail as logo
+                            group: document.getElementById("globalGroup").value.trim()
                         });
                         channelCount++;
                     }
@@ -766,13 +761,77 @@
             alert(`Error processing Pixeldrain folder: ${error.message}. Please check the URL and try again.`);
         } finally {
             isProcessingFolder = false;
+            disableInputs(false);
             document.getElementById("channelURL").value = "";
-            document.getElementById("channelURL").disabled = false;
-            document.getElementById("channelName").disabled = false;
-            document.getElementById("channelLogo").disabled = false;
-            document.querySelector(".btn-success").disabled = false; // Add Channel button
         }
         return addedChannelsFromFolder;
+    }
+
+    // New function to process M3U/M3U8 links
+    async function processM3UFromURL(m3uUrl) {
+        if (isProcessingM3U) {
+            alert("Already processing an M3U/M3U8 link. Please wait.");
+            return [];
+        }
+
+        const addedChannelsFromM3U = [];
+
+        try {
+            isProcessingM3U = true;
+            disableInputs(true, "Loading M3U/M3U8 playlist content...");
+
+            const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(m3uUrl)}`); // Use AllOrigins for CORS
+            if (!response.ok) {
+                throw new Error(`Failed to fetch M3U/M3U8 playlist: ${response.statusText}`);
+            }
+            const m3uContent = await response.text();
+
+            const lines = m3uContent.split('\n');
+            let currentChannel = {};
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                if (line.startsWith('#EXTINF:')) {
+                    // Extract attributes from #EXTINF line
+                    const logoMatch = line.match(/tvg-logo="([^"]*)"/);
+                    const groupMatch = line.match(/group-title="([^"]*)"/);
+                    const nameMatch = line.match(/,(.*)$/); // Get everything after the last comma
+
+                    currentChannel.logo = logoMatch ? logoMatch[1] : '';
+                    currentChannel.group = groupMatch ? groupMatch[1] : '';
+                    currentChannel.name = nameMatch ? nameMatch[1].trim() : `Channel ${currentChannels.length + addedChannelsFromM3U.length + 1}`;
+                } else if (line && !line.startsWith('#') && currentChannel.name) {
+                    // This is the URL line
+                    currentChannel.url = line;
+                    addedChannelsFromM3U.push(currentChannel);
+                    currentChannel = {}; // Reset for next channel
+                }
+            }
+            if (addedChannelsFromM3U.length === 0) {
+                alert("No valid channels found in the M3U/M3U8 playlist.");
+            }
+        } catch (error) {
+            console.error("Error processing M3U/M3U8 link:", error);
+            alert(`Error processing M3U/M3U8 link: ${error.message}. Please ensure it's a direct link to an M3U/M3U8 file and try again.`);
+        } finally {
+            isProcessingM3U = false;
+            disableInputs(false);
+            document.getElementById("channelURL").value = "";
+        }
+        return addedChannelsFromM3U;
+    }
+
+    function disableInputs(disabled, message = "") {
+        document.getElementById("channelURL").disabled = disabled;
+        document.getElementById("channelName").disabled = disabled;
+        document.getElementById("channelLogo").disabled = disabled;
+        document.querySelector(".btn-success").disabled = disabled; // Add Channel button
+        if (message) {
+            document.getElementById("channelURL").placeholder = message;
+        } else {
+            document.getElementById("channelURL").placeholder = "🔗 Stream URL (Pixeldrain Folder or .m3u/.m3u8 Link)";
+        }
     }
 
 
@@ -905,69 +964,69 @@
       const globalGroup = document.getElementById("globalGroup").value.trim();
 
       if (!url) {
-        alert("Stream URL (or Pixeldrain Folder Link) is required!");
+        alert("Stream URL (or Pixeldrain Folder Link / .m3u/.m3u8 Link) is required!");
         return;
       }
 
       const pixeldrainFolderRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
+      const m3uLinkRegex = /\.(m3u|m3u8)(\?.*)?$/i; // Regex to detect .m3u or .m3u8 extensions
+
+      let channelsToAdd = [];
 
       if (pixeldrainFolderRegex.test(url)) {
           // It's a Pixeldrain folder link
-          if (name) {
-              alert("When adding a Pixeldrain folder, channel name input will be ignored. Names will be taken from file names or numbered.");
-              nameInput.value = ""; // Clear name input
-          }
-          if (customLogo) {
-              alert("When adding a Pixeldrain folder, custom logo input will be ignored. Thumbnails will be used as logos.");
-              logoInput.value = ""; // Clear logo input
+          if (name) alert("Channel name will be ignored for Pixeldrain folder.");
+          if (customLogo) alert("Custom logo will be ignored for Pixeldrain folder.");
+          nameInput.value = "";
+          logoInput.value = "";
+          channelsToAdd = await processPixeldrainFolder(url);
+      } else if (m3uLinkRegex.test(url)) {
+          // It's an M3U/M3U8 link
+          if (name) alert("Channel name will be ignored when importing from M3U/M3U8 link.");
+          if (customLogo) alert("Custom logo will be ignored when importing from M3U/M3U8 link.");
+          nameInput.value = "";
+          logoInput.value = "";
+          channelsToAdd = await processM3UFromURL(url);
+      } else {
+          // It's a single channel entry
+          if (!name) {
+            alert("Channel name is required for single channel entries!");
+            return;
           }
 
-          const channelsFromFolder = await processPixeldrainFolder(url);
-          if (channelsFromFolder.length > 0) {
-              currentChannels.push(...channelsFromFolder); // Add all channels from folder
+          // Convert Pixeldrain file URL if applicable (e.g., u/abc -> api/file/abc)
+          url = convertPixeldrainFileUrl(url);
+
+          let finalLogo = customLogo;
+          if (isTmdbEnabled && !customLogo && name.toLowerCase().includes("movie")) {
+              // Add channel with a temporary loading logo first
+              const tempLogo = "https://via.placeholder.com/30?text=Loading...";
+              const channelIndex = currentChannels.length;
+              channelsToAdd.push({ name, url, logo: tempLogo, group: globalGroup });
+              currentChannels.push(...channelsToAdd); // Add immediately to show loading state
               saveCurrentChannels();
               renderCurrentChannels();
-              alert(`Added ${channelsFromFolder.length} video channels from Pixeldrain folder!`);
+
+              // Fetch logo asynchronously
+              const fetchedLogo = await searchMovieLogo(name);
+
+              // Update the specific channel with the fetched logo
+              currentChannels[channelIndex].logo = fetchedLogo;
+              logoInput.value = fetchedLogo; // Update input for next use
+          } else {
+              finalLogo = customLogo || globalLogo || "https://via.placeholder.com/30";
+              channelsToAdd.push({ name, url, logo: finalLogo, group: globalGroup });
           }
-          urlInput.value = ""; // Clear URL input after processing folder
-          return; // Exit as folder processing handles adding channels
       }
 
-      // If not a folder link, proceed with single channel addition
-      if (!name) {
-        alert("Channel name is required for single channel entries!");
-        return;
-      }
-
-      // Convert Pixeldrain file URL if applicable
-      url = convertPixeldrainFileUrl(url);
-
-      let finalLogo = customLogo;
-      // যদি কাস্টম লোগো না থাকে এবং চ্যানেলের নাম 'movie' অন্তর্ভুক্ত করে, তবে TMDB থেকে লোগো সার্চ করুন
-      if (isTmdbEnabled && !customLogo && name.toLowerCase().includes("movie")) {
-          // Add channel with a temporary loading logo first
-          const tempLogo = "https://via.placeholder.com/30?text=Loading...";
-          const channelIndex = currentChannels.length; // Get the index before pushing
-          currentChannels.push({ name, url, logo: tempLogo, group: globalGroup });
-          saveCurrentChannels();
-          renderCurrentChannels(); // Render immediately with loading state
-
-          // Fetch logo asynchronously
-          const fetchedLogo = await searchMovieLogo(name);
-
-          // Update the specific channel with the fetched logo
-          currentChannels[channelIndex].logo = fetchedLogo;
-          logoInput.value = fetchedLogo; // Update input for next use
-
-          // Re-render after a short delay to ensure UI updates
-          setTimeout(() => {
-            saveCurrentChannels();
-            renderCurrentChannels();
-          }, 100);
-
-      } else {
-          finalLogo = customLogo || globalLogo || "https://via.placeholder.com/30";
-          currentChannels.push({ name, url, logo: finalLogo, group: globalGroup });
+      if (channelsToAdd.length > 0) {
+          // For single channels, it's already pushed. For folders/m3u, push here.
+          if (!pixeldrainFolderRegex.test(url) && !m3uLinkRegex.test(url)) {
+            // Already pushed for single channel with TMDB logic, no need to push again here
+          } else {
+            currentChannels.push(...channelsToAdd);
+            alert(`Added ${channelsToAdd.length} channel(s)!`);
+          }
           saveCurrentChannels();
           renderCurrentChannels();
       }
@@ -975,7 +1034,7 @@
       // Clear inputs (except customLogo if it was just fetched by TMDB)
       nameInput.value = "";
       urlInput.value = "";
-      if (!name.toLowerCase().includes("movie") || customLogo || !isTmdbEnabled) { // Only clear if not TMDB fetched or TMDB is off
+      if (!name.toLowerCase().includes("movie") || customLogo || !isTmdbEnabled || pixeldrainFolderRegex.test(url) || m3uLinkRegex.test(url)) {
         logoInput.value = "";
       }
     }
@@ -1144,89 +1203,4 @@
             currentChannels = [...savedPlaylists?.[name] || []]; // Load a copy
             // নিশ্চিত করুন যে লোড করার সময় প্রতিটি চ্যানেলের জন্য একটি বৈধ লোগো আছে
             currentChannels.forEach(channel => {
-                if (!channel.logo || channel.logo === "https://via.placeholder.com/30?text=Loading...") {
-                    channel.logo = document.getElementById("logoAll").value.trim() || "https://via.placeholder.com/30";
-                }
-            });
-            saveCurrentChannels(); // Save the newly loaded playlist as current
-            renderCurrentChannels();
-            toggleSavedPlaylistsDropdown(); // Close dropdown
-            document.getElementById("playlistFileNameInput").value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name; // ফাইল নামের ইনপুট আপডেট করা
-            if (name !== AUTO_SAVE_PLAYLIST_NAME) { // Auto Saved Session লোড হলে বার্তা না দেখানো
-                alert(`Playlist "${name}" loaded.`);
-            }
-        }
-    }
-
-    function confirmDeleteSavedPlaylist(name, event) {
-        event.stopPropagation(); // Prevent loading the playlist when deleting
-        if (name === AUTO_SAVE_PLAYLIST_NAME) {
-          alert("The 'Auto Saved Session' playlist cannot be manually deleted.");
-          return;
-        }
-        if (confirm(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone."`)) {
-            deleteSavedPlaylist(name);
-        }
-    }
-
-    function deleteSavedPlaylist(name) {
-        const {[name]: deleted, ...rest} = savedPlaylists; // Remove the playlist
-        savedPlaylists = rest;
-        savePlaylistsToLocalStorage();
-        renderSavedPlaylistsDropdown();
-        alert(`Playlist "${name}" deleted.`);
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-      if (!event.target.matches('.btn-primary') && !event.target.closest('.dropdown-content')) {
-        const dropdowns = document.getElementsByClassName("dropdown-content");
-        for (let i = 0; i < dropdowns.length; i++) {
-          const openDropdown = dropdowns[i];
-          if (openDropdown.classList.contains('show')) {
-            openDropdown.classList.remove('show');
-          }
-        }
-      }
-    }
-
-    // --- Modal/Popup Functions ---
-    function showWelcomeModal() {
-        const modal = document.getElementById('welcomeModal');
-        modal.style.display = 'block';
-    }
-
-    function closeWelcomeModal() {
-        const modal = document.getElementById('welcomeModal');
-        modal.style.display = 'none';
-        localStorage.setItem(WELCOME_MODAL_SHOWN_KEY, 'true'); // Mark that the modal has been shown
-    }
-
-    // New Help Modal Functions
-    function showHelpModal() {
-        const modal = document.getElementById('helpModal');
-        modal.style.display = 'block';
-    }
-
-    function closeHelpModal() {
-        const modal = document.getElementById('helpModal');
-        modal.style.display = 'none';
-    }
-
-
-    // --- Initialize on Load ---
-    window.onload = () => {
-        loadCurrentChannels(); // Load the last active playlist
-        loadPlaylistsFromLocalStorage(); // Load all saved playlists for the menu
-        // Initialize playlist file name input
-        document.getElementById("playlistFileNameInput").value = "playlist";
-
-        // Show welcome modal if it hasn't been shown before
-        const welcomeModalShown = localStorage.getItem(WELCOME_MODAL_SHOWN_KEY);
-        if (!welcomeModalShown) {
-            showWelcomeModal();
-        }
-    };
-  </script>
-</body>
-</html>
+                if (!channel.logo || channel.logo === "https://
