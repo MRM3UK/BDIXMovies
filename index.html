@@ -530,7 +530,7 @@
             padding: 12px 15px;
         }
     }
-    
+
     /* Confirmation Modal */
     #confirmationModal .modal-content {
         max-width: 450px;
@@ -1007,11 +1007,13 @@
             if (currentChannels.length > 0 && searchTerm !== '') {
                 message = "No matching channels found.";
             }
-            elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">${message}</p>`;
+            elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No channels added yet.</p>`;
         } else {
-            filteredChannels.forEach((ch) => { // Removed index here, we will use a unique identifier
-                // Find the actual index of the channel in the currentChannels array
-                const originalIndex = currentChannels.findIndex(item => item === ch); // Find the original index using reference
+            filteredChannels.forEach((ch) => {
+                // IMPORTANT CHANGE HERE:
+                // `originalIndex` খুঁজে বের করা হচ্ছে `currentChannels` অ্যারেতে `ch` (চ্যানেল অবজেক্ট)-এর রেফারেন্স ব্যবহার করে।
+                // এটি নিশ্চিত করে যে আমরা সবসময় মূল অ্যারেতে সঠিক আইটেমটি চিহ্নিত করছি, এমনকি যদি তালিকা ফিল্টার করা হয় বা সাজানো হয়।
+                const originalIndex = currentChannels.findIndex(item => item === ch);
                 if (originalIndex === -1) return; // Should not happen if filteredChannels is a subset of currentChannels
 
                 const previewDiv = document.createElement("div");
@@ -1105,13 +1107,16 @@
 
 
     function removeChannel(index) {
-        // Ensure the index is valid and within bounds
+        // IMPORTANT CHANGE HERE:
+        // `index` এর বৈধতা নিশ্চিত করা হচ্ছে।
+        // এটি নিশ্চিত করে যে `index` `currentChannels` অ্যারের সীমার মধ্যে আছে।
         if (index >= 0 && index < currentChannels.length) {
             currentChannels.splice(index, 1);
             saveCurrentChannels(); // Auto-save after removal
             renderCurrentChannels();
         } else {
             console.error("Invalid index for channel removal:", index);
+            showCustomAlert("Error: Could not delete channel. Please try refreshing the page.");
         }
     }
 
