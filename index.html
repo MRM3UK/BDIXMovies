@@ -1002,13 +1002,12 @@
             (ch.group && ch.group.toLowerCase().includes(searchTerm))
         );
 
-        if (filteredChannels.length === 0) {
-            let message = "No channels added yet.";
-            if (currentChannels.length > 0 && searchTerm !== '') {
-                message = "No matching channels found.";
-            }
+        if (filteredChannels.length === 0 && currentChannels.length === 0) {
             elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No channels added yet.</p>`;
-        } else {
+        } else if (filteredChannels.length === 0 && currentChannels.length > 0 && searchTerm !== '') {
+             elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No matching channels found.</p>`;
+        }
+        else {
             // It's crucial to iterate over currentChannels to get the real index
             // and then check if it's part of the filtered set to display.
             currentChannels.forEach((ch, originalIndex) => {
@@ -1042,7 +1041,9 @@
 
             // Event delegation for edit and delete buttons
             // Attach a single listener to the parent container
-            elements.previewList.removeEventListener('click', handleChannelActions); // Remove previous listener to avoid duplicates
+            // Ensure no duplicate listeners are added:
+            // This line is important to prevent multiple listeners if renderCurrentChannels is called multiple times.
+            elements.previewList.removeEventListener('click', handleChannelActions);
             elements.previewList.addEventListener('click', handleChannelActions);
         }
         generateM3U();
@@ -1050,15 +1051,20 @@
 
     async function handleChannelActions(e) {
         const target = e.target;
-        const button = target.closest('button'); // Find the closest button ancestor
+        // Find the closest button that is either an edit-btn or a delete-btn
+        const button = target.closest('.edit-btn, .delete-btn');
 
-        if (!button) return; // Not a button click
+        if (!button) {
+            // Click was not on an edit or delete button (or their icons)
+            return;
+        }
 
         const originalIndex = parseInt(button.dataset.index);
 
+        // Basic validation for index
         if (isNaN(originalIndex) || originalIndex < 0 || originalIndex >= currentChannels.length) {
             console.error("Invalid index obtained from button data-index:", button.dataset.index, "Original Index:", originalIndex);
-            await showCustomAlert("Error: Invalid channel index. Could not perform action.");
+            await showCustomAlert("Error: Invalid channel index. Could not perform action. Please refresh the page if this persists.");
             return;
         }
 
@@ -1104,6 +1110,8 @@
             url = convertPixeldrainFileUrl(url);
 
             let finalLogo = customLogo;
+            // Only try to fetch TMDB logo if customLogo is NOT provided,
+            // and the TMDB_API_KEY is properly set AND it's a "movie" channel.
             if (!customLogo && name.toLowerCase().includes("movie") && TMDB_API_KEY !== 'YOUR_TMDB_API_KEY' && TMDB_API_KEY) {
                 const tempLogo = "https://via.placeholder.com/30?text=Loading...";
                 const channelIndex = currentChannels.length;
@@ -1116,7 +1124,7 @@
                 setTimeout(() => {
                     saveCurrentChannels(); // Auto-save after logo is fetched
                     renderCurrentChannels();
-                }, 100);
+                }, 100); // Small delay to allow UI to update if needed
 
             } else {
                 finalLogo = customLogo || (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
@@ -1126,21 +1134,24 @@
             }
         }
 
-        if (elements.channelName) elements.channelName.value = "";
-        if (elements.channelURL) elements.channelURL.value = "";
-        if (elements.channelLogo) elements.channelLogo.value = "";
+        // Clear input fields only if not processing folder
+        if (!isProcessingFolder) {
+            if (elements.channelName) elements.channelName.value = "";
+            if (elements.channelURL) elements.channelURL.value = "";
+            if (elements.channelLogo) elements.channelLogo.value = "";
+        }
     }
 
 
     function removeChannel(index) {
         console.log("Attempting to remove channel at index:", index);
-        console.log("currentChannels BEFORE:", JSON.parse(JSON.stringify(currentChannels))); // Deep copy for logging
+        console.log("currentChannels BEFORE removal:", JSON.parse(JSON.stringify(currentChannels))); // Deep copy for logging
 
         if (index >= 0 && index < currentChannels.length) {
             currentChannels.splice(index, 1);
             saveCurrentChannels(); // Auto-save after removal
-            renderCurrentChannels();
-            console.log("Channel removed successfully. currentChannels AFTER:", JSON.parse(JSON.stringify(currentChannels)));
+            renderCurrentChannels(); // Re-render the list
+            console.log("Channel removed successfully. currentChannels AFTER removal:", JSON.parse(JSON.stringify(currentChannels)));
         } else {
             console.error("Invalid index for channel removal:", index, "Array length:", currentChannels.length);
             showCustomAlert("Error: Could not delete channel. Invalid index. Please try refreshing the page.");
@@ -1149,22 +1160,35 @@
 
     async function editChannel(index) {
         const channel = currentChannels[index];
-        if (!channel) return;
+        if (!channel) {
+            await showCustomAlert("Error: Channel not found for editing. Please refresh the page.");
+            return;
+        }
 
         let newName = prompt("Edit Channel Name:", channel.name);
-        if (newName === null) return;
+        if (newName === null) return; // User cancelled
         newName = newName.trim();
+        if (newName === "") {
+             await showCustomAlert("Channel name cannot be empty. Edit cancelled.");
+             return;
+        }
+
 
         let newUrl = prompt("Edit Stream URL:", channel.url);
-        if (newUrl === null) return;
+        if (newUrl === null) return; // User cancelled
         newUrl = convertPixeldrainFileUrl(newUrl.trim());
+        if (newUrl === "") {
+            await showCustomAlert("Stream URL cannot be empty. Edit cancelled.");
+            return;
+        }
+
 
         let newLogo = prompt("Edit Logo URL (leave empty for global/TMDB if applicable):", channel.logo);
-        if (newLogo === null) return;
+        if (newLogo === null) newLogo = channel.logo; // Keep current logo if cancelled
         newLogo = newLogo.trim();
 
         let newGroup = prompt("Edit Group Name:", channel.group || '');
-        if (newGroup === null) return;
+        if (newGroup === null) newGroup = channel.group; // Keep current group if cancelled
         newGroup = newGroup.trim();
 
         channel.name = newName;
@@ -1178,7 +1202,7 @@
     }
 
     function filterChannels() {
-        renderCurrentChannels();
+        renderCurrentChannels(); // Re-render based on search input
     }
 
     async function clearCurrentChannels() {
@@ -1187,6 +1211,7 @@
             currentChannels = [];
             saveCurrentChannels(); // Auto-save after clearing
             renderCurrentChannels();
+            await showCustomAlert("All channels cleared.");
         }
     }
 
@@ -1215,7 +1240,10 @@
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = `${fileName}.m3u`;
+        document.body.appendChild(a); // Append to body to ensure it's in the DOM for Firefox
         a.click();
+        document.body.removeChild(a); // Clean up
+        URL.revokeObjectURL(a.href); // Free up memory
     }
 
     async function copyOutput() {
@@ -1246,6 +1274,7 @@
         if (!elements.savedPlaylistsDropdown) return;
         elements.savedPlaylistsDropdown.innerHTML = "";
         const playlistNames = Object.keys(savedPlaylists).sort((a, b) => {
+            // "Auto Saved Session" always first
             if (a === AUTO_SAVE_PLAYLIST_NAME) return -1;
             if (b === AUTO_SAVE_PLAYLIST_NAME) return 1;
             return a.localeCompare(b);
@@ -1262,10 +1291,11 @@
                 itemDiv.className = "dropdown-item-actions";
                 itemDiv.innerHTML = `
                     <span class="playlist-name-text" data-playlist-name="${name}">${name}</span>
-                    ${name !== AUTO_SAVE_PLAYLIST_NAME ? `<button class="delete-playlist-btn" data-playlist-name="${name}">✖</button>` : ''}
+                    ${name !== AUTO_SAVE_PLAYLIST_NAME ? `<button class="delete-playlist-btn" data-playlist-name="${name}" title="Delete Playlist">✖</button>` : ''}
                 `;
                 elements.savedPlaylistsDropdown.appendChild(itemDiv);
             });
+            // Attach listeners to newly created elements
             elements.savedPlaylistsDropdown.querySelectorAll('.playlist-name-text').forEach(span => {
                 span.addEventListener('click', (e) => loadSavedPlaylist(e.currentTarget.dataset.playlistName));
             });
@@ -1285,7 +1315,7 @@
 
         if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
             playlistName = prompt("Please enter a name for this playlist:", `My Playlist ${Object.keys(savedPlaylists).length + 1}`);
-            if (!playlistName) return;
+            if (!playlistName) return; // User cancelled prompt
             playlistName = playlistName.trim();
             if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
                 await showCustomAlert("Invalid playlist name. Cannot be empty or 'Auto Saved Session'.");
@@ -1310,18 +1340,26 @@
     }
 
     async function loadSavedPlaylist(name) {
+        // Prevent loading if already processing a folder to avoid state conflicts
+        if (isProcessingFolder) {
+            await showCustomAlert("Cannot load playlist while processing a Pixeldrain folder. Please wait.");
+            return;
+        }
+
         const confirmed = await showCustomConfirm(`Loading "${name}" will replace your current playlist. Continue?`);
         if (confirmed) {
             currentChannels = [...savedPlaylists?.[name] || []];
             currentChannels.forEach(channel => {
+                // Ensure logos are set if they were placeholders or missing
                 if (!channel.logo || channel.logo.includes("placeholder.com") || channel.logo.includes("Loading...")) {
                     channel.logo = (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
                 }
             });
-            saveCurrentChannels(); // Auto-save the newly loaded playlist
+            saveCurrentChannels(); // Auto-save the newly loaded playlist (this also updates the auto-save entry)
             renderCurrentChannels();
-            toggleSavedPlaylistsDropdown();
+            toggleSavedPlaylistsDropdown(); // Close dropdown after loading
             if (elements.playlistFileNameInput) {
+                // Set the filename input to the loaded playlist's name, or default if auto-saved
                 elements.playlistFileNameInput.value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name;
             }
             await showCustomAlert(`Playlist "${name}" loaded.`);
@@ -1329,7 +1367,7 @@
     }
 
     async function confirmDeleteSavedPlaylist(name, event) {
-        event.stopPropagation();
+        event.stopPropagation(); // Prevent the dropdown from closing immediately
         if (name === AUTO_SAVE_PLAYLIST_NAME) {
             await showCustomAlert("The 'Auto Saved Session' playlist cannot be manually deleted.");
             return;
@@ -1341,6 +1379,7 @@
     }
 
     async function deleteSavedPlaylist(name) {
+        // Create a new object excluding the playlist to be deleted
         const {[name]: deleted, ...rest} = savedPlaylists;
         savedPlaylists = rest;
         savePlaylistsToLocalStorage();
@@ -1362,6 +1401,10 @@
 
         try {
             if (elements.qrCodeCanvas) {
+                // Clear previous QR code if any
+                const context = elements.qrCodeCanvas.getContext('2d');
+                context.clearRect(0, 0, elements.qrCodeCanvas.width, elements.qrCodeCanvas.height);
+
                 new QRious({
                     element: elements.qrCodeCanvas,
                     value: playlistContent,
@@ -1375,7 +1418,7 @@
             }
         } catch (error) {
             console.error("Error generating QR code:", error);
-            await showCustomAlert("Failed to generate QR code. The playlist might be too large.");
+            await showCustomAlert("Failed to generate QR code. The playlist might be too large or invalid characters are present.");
         }
     }
 
@@ -1418,112 +1461,4 @@
                 // 3. Your server then returns the actual HTTP status code and other relevant information
                 //    back to your client-side JavaScript.
 
-                // The current implementation is a basic attempt to check reachability from the client,
-                // but its accuracy for determining actual stream validity is limited.
-                const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' });
-                
-                // If a response is received without a network error, we assume it's reachable.
-                // This does NOT guarantee the stream is playable or the URL returns valid content.
-                if (statusIconElement) {
-                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if no network error on fetch
-                }
-            } catch (error) {
-                console.error(`Error checking stream ${channel.name} (${channel.url}):`, error);
-                if (statusIconElement) {
-                    statusIconElement.innerHTML = '<i class="fas fa-times-circle error"></i>'; // Error (e.g., network disconnected, invalid domain)
-                }
-            }
-            await new Promise(resolve => setTimeout(resolve, 200)); // Small delay to prevent overwhelming requests
-        }
-
-        if (elements.checkStreamsBtn) {
-            elements.checkStreamsBtn.disabled = false;
-            elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
-        }
-        await showCustomAlert("Stream checking complete! (Note: Client-side checks are limited and may not guarantee stream playability due to browser security policies.)");
-    }
-
-
-    // --- Event Listeners ---
-    document.addEventListener('DOMContentLoaded', () => {
-        // Initialize elements object after DOM is loaded
-        elements.logoAll = document.getElementById("logoAll");
-        elements.globalGroup = document.getElementById("globalGroup");
-        elements.channelName = document.getElementById("channelName");
-        elements.channelURL = document.getElementById("channelURL");
-        elements.channelLogo = document.getElementById("channelLogo");
-        elements.addChannelBtn = document.getElementById("addChannelBtn");
-        elements.checkStreamsBtn = document.getElementById("checkStreamsBtn");
-        elements.channelSearchInput = document.getElementById("channelSearchInput");
-        elements.previewList = document.getElementById("previewList"); // This is the parent for channel previews
-        elements.savedPlaylistsToggleBtn = document.getElementById("savedPlaylistsToggleBtn");
-        elements.savedPlaylistsDropdown = document.getElementById("savedPlaylistsDropdown");
-        elements.savedPlaylistsCount = document.getElementById("savedPlaylistsCount");
-        elements.playlistFileNameInput = document.getElementById("playlistFileNameInput");
-        elements.savePlaylistBtn = document.getElementById("savePlaylistBtn");
-        elements.generateM3UBtn = document.getElementById("generateM3UBtn");
-        elements.downloadM3UBtn = document.getElementById("downloadM3UBtn");
-        elements.copyOutputBtn = document.getElementById("copyOutputBtn");
-        elements.clearCurrentBtn = document.getElementById("clearCurrentBtn");
-        elements.generateQrCodeBtn = document.getElementById("generateQrCodeBtn");
-        elements.output = document.getElementById("output");
-        elements.welcomeModal = document.getElementById("welcomeModal");
-        elements.welcomeModalOkBtn = document.getElementById("welcomeModalOkBtn");
-        elements.confirmationModal = document.getElementById("confirmationModal");
-        elements.confirmationMessage = document.getElementById("confirmationMessage");
-        elements.confirmActionBtn = document.getElementById("confirmActionBtn");
-        elements.cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
-        elements.alertModal = document.getElementById("alertModal");
-        elements.alertMessage = document.getElementById("alertMessage");
-        elements.alertOkBtn = document.getElementById("alertOkBtn");
-        elements.qrCodeModal = document.getElementById("qrCodeModal");
-        elements.qrCodeCanvas = document.getElementById("qrCodeCanvas");
-        elements.qrCodeModalOkBtn = document.getElementById("qrCodeModalOkBtn");
-
-
-        if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
-        if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams);
-        if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('keyup', filterChannels);
-        if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
-        if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
-        if (elements.generateM3UBtn) elements.generateM3UBtn.addEventListener('click', generateM3U);
-        if (elements.downloadM3UBtn) elements.downloadM3UBtn.addEventListener('click', downloadM3U);
-        if (elements.copyOutputBtn) elements.copyOutputBtn.addEventListener('click', copyOutput);
-        if (elements.clearCurrentBtn) elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
-        if (elements.generateQrCodeBtn) elements.generateQrCodeBtn.addEventListener('click', generateQrCode);
-
-        // Global settings auto-save
-        if (elements.logoAll) elements.logoAll.addEventListener('input', saveGlobalSettings);
-        if (elements.globalGroup) elements.globalGroup.addEventListener('input', saveGlobalSettings);
-
-        // Modal OK Button Listeners (replacing close buttons)
-        if (elements.welcomeModalOkBtn) elements.welcomeModalOkBtn.addEventListener('click', () => {
-            closeModal(elements.welcomeModal);
-            localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
-            if (resolveWelcome) {
-                resolveWelcome();
-                resolveWelcome = null;
-            }
-        });
-
-        // Confirmation Modal Action Listeners
-        if (elements.confirmActionBtn) elements.confirmActionBtn.addEventListener('click', () => {
-            closeModal(elements.confirmationModal);
-            if (resolveConfirmation) {
-                resolveConfirmation(true); // Resolve with true for 'Yes'
-                resolveConfirmation = null;
-            }
-        });
-        if (elements.cancelConfirmBtn) elements.cancelConfirmBtn.addEventListener('click', () => {
-            closeModal(elements.confirmationModal);
-            if (resolveConfirmation) {
-                resolveConfirmation(false); // Resolve with false for 'No'
-                resolveConfirmation = null;
-            }
-        });
-
-        // Alert Modal OK Button Listener
-        if (elements.alertOkBtn) elements.alertOkBtn.addEventListener('click', () => {
-            closeModal(elements.alertModal);
-            if (resolveAlert) {
-                resolve
+                // The current implementation is a basic attempt
