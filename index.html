@@ -755,41 +755,8 @@
         '.divx', '.xvid', '.m4v', '.asf', '.dat', '.evo', '.hevc', '.h264', '.h265', '.m3u8'
     ];
 
-    // DOM Elements
-    const elements = {
-        logoAll: document.getElementById("logoAll"),
-        globalGroup: document.getElementById("globalGroup"),
-        channelName: document.getElementById("channelName"),
-        channelURL: document.getElementById("channelURL"),
-        channelLogo: document.getElementById("channelLogo"),
-        addChannelBtn: document.getElementById("addChannelBtn"),
-        checkStreamsBtn: document.getElementById("checkStreamsBtn"), // New
-        channelSearchInput: document.getElementById("channelSearchInput"),
-        previewList: document.getElementById("previewList"),
-        savedPlaylistsToggleBtn: document.getElementById("savedPlaylistsToggleBtn"),
-        savedPlaylistsDropdown: document.getElementById("savedPlaylistsDropdown"),
-        savedPlaylistsCount: document.getElementById("savedPlaylistsCount"),
-        playlistFileNameInput: document.getElementById("playlistFileNameInput"),
-        savePlaylistBtn: document.getElementById("savePlaylistBtn"),
-        generateM3UBtn: document.getElementById("generateM3UBtn"),
-        downloadM3UBtn: document.getElementById("downloadM3UBtn"),
-        copyOutputBtn: document.getElementById("copyOutputBtn"),
-        clearCurrentBtn: document.getElementById("clearCurrentBtn"),
-        generateQrCodeBtn: document.getElementById("generateQrCodeBtn"), // New
-        output: document.getElementById("output"),
-        welcomeModal: document.getElementById("welcomeModal"),
-        welcomeModalOkBtn: document.getElementById("welcomeModalOkBtn"), // New OK button
-        confirmationModal: document.getElementById("confirmationModal"),
-        confirmationMessage: document.getElementById("confirmationMessage"),
-        confirmActionBtn: document.getElementById("confirmActionBtn"),
-        cancelConfirmBtn: document.getElementById("cancelConfirmBtn"),
-        alertModal: document.getElementById("alertModal"), // New
-        alertMessage: document.getElementById("alertMessage"), // New
-        alertOkBtn: document.getElementById("alertOkBtn"), // New
-        qrCodeModal: document.getElementById("qrCodeModal"), // New
-        qrCodeCanvas: document.getElementById("qrCodeCanvas"), // New
-        qrCodeModalOkBtn: document.getElementById("qrCodeModalOkBtn"), // New OK button for QR modal
-    };
+    // DOM Elements - Get all elements once after DOM is loaded
+    const elements = {};
 
     let resolveConfirmation = null; // Used for promise-based confirmation
     let resolveAlert = null; // Used for promise-based alert
@@ -923,7 +890,7 @@
                             name: fileName,
                             url: fileApiUrl,
                             logo: fileThumbnailUrl,
-                            group: elements.globalGroup.value.trim()
+                            group: elements.globalGroup ? elements.globalGroup.value.trim() : ''
                         });
                         channelCount++;
                     }
@@ -988,7 +955,7 @@
             currentChannels.forEach(channel => {
                 // Ensure logos are set if they were placeholders or missing
                 if (!channel.logo || channel.logo.includes("placeholder.com") || channel.logo.includes("Loading...")) {
-                    channel.logo = elements.logoAll.value.trim() || "https://via.placeholder.com/30";
+                    channel.logo = (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
                 }
             });
         }
@@ -1009,8 +976,8 @@
 
     function saveGlobalSettings() {
         const settings = {
-            globalLogo: elements.logoAll.value.trim(),
-            globalGroup: elements.globalGroup.value.trim(),
+            globalLogo: elements.logoAll ? elements.logoAll.value.trim() : '',
+            globalGroup: elements.globalGroup ? elements.globalGroup.value.trim() : '',
         };
         localStorage.setItem(LOCAL_STORAGE_KEYS.GLOBAL_SETTINGS, JSON.stringify(settings));
     }
@@ -1019,8 +986,8 @@
         const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEYS.GLOBAL_SETTINGS);
         if (storedSettings) {
             const settings = JSON.parse(storedSettings);
-            elements.logoAll.value = settings.globalLogo || '';
-            elements.globalGroup.value = settings.globalGroup || '';
+            if (elements.logoAll) elements.logoAll.value = settings.globalLogo || '';
+            if (elements.globalGroup) elements.globalGroup.value = settings.globalGroup || '';
         }
     }
 
@@ -1028,7 +995,7 @@
     function renderCurrentChannels() {
         if (!elements.previewList) return; // Add null check for robustness
         elements.previewList.innerHTML = "";
-        const searchTerm = elements.channelSearchInput.value.toLowerCase();
+        const searchTerm = elements.channelSearchInput ? elements.channelSearchInput.value.toLowerCase() : '';
         const filteredChannels = currentChannels.filter(ch =>
             ch.name.toLowerCase().includes(searchTerm) ||
             ch.url.toLowerCase().includes(searchTerm) ||
@@ -1076,9 +1043,9 @@
     }
 
     async function addChannelFromInputs() {
-        const name = elements.channelName.value.trim();
-        let url = elements.channelURL.value.trim();
-        const customLogo = elements.channelLogo.value.trim();
+        const name = elements.channelName ? elements.channelName.value.trim() : '';
+        let url = elements.channelURL ? elements.channelURL.value.trim() : '';
+        const customLogo = elements.channelLogo ? elements.channelLogo.value.trim() : '';
 
         if (!url) {
             await showCustomAlert("Stream URL (or Pixeldrain Folder Link) is required!");
@@ -1109,7 +1076,7 @@
             if (!customLogo && name.toLowerCase().includes("movie") && TMDB_API_KEY !== 'YOUR_TMDB_API_KEY' && TMDB_API_KEY) {
                 const tempLogo = "https://via.placeholder.com/30?text=Loading...";
                 const channelIndex = currentChannels.length;
-                currentChannels.push({ name, url, logo: tempLogo, group: elements.globalGroup.value.trim() });
+                currentChannels.push({ name, url, logo: tempLogo, group: elements.globalGroup ? elements.globalGroup.value.trim() : '' });
                 saveCurrentChannels(); // Auto-save after adding temp
                 renderCurrentChannels();
 
@@ -1121,16 +1088,16 @@
                 }, 100);
 
             } else {
-                finalLogo = customLogo || elements.logoAll.value.trim() || "https://via.placeholder.com/30";
-                currentChannels.push({ name, url, logo: finalLogo, group: elements.globalGroup.value.trim() });
+                finalLogo = customLogo || (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
+                currentChannels.push({ name, url, logo: finalLogo, group: elements.globalGroup ? elements.globalGroup.value.trim() : '' });
                 saveCurrentChannels(); // Auto-save after adding
                 renderCurrentChannels();
             }
         }
 
-        elements.channelName.value = "";
-        elements.channelURL.value = "";
-        elements.channelLogo.value = "";
+        if (elements.channelName) elements.channelName.value = "";
+        if (elements.channelURL) elements.channelURL.value = "";
+        if (elements.channelLogo) elements.channelLogo.value = "";
     }
 
 
@@ -1162,7 +1129,7 @@
 
         channel.name = newName;
         channel.url = newUrl;
-        channel.logo = newLogo || elements.logoAll.value.trim() || "https://via.placeholder.com/30";
+        channel.logo = newLogo || (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
         channel.group = newGroup;
 
         saveCurrentChannels(); // Auto-save after edit
@@ -1195,12 +1162,12 @@
     }
 
     async function downloadM3U() {
-        const content = elements.output.value;
+        const content = elements.output ? elements.output.value : '';
         if (currentChannels.length === 0) {
             await showCustomAlert("Add some channels before downloading a playlist!");
             return;
         }
-        let fileName = elements.playlistFileNameInput.value.trim();
+        let fileName = elements.playlistFileNameInput ? elements.playlistFileNameInput.value.trim() : 'playlist';
         if (!fileName) {
             fileName = "playlist";
         }
@@ -1269,7 +1236,7 @@
     }
 
     async function saveCurrentPlaylist() {
-        let playlistName = elements.playlistFileNameInput.value.trim();
+        let playlistName = elements.playlistFileNameInput ? elements.playlistFileNameInput.value.trim() : '';
 
         if (currentChannels.length === 0) {
             await showCustomAlert("No channels to save. Add channels to the current playlist first.");
@@ -1308,13 +1275,15 @@
             currentChannels = [...savedPlaylists?.[name] || []];
             currentChannels.forEach(channel => {
                 if (!channel.logo || channel.logo.includes("placeholder.com") || channel.logo.includes("Loading...")) {
-                    channel.logo = elements.logoAll.value.trim() || "https://via.placeholder.com/30";
+                    channel.logo = (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
                 }
             });
             saveCurrentChannels(); // Auto-save the newly loaded playlist
             renderCurrentChannels();
             toggleSavedPlaylistsDropdown();
-            elements.playlistFileNameInput.value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name;
+            if (elements.playlistFileNameInput) {
+                elements.playlistFileNameInput.value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name;
+            }
             await showCustomAlert(`Playlist "${name}" loaded.`);
         }
     }
@@ -1421,73 +1390,155 @@
 
 
     // --- Event Listeners ---
-    if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
-    if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('keyup', filterChannels);
-    if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
-    if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
-    if (elements.generateM3UBtn) elements.generateM3UBtn.addEventListener('click', generateM3U);
-    if (elements.downloadM3UBtn) elements.downloadM3UBtn.addEventListener('click', downloadM3U);
-    if (elements.copyOutputBtn) elements.copyOutputBtn.addEventListener('click', copyOutput);
-    if (elements.clearCurrentBtn) elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
-    if (elements.generateQrCodeBtn) elements.generateQrCodeBtn.addEventListener('click', generateQrCode);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize elements object after DOM is loaded
+        elements.logoAll = document.getElementById("logoAll");
+        elements.globalGroup = document.getElementById("globalGroup");
+        elements.channelName = document.getElementById("channelName");
+        elements.channelURL = document.getElementById("channelURL");
+        elements.channelLogo = document.getElementById("channelLogo");
+        elements.addChannelBtn = document.getElementById("addChannelBtn");
+        elements.checkStreamsBtn = document.getElementById("checkStreamsBtn");
+        elements.channelSearchInput = document.getElementById("channelSearchInput");
+        elements.previewList = document.getElementById("previewList");
+        elements.savedPlaylistsToggleBtn = document.getElementById("savedPlaylistsToggleBtn");
+        elements.savedPlaylistsDropdown = document.getElementById("savedPlaylistsDropdown");
+        elements.savedPlaylistsCount = document.getElementById("savedPlaylistsCount");
+        elements.playlistFileNameInput = document.getElementById("playlistFileNameInput");
+        elements.savePlaylistBtn = document.getElementById("savePlaylistBtn");
+        elements.generateM3UBtn = document.getElementById("generateM3UBtn");
+        elements.downloadM3UBtn = document.getElementById("downloadM3UBtn");
+        elements.copyOutputBtn = document.getElementById("copyOutputBtn");
+        elements.clearCurrentBtn = document.getElementById("clearCurrentBtn");
+        elements.generateQrCodeBtn = document.getElementById("generateQrCodeBtn");
+        elements.output = document.getElementById("output");
+        elements.welcomeModal = document.getElementById("welcomeModal");
+        elements.welcomeModalOkBtn = document.getElementById("welcomeModalOkBtn");
+        elements.confirmationModal = document.getElementById("confirmationModal");
+        elements.confirmationMessage = document.getElementById("confirmationMessage");
+        elements.confirmActionBtn = document.getElementById("confirmActionBtn");
+        elements.cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
+        elements.alertModal = document.getElementById("alertModal");
+        elements.alertMessage = document.getElementById("alertMessage");
+        elements.alertOkBtn = document.getElementById("alertOkBtn");
+        elements.qrCodeModal = document.getElementById("qrCodeModal");
+        elements.qrCodeCanvas = document.getElementById("qrCodeCanvas");
+        elements.qrCodeModalOkBtn = document.getElementById("qrCodeModalOkBtn");
 
-    // Global settings auto-save
-    if (elements.logoAll) elements.logoAll.addEventListener('input', saveGlobalSettings);
-    if (elements.globalGroup) elements.globalGroup.addEventListener('input', saveGlobalSettings);
 
-    // Modal OK Button Listeners (replacing close buttons)
-    if (elements.welcomeModalOkBtn) elements.welcomeModalOkBtn.addEventListener('click', () => {
-        closeModal(elements.welcomeModal);
-        localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
-        if (resolveWelcome) {
-            resolveWelcome();
-            resolveWelcome = null;
-        }
+        if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
+        if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams); // New listener for check streams
+        if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('keyup', filterChannels);
+        if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
+        if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
+        if (elements.generateM3UBtn) elements.generateM3UBtn.addEventListener('click', generateM3U);
+        if (elements.downloadM3UBtn) elements.downloadM3UBtn.addEventListener('click', downloadM3U);
+        if (elements.copyOutputBtn) elements.copyOutputBtn.addEventListener('click', copyOutput);
+        if (elements.clearCurrentBtn) elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
+        if (elements.generateQrCodeBtn) elements.generateQrCodeBtn.addEventListener('click', generateQrCode);
+
+        // Global settings auto-save
+        if (elements.logoAll) elements.logoAll.addEventListener('input', saveGlobalSettings);
+        if (elements.globalGroup) elements.globalGroup.addEventListener('input', saveGlobalSettings);
+
+        // Modal OK Button Listeners (replacing close buttons)
+        if (elements.welcomeModalOkBtn) elements.welcomeModalOkBtn.addEventListener('click', () => {
+            closeModal(elements.welcomeModal);
+            localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+            if (resolveWelcome) {
+                resolveWelcome();
+                resolveWelcome = null;
+            }
+        });
+
+        // Confirmation Modal Action Listeners
+        if (elements.confirmActionBtn) elements.confirmActionBtn.addEventListener('click', () => {
+            closeModal(elements.confirmationModal);
+            if (resolveConfirmation) {
+                resolveConfirmation(true); // Resolve with true for 'Yes'
+                resolveConfirmation = null;
+            }
+        });
+        if (elements.cancelConfirmBtn) elements.cancelConfirmBtn.addEventListener('click', () => {
+            closeModal(elements.confirmationModal);
+            if (resolveConfirmation) {
+                resolveConfirmation(false); // Resolve with false for 'No'
+                resolveConfirmation = null;
+            }
+        });
+
+        // Alert Modal OK Button Listener
+        if (elements.alertOkBtn) elements.alertOkBtn.addEventListener('click', () => {
+            closeModal(elements.alertModal);
+            if (resolveAlert) {
+                resolveAlert(); // Resolve the promise
+                resolveAlert = null;
+            }
+        });
+
+        // QR Code Modal OK Button Listener
+        if (elements.qrCodeModalOkBtn) elements.qrCodeModalOkBtn.addEventListener('click', () => {
+            closeModal(elements.qrCodeModal);
+            if (resolveQrCode) {
+                resolveQrCode();
+                resolveQrCode = null;
+            }
+        });
+
+        // Close dropdown/modals if clicked outside or ESC key pressed
+        window.addEventListener('click', (event) => {
+            if (elements.savedPlaylistsDropdown && !event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
+                elements.savedPlaylistsDropdown.classList.remove('show');
+            }
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (elements.welcomeModal && elements.welcomeModal.style.display === 'block') {
+                    closeModal(elements.welcomeModal);
+                    localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+                    if (resolveWelcome) { // Resolve if ESC is pressed
+                        resolveWelcome();
+                        resolveWelcome = null;
+                    }
+                } else if (elements.confirmationModal && elements.confirmationModal.style.display === 'block') {
+                    closeModal(elements.confirmationModal);
+                    if (resolveConfirmation) {
+                        resolveConfirmation(false); // Resolve with false if ESC
+                        resolveConfirmation = null;
+                    }
+                } else if (elements.alertModal && elements.alertModal.style.display === 'block') {
+                    closeModal(elements.alertModal);
+                    if (resolveAlert) {
+                        resolveAlert(); // Resolve if ESC
+                        resolveAlert = null;
+                    }
+                } else if (elements.qrCodeModal && elements.qrCodeModal.style.display === 'block') {
+                    closeModal(elements.qrCodeModal);
+                    if (resolveQrCode) { // Resolve if ESC
+                        resolveQrCode();
+                        resolveQrCode = null;
+                    }
+                }
+            }
+        });
+
+        // --- Initialize on Load ---
+        (async () => {
+            loadGlobalSettings();
+            loadPlaylistsFromLocalStorage(); // Load all saved playlists, including auto-save
+            loadCurrentChannels(); // This will now load from the "Auto Saved Session" if available
+
+            if (elements.playlistFileNameInput) {
+                elements.playlistFileNameInput.value = "playlist"; // Reset playlist name input
+            }
+
+            const welcomeModalShown = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN);
+            if (!welcomeModalShown && elements.welcomeModal) {
+                await showWelcomeModal(); // Use await to ensure modal is closed before proceeding
+            }
+        })();
     });
-
-    // Confirmation Modal Action Listeners
-    if (elements.confirmActionBtn) elements.confirmActionBtn.addEventListener('click', () => {
-        closeModal(elements.confirmationModal);
-        if (resolveConfirmation) {
-            resolveConfirmation(true); // Resolve with true for 'Yes'
-            resolveConfirmation = null;
-        }
-    });
-    if (elements.cancelConfirmBtn) elements.cancelConfirmBtn.addEventListener('click', () => {
-        closeModal(elements.confirmationModal);
-        if (resolveConfirmation) {
-            resolveConfirmation(false); // Resolve with false for 'No'
-            resolveConfirmation = null;
-        }
-    });
-
-    // Alert Modal OK Button Listener
-    if (elements.alertOkBtn) elements.alertOkBtn.addEventListener('click', () => {
-        closeModal(elements.alertModal);
-        if (resolveAlert) {
-            resolveAlert(); // Resolve the promise
-            resolveAlert = null;
-        }
-    });
-
-    // QR Code Modal OK Button Listener
-    if (elements.qrCodeModalOkBtn) elements.qrCodeModalOkBtn.addEventListener('click', () => {
-        closeModal(elements.qrCodeModal);
-        if (resolveQrCode) {
-            resolveQrCode();
-            resolveQrCode = null;
-        }
-    });
-
-    // Close dropdown/modals if clicked outside or ESC key pressed
-    window.addEventListener('click', (event) => {
-        if (elements.savedPlaylistsDropdown && !event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
-            elements.savedPlaylistsDropdown.classList.remove('show');
-        }
-        // No need for event.target === modalElement checks for closing anymore,
-        // as we rely on explicit button clicks or ESC.
-    });
-
-    window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            if (elements.welcomeModal
+  </script>
+</body>
+</html>
