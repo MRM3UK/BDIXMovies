@@ -1361,21 +1361,36 @@
             }
 
             try {
-                // Using a simple HEAD request with no-cors to check reachability.
-                // This is a basic check and cannot confirm if the stream is actually playable.
-                // For robust stream validation, a server-side proxy is typically required.
+                // IMPORTANT NOTE ON STREAM CHECKING:
+                // Direct client-side stream checking using `fetch` with `mode: 'no-cors'`
+                // is inherently limited due to browser's Cross-Origin Resource Sharing (CORS) policy.
+                // When `mode: 'no-cors'` is used, the browser does not expose the actual HTTP status code
+                // of the response (e.g., 200 OK, 404 Not Found, 500 Internal Server Error) to JavaScript.
+                // It simply indicates if the request was sent and received a response at all,
+                // without revealing whether the resource actually exists or is playable.
+                // Therefore, even for an invalid URL, a 'successful' (non-network error) response
+                // might still occur, leading to a misleading 'OK' status.
+
+                // For a truly reliable stream status check (e.g., verifying if a stream is live or a file exists),
+                // you would typically need a **server-side proxy**.
+                // 1. Your client-side JavaScript sends the stream URL to your server.
+                // 2. Your server makes the request to the stream URL (bypassing browser CORS restrictions).
+                // 3. Your server then returns the actual HTTP status code and other relevant information
+                //    back to your client-side JavaScript.
+
+                // The current implementation is a basic attempt to check reachability from the client,
+                // but its accuracy for determining actual stream validity is limited.
                 const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' });
                 
-                // If response.ok is not directly available due to 'no-cors',
-                // we assume reachability if no network error occurred.
-                // More advanced checks would involve inspecting response headers or using a proxy.
+                // If a response is received without a network error, we assume it's reachable.
+                // This does NOT guarantee the stream is playable or the URL returns valid content.
                 if (statusIconElement) {
-                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if no error on fetch
+                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if no network error on fetch
                 }
             } catch (error) {
                 console.error(`Error checking stream ${channel.name} (${channel.url}):`, error);
                 if (statusIconElement) {
-                    statusIconElement.innerHTML = '<i class="fas fa-times-circle error"></i>'; // Error
+                    statusIconElement.innerHTML = '<i class="fas fa-times-circle error"></i>'; // Error (e.g., network disconnected, invalid domain)
                 }
             }
             await new Promise(resolve => setTimeout(resolve, 200)); // Small delay to prevent overwhelming requests
@@ -1385,7 +1400,7 @@
             elements.checkStreamsBtn.disabled = false;
             elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
         }
-        await showCustomAlert("Stream checking complete!");
+        await showCustomAlert("Stream checking complete! (Note: Client-side checks are limited and may not guarantee stream playability due to browser security policies.)");
     }
 
 
