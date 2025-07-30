@@ -41,6 +41,7 @@
       --shadow-dark: rgba(0, 0, 0, 0.5);
       --shadow-medium: rgba(0, 0, 0, 0.6);
       --shadow-light: rgba(0, 0, 0, 0.3);
+      --modal-bg-overlay: rgba(0,0,0,0.8);
     }
 
     body {
@@ -438,7 +439,7 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0,0,0,0.8);
+      background-color: var(--modal-bg-overlay);
       padding-top: 60px;
       backdrop-filter: blur(8px);
       animation: fadeInOverlay 0.3s forwards;
@@ -569,6 +570,26 @@
     #confirmationModal .button-group-row .btn {
         min-width: 100px;
     }
+
+    /* Alert Modal (re-using confirmation modal styles but with only one button) */
+    #alertModal .modal-content {
+        max-width: 450px;
+        padding: 25px;
+    }
+    #alertModal p {
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 1.1rem;
+        color: var(--text-medium);
+    }
+    #alertModal .button-group-row {
+        justify-content: center;
+        margin-top: 0;
+    }
+    #alertModal .button-group-row .btn {
+        min-width: 120px;
+    }
+
 
     /* QR Code Modal Specific */
     #qrCodeCanvas {
@@ -708,6 +729,16 @@
     </div>
   </div>
 
+  <div id="alertModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close-btn" id="alertModalCloseBtn">&times;</span>
+      <p id="alertMessage"></p>
+      <div class="button-group-row">
+        <button class="btn btn-primary" id="alertOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
   <div id="qrCodeModal" class="modal">
     <div class="modal-content">
       <span class="modal-close-btn" id="qrCodeModalCloseBtn">&times;</span>
@@ -771,26 +802,53 @@
         confirmationMessage: document.getElementById("confirmationMessage"),
         confirmActionBtn: document.getElementById("confirmActionBtn"),
         cancelConfirmBtn: document.getElementById("cancelConfirmBtn"),
+        alertModal: document.getElementById("alertModal"), // New
+        alertMessage: document.getElementById("alertMessage"), // New
+        alertOkBtn: document.getElementById("alertOkBtn"), // New
+        alertModalCloseBtn: document.getElementById("alertModalCloseBtn"), // New
         qrCodeModal: document.getElementById("qrCodeModal"), // New
         qrCodeModalCloseBtn: document.getElementById("qrCodeModalCloseBtn"), // New
         qrCodeCanvas: document.getElementById("qrCodeCanvas"), // New
     };
 
-    let confirmationCallback = null;
+    let resolveConfirmation = null; // Used for promise-based confirmation
+    let resolveAlert = null; // Used for promise-based alert
 
     // --- Helper Functions ---
     function showModal(modalElement) {
         modalElement.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent scrolling body when modal is open
     }
 
     function closeModal(modalElement) {
         modalElement.style.display = 'none';
+        document.body.style.overflow = ''; // Restore body scrolling
     }
 
-    function showConfirmationModal(message, onConfirm) {
-        elements.confirmationMessage.textContent = message;
-        confirmationCallback = onConfirm;
-        showModal(elements.confirmationModal);
+    /**
+     * Shows a custom alert modal.
+     * @param {string} message - The message to display.
+     * @returns {Promise<void>} A promise that resolves when the user clicks OK.
+     */
+    function showCustomAlert(message) {
+        return new Promise(resolve => {
+            elements.alertMessage.textContent = message;
+            resolveAlert = resolve; // Store resolve function
+            showModal(elements.alertModal);
+        });
+    }
+
+    /**
+     * Shows a custom confirmation modal.
+     * @param {string} message - The message to display.
+     * @returns {Promise<boolean>} A promise that resolves to true if 'Yes' is clicked, false if 'No'.
+     */
+    function showCustomConfirm(message) {
+        return new Promise(resolve => {
+            elements.confirmationMessage.textContent = message;
+            resolveConfirmation = resolve; // Store resolve function
+            showModal(elements.confirmationModal);
+        });
     }
 
     function convertPixeldrainFileUrl(originalUrl) {
@@ -804,7 +862,7 @@
 
     async function processPixeldrainFolder(folderUrl) {
         if (isProcessingFolder) {
-            alert("Already processing a folder. Please wait.");
+            await showCustomAlert("Already processing a folder. Please wait.");
             return [];
         }
 
@@ -812,7 +870,7 @@
         const match = folderUrl.match(folderIdRegex);
         if (!match || !match[1]) {
             console.error("Invalid Pixeldrain folder URL format.");
-            alert("Invalid Pixeldrain folder URL. Please use a link like: https://pixeldrain.com/l/FOLDER_ID");
+            await showCustomAlert("Invalid Pixeldrain folder URL. Please use a link like: https://pixeldrain.com/l/FOLDER_ID");
             return [];
         }
 
@@ -859,14 +917,14 @@
                     }
                 }
                 if (addedChannelsFromFolder.length === 0) {
-                    alert("No video files found in the Pixeldrain folder.");
+                    await showCustomAlert("No video files found in the Pixeldrain folder.");
                 }
             } else {
-                alert("No files found in the Pixeldrain folder.");
+                await showCustomAlert("No files found in the Pixeldrain folder.");
             }
         } catch (error) {
             console.error("Error processing Pixeldrain folder:", error);
-            alert(`Error processing Pixeldrain folder: ${error.message}. Please check the URL and try again.`);
+            await showCustomAlert(`Error processing Pixeldrain folder: ${error.message}. Please check the URL and try again.`);
         } finally {
             isProcessingFolder = false;
             elements.channelURL.value = "";
@@ -999,7 +1057,12 @@
                 button.addEventListener('click', (e) => editChannel(parseInt(e.currentTarget.dataset.index)));
             });
             elements.previewList.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', (e) => confirmRemoveChannel(parseInt(e.currentTarget.dataset.index)));
+                button.addEventListener('click', async (e) => {
+                    const confirmed = await showCustomConfirm("Are you sure you want to delete this channel?");
+                    if (confirmed) {
+                        removeChannel(parseInt(e.currentTarget.dataset.index));
+                    }
+                });
             });
         }
         generateM3U();
@@ -1011,26 +1074,26 @@
         const customLogo = elements.channelLogo.value.trim();
 
         if (!url) {
-            alert("Stream URL (or Pixeldrain Folder Link) is required!");
+            await showCustomAlert("Stream URL (or Pixeldrain Folder Link) is required!");
             return;
         }
 
         const pixeldrainFolderRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
 
         if (pixeldrainFolderRegex.test(url)) {
-            if (name) alert("When adding a Pixeldrain folder, channel name input will be ignored. Names will be taken from file names or numbered.");
-            if (customLogo) alert("When adding a Pixeldrain folder, custom logo input will be ignored. Thumbnails will be used as logos.");
+            if (name) await showCustomAlert("When adding a Pixeldrain folder, channel name input will be ignored. Names will be taken from file names or numbered.");
+            if (customLogo) await showCustomAlert("When adding a Pixeldrain folder, custom logo input will be ignored. Thumbnails will be used as logos.");
 
             const channelsFromFolder = await processPixeldrainFolder(url);
             if (channelsFromFolder.length > 0) {
                 currentChannels.push(...channelsFromFolder);
                 saveCurrentChannels();
                 renderCurrentChannels();
-                alert(`Added ${channelsFromFolder.length} video channels from Pixeldrain folder!`);
+                await showCustomAlert(`Added ${channelsFromFolder.length} video channels from Pixeldrain folder!`);
             }
         } else {
             if (!name) {
-                alert("Channel name is required for single channel entries!");
+                await showCustomAlert("Channel name is required for single channel entries!");
                 return;
             }
             url = convertPixeldrainFileUrl(url);
@@ -1070,45 +1133,47 @@
         renderCurrentChannels();
     }
 
-    function editChannel(index) {
+    async function editChannel(index) {
         const channel = currentChannels[index];
         if (!channel) return;
 
-        const newName = prompt("Edit Channel Name:", channel.name);
+        let newName = prompt("Edit Channel Name:", channel.name);
         if (newName === null) return;
+        newName = newName.trim();
 
         let newUrl = prompt("Edit Stream URL:", channel.url);
         if (newUrl === null) return;
+        newUrl = convertPixeldrainFileUrl(newUrl.trim());
 
-        newUrl = convertPixeldrainFileUrl(newUrl);
-
-        const newLogo = prompt("Edit Logo URL (leave empty for global/TMDB if applicable):", channel.logo);
+        let newLogo = prompt("Edit Logo URL (leave empty for global/TMDB if applicable):", channel.logo);
         if (newLogo === null) return;
+        newLogo = newLogo.trim();
 
-        const newGroup = prompt("Edit Group Name:", channel.group || '');
+        let newGroup = prompt("Edit Group Name:", channel.group || '');
         if (newGroup === null) return;
+        newGroup = newGroup.trim();
 
-        channel.name = newName.trim();
-        channel.url = newUrl.trim();
-        channel.logo = newLogo.trim() || elements.logoAll.value.trim() || "https://via.placeholder.com/30";
-        channel.group = newGroup.trim();
+        channel.name = newName;
+        channel.url = newUrl;
+        channel.logo = newLogo || elements.logoAll.value.trim() || "https://via.placeholder.com/30";
+        channel.group = newGroup;
 
         saveCurrentChannels();
         renderCurrentChannels();
-        alert("Channel updated successfully!");
+        await showCustomAlert("Channel updated successfully!");
     }
 
     function filterChannels() {
         renderCurrentChannels();
     }
 
-    function clearCurrentChannels() {
-        showConfirmationModal("Are you sure you want to clear all channels from the current playlist?", () => {
+    async function clearCurrentChannels() {
+        const confirmed = await showCustomConfirm("Are you sure you want to clear all channels from the current playlist?");
+        if (confirmed) {
             currentChannels = [];
             saveCurrentChannels();
             renderCurrentChannels();
-            closeModal(elements.confirmationModal);
-        });
+        }
     }
 
     // --- M3U Generation & Download ---
@@ -1120,10 +1185,10 @@
         elements.output.value = output;
     }
 
-    function downloadM3U() {
+    async function downloadM3U() {
         const content = elements.output.value;
         if (currentChannels.length === 0) {
-            alert("Add some channels before downloading a playlist!");
+            await showCustomAlert("Add some channels before downloading a playlist!");
             return;
         }
         let fileName = elements.playlistFileNameInput.value.trim();
@@ -1137,16 +1202,16 @@
         a.click();
     }
 
-    function copyOutput() {
+    async function copyOutput() {
         elements.output.select();
         elements.output.setSelectionRange(0, 99999);
 
         try {
-            document.execCommand("copy");
-            alert("Output copied to clipboard!");
+            await navigator.clipboard.writeText(elements.output.value);
+            await showCustomAlert("Output copied to clipboard!");
         } catch (err) {
             console.error("Failed to copy text: ", err);
-            alert("Failed to copy text. Please copy manually.");
+            await showCustomAlert("Failed to copy text. Please copy manually.");
         }
     }
 
@@ -1188,11 +1253,11 @@
         }
     }
 
-    function saveCurrentPlaylist() {
+    async function saveCurrentPlaylist() {
         let playlistName = elements.playlistFileNameInput.value.trim();
 
         if (currentChannels.length === 0) {
-            alert("No channels to save. Add channels to the current playlist first.");
+            await showCustomAlert("No channels to save. Add channels to the current playlist first.");
             return;
         }
 
@@ -1201,28 +1266,28 @@
             if (!playlistName) return;
             playlistName = playlistName.trim();
             if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
-                alert("Invalid playlist name. Cannot be empty or 'Auto Saved Session'.");
+                await showCustomAlert("Invalid playlist name. Cannot be empty or 'Auto Saved Session'.");
                 return;
             }
         }
 
         if (savedPlaylists?.[playlistName]) {
-            showConfirmationModal(`A playlist named "${playlistName}" already exists. Do you want to overwrite it?`, () => {
+            const confirmed = await showCustomConfirm(`A playlist named "${playlistName}" already exists. Do you want to overwrite it?`);
+            if (confirmed) {
                 savedPlaylists = { ...savedPlaylists, [playlistName]: [...currentChannels] };
                 savePlaylistsToLocalStorage();
                 renderSavedPlaylistsDropdown();
-                alert(`Playlist "${playlistName}" overwritten successfully!`);
-                closeModal(elements.confirmationModal);
-            });
+                await showCustomAlert(`Playlist "${playlistName}" overwritten successfully!`);
+            }
         } else {
             savedPlaylists = { ...savedPlaylists, [playlistName]: [...currentChannels] };
             savePlaylistsToLocalStorage();
             renderSavedPlaylistsDropdown();
-            alert(`Playlist "${playlistName}" saved successfully!`);
+            await showCustomAlert(`Playlist "${playlistName}" saved successfully!`);
         }
     }
 
-    function loadSavedPlaylist(name) {
+    async function loadSavedPlaylist(name) {
         if (name === AUTO_SAVE_PLAYLIST_NAME) {
             currentChannels = [...savedPlaylists?.[name] || []];
             currentChannels.forEach(channel => {
@@ -1237,7 +1302,8 @@
             return;
         }
 
-        showConfirmationModal(`Loading "${name}" will replace your current playlist. Continue?`, () => {
+        const confirmed = await showCustomConfirm(`Loading "${name}" will replace your current playlist. Continue?`);
+        if (confirmed) {
             currentChannels = [...savedPlaylists?.[name] || []];
             currentChannels.forEach(channel => {
                 if (!channel.logo || channel.logo.includes("placeholder.com") || channel.logo.includes("Loading...")) {
@@ -1248,49 +1314,38 @@
             renderCurrentChannels();
             toggleSavedPlaylistsDropdown();
             elements.playlistFileNameInput.value = name;
-            alert(`Playlist "${name}" loaded.`);
-            closeModal(elements.confirmationModal);
-        });
+            await showCustomAlert(`Playlist "${name}" loaded.`);
+        }
     }
 
-    function confirmDeleteSavedPlaylist(name, event) {
+    async function confirmDeleteSavedPlaylist(name, event) {
         event.stopPropagation();
         if (name === AUTO_SAVE_PLAYLIST_NAME) {
-            alert("The 'Auto Saved Session' playlist cannot be manually deleted.");
+            await showCustomAlert("The 'Auto Saved Session' playlist cannot be manually deleted.");
             return;
         }
-        showConfirmationModal(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone.`, () => {
+        const confirmed = await showCustomConfirm(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone.`);
+        if (confirmed) {
             deleteSavedPlaylist(name);
-            closeModal(elements.confirmationModal);
-        });
+        }
     }
 
-    function deleteSavedPlaylist(name) {
+    async function deleteSavedPlaylist(name) {
         const {[name]: deleted, ...rest} = savedPlaylists;
         savedPlaylists = rest;
         savePlaylistsToLocalStorage();
         renderSavedPlaylistsDropdown();
-        alert(`Playlist "${name}" deleted.`);
+        await showCustomAlert(`Playlist "${name}" deleted.`);
     }
 
     // --- QR Code Generator ---
-    function generateQrCode() {
+    async function generateQrCode() {
         const playlistContent = elements.output.value;
         if (!playlistContent.trim()) {
-            alert("Please generate a playlist first to create a QR code.");
+            await showCustomAlert("Please generate a playlist first to create a QR code.");
             return;
         }
 
-        // To make the QR code scannable on another device, we need a publicly accessible URL.
-        // For local development, this won't work directly for external devices.
-        // A common workaround is to upload the M3U to a temporary pastebin or file hosting service
-        // and generate a QR code for *that* URL.
-        // For simplicity in this local code, we'll generate QR for the content directly.
-        // If you host this online, you could offer to upload the M3U and provide a URL.
-        // Example: If you host playlist.m3u on your server, QR would be for yoursite.com/playlist.m3u
-
-        // For this example, we'll use a data URI or a simple text representation if it's too large.
-        // Qrious can handle reasonable amounts of text.
         try {
             new QRious({
                 element: elements.qrCodeCanvas,
@@ -1302,14 +1357,14 @@
             showModal(elements.qrCodeModal);
         } catch (error) {
             console.error("Error generating QR code:", error);
-            alert("Failed to generate QR code. The playlist might be too large.");
+            await showCustomAlert("Failed to generate QR code. The playlist might be too large.");
         }
     }
 
     // --- Live Stream Checker ---
     async function checkStreams() {
         if (currentChannels.length === 0) {
-            alert("No channels to check. Please add some channels first.");
+            await showCustomAlert("No channels to check. Please add some channels first.");
             return;
         }
 
@@ -1325,19 +1380,16 @@
             }
 
             try {
-                // Use a proxy for CORS if necessary, or a simple fetch for direct links.
-                // Note: Direct fetch will often fail due to CORS for actual stream URLs.
-                // A server-side proxy is usually needed for robust stream checking.
-                // For demonstration, a simple HEAD request is used.
-                const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' }); // no-cors for basic reachability
-                // We cannot check actual content with no-cors, just if the URL is reachable.
-                // For proper stream validation, you would need a backend.
-
+                // Using a simple HEAD request with no-cors to check reachability.
+                // This is a basic check and cannot confirm if the stream is actually playable.
+                // For robust stream validation, a server-side proxy is typically required.
+                const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' });
+                
+                // If response.ok is not directly available due to 'no-cors',
+                // we assume reachability if no network error occurred.
+                // More advanced checks would involve inspecting response headers or using a proxy.
                 if (statusIconElement) {
-                    // This check is very basic and might not be accurate for all streams due to CORS and stream types.
-                    // If response.ok (HTTP 2xx) is not reachable due to 'no-cors', it implies it's reachable at least.
-                    // A proper check would involve actual stream parsing, which is complex for client-side JS.
-                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if reachable
+                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if no error on fetch
                 }
             } catch (error) {
                 console.error(`Error checking stream ${channel.name} (${channel.url}):`, error);
@@ -1350,7 +1402,7 @@
 
         elements.checkStreamsBtn.disabled = false;
         elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
-        alert("Stream checking complete!");
+        await showCustomAlert("Stream checking complete!");
     }
 
 
@@ -1371,19 +1423,55 @@
     elements.globalGroup.addEventListener('input', saveGlobalSettings);
 
     // Modal Close Listeners
-    elements.welcomeModalCloseBtn.addEventListener('click', () => closeModal(elements.welcomeModal));
-    elements.confirmationModalCloseBtn.addEventListener('click', () => closeModal(elements.confirmationModal));
-    elements.qrCodeModalCloseBtn.addEventListener('click', () => closeModal(elements.qrCodeModal)); // New
+    elements.welcomeModalCloseBtn.addEventListener('click', () => {
+        closeModal(elements.welcomeModal);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+    });
 
-    // Confirmation Modal Action Listeners
-    elements.confirmActionBtn.addEventListener('click', () => {
-        if (confirmationCallback) {
-            confirmationCallback();
+    elements.confirmationModalCloseBtn.addEventListener('click', () => {
+        closeModal(elements.confirmationModal);
+        if (resolveConfirmation) {
+            resolveConfirmation(false); // Resolve with false if modal is closed without choice
+            resolveConfirmation = null;
         }
     });
-    elements.cancelConfirmBtn.addEventListener('click', () => closeModal(elements.confirmationModal));
 
-    // Close dropdown/modals if clicked outside
+    elements.alertModalCloseBtn.addEventListener('click', () => { // New
+        closeModal(elements.alertModal);
+        if (resolveAlert) {
+            resolveAlert(); // Resolve the promise
+            resolveAlert = null;
+        }
+    });
+    
+    // Confirmation Modal Action Listeners
+    elements.confirmActionBtn.addEventListener('click', () => {
+        closeModal(elements.confirmationModal);
+        if (resolveConfirmation) {
+            resolveConfirmation(true); // Resolve with true for 'Yes'
+            resolveConfirmation = null;
+        }
+    });
+    elements.cancelConfirmBtn.addEventListener('click', () => {
+        closeModal(elements.confirmationModal);
+        if (resolveConfirmation) {
+            resolveConfirmation(false); // Resolve with false for 'No'
+            resolveConfirmation = null;
+        }
+    });
+
+    // Alert Modal OK Button Listener (New)
+    elements.alertOkBtn.addEventListener('click', () => {
+        closeModal(elements.alertModal);
+        if (resolveAlert) {
+            resolveAlert(); // Resolve the promise
+            resolveAlert = null;
+        }
+    });
+
+    elements.qrCodeModalCloseBtn.addEventListener('click', () => closeModal(elements.qrCodeModal)); // New
+
+    // Close dropdown/modals if clicked outside or ESC key pressed
     window.addEventListener('click', (event) => {
         if (!event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
             elements.savedPlaylistsDropdown.classList.remove('show');
@@ -1394,9 +1482,43 @@
         }
         if (event.target === elements.confirmationModal) {
             closeModal(elements.confirmationModal);
+            if (resolveConfirmation) {
+                resolveConfirmation(false);
+                resolveConfirmation = null;
+            }
         }
-        if (event.target === elements.qrCodeModal) { // New
+        if (event.target === elements.alertModal) { // New
+            closeModal(elements.alertModal);
+            if (resolveAlert) {
+                resolveAlert();
+                resolveAlert = null;
+            }
+        }
+        if (event.target === elements.qrCodeModal) {
             closeModal(elements.qrCodeModal);
+        }
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            if (elements.welcomeModal.style.display === 'block') {
+                closeModal(elements.welcomeModal);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+            } else if (elements.confirmationModal.style.display === 'block') {
+                closeModal(elements.confirmationModal);
+                if (resolveConfirmation) {
+                    resolveConfirmation(false);
+                    resolveConfirmation = null;
+                }
+            } else if (elements.alertModal.style.display === 'block') { // New
+                closeModal(elements.alertModal);
+                if (resolveAlert) {
+                    resolveAlert();
+                    resolveAlert = null;
+                }
+            } else if (elements.qrCodeModal.style.display === 'block') {
+                closeModal(elements.qrCodeModal);
+            }
         }
     });
 
@@ -1410,7 +1532,6 @@
         const welcomeModalShown = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN);
         if (!welcomeModalShown) {
             showModal(elements.welcomeModal);
-            localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
         }
     };
   </script>
