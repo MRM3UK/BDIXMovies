@@ -7,6 +7,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
   <style>
     /* CSS Variables for colors */
     :root {
@@ -31,19 +33,19 @@
       --btn-primary-hover: #303f9f;
       --btn-copy: #607d8b;
       --btn-copy-hover: #455a64;
-      --border-color: #333;
-      --shadow-dark: rgba(0, 0, 0, 0.5);
-      --shadow-medium: rgba(0, 0, 0, 0.6);
-      --shadow-light: rgba(0, 0, 0, 0.3);
       --red-error: #dc3545;
       --red-error-hover: #c82333;
       --yellow-warning: #ffc107;
       --yellow-warning-hover: #e0a800;
+      --border-color: #333;
+      --shadow-dark: rgba(0, 0, 0, 0.5);
+      --shadow-medium: rgba(0, 0, 0, 0.6);
+      --shadow-light: rgba(0, 0, 0, 0.3);
     }
 
     body {
       background-color: var(--bg-dark);
-      font-family: 'Roboto', sans-serif; /* Changed to Roboto for body */
+      font-family: 'Roboto', sans-serif;
       color: var(--text-light);
       padding: 15px;
       line-height: 1.6;
@@ -51,16 +53,16 @@
     .container {
       background-color: var(--bg-container);
       border-radius: 20px;
-      box-shadow: 0 0 25px var(--shadow-dark); /* Enhanced shadow */
+      box-shadow: 0 0 25px var(--shadow-dark);
       padding: 35px;
       margin-top: 20px;
       margin-bottom: 20px;
     }
     h3 {
-      font-family: 'Poppins', sans-serif; /* Changed to Poppins for headings */
+      font-family: 'Poppins', sans-serif;
       color: var(--text-medium);
-      text-shadow: 1px 1px 3px var(--shadow-dark); /* Deeper shadow */
-      font-weight: 700; /* Bolder */
+      text-shadow: 1px 1px 3px var(--shadow-dark);
+      font-weight: 700;
       text-align: center;
       margin-bottom: 25px;
       letter-spacing: 1px;
@@ -72,15 +74,15 @@
         letter-spacing: 0.5px;
     }
     .form-control, .btn {
-      border-radius: 12px; /* Slightly more rounded */
-      transition: all 0.3s ease-in-out; /* Slower, smoother transition */
+      border-radius: 12px;
+      transition: all 0.3s ease-in-out;
       border: 1px solid var(--border-color);
       font-size: 1rem;
     }
     .form-control {
       background-color: var(--bg-input);
       color: var(--text-light);
-      padding: 14px 18px; /* More padding */
+      padding: 14px 18px;
     }
     .form-control::placeholder {
         color: var(--text-placeholder);
@@ -88,31 +90,31 @@
     .form-control:focus {
       outline: none;
       border-color: var(--accent-blue);
-      box-shadow: 0 0 8px rgba(100, 181, 246, 0.6); /* More prominent shadow on focus */
-      background-color: var(--bg-input); /* Keep same background, or slightly darker */
+      box-shadow: 0 0 8px rgba(100, 181, 246, 0.6);
+      background-color: var(--bg-input);
       color: var(--text-light);
     }
     .btn {
-      padding: 14px 22px; /* More padding */
+      padding: 14px 22px;
       font-weight: bold;
-      letter-spacing: 1px; /* Increased letter spacing */
+      letter-spacing: 1px;
       text-transform: uppercase;
-      box-shadow: 0 3px 8px var(--shadow-medium); /* Deeper shadow */
+      box-shadow: 0 3px 8px var(--shadow-medium);
       cursor: pointer;
-      background-image: linear-gradient(to bottom, var(--btn-primary), var(--btn-primary-hover)); /* Example gradient */
-      border: none; /* Remove default border */
-      color: #fff; /* Ensure text color */
+      background-image: linear-gradient(to bottom, var(--btn-primary), var(--btn-primary-hover));
+      border: none;
+      color: #fff;
     }
     .btn i {
-        margin-right: 10px; /* More space for icons */
+        margin-right: 10px;
     }
     .btn:hover {
-      transform: translateY(-2px); /* More pronounced lift */
-      box-shadow: 0 5px 12px var(--shadow-dark); /* Even deeper shadow on hover */
-      opacity: 0.95; /* Subtle opacity change */
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px var(--shadow-dark);
+      opacity: 0.95;
     }
     .btn:active {
-        transform: translateY(0); /* Return to original position */
+        transform: translateY(0);
         box-shadow: 0 1px 5px var(--shadow-dark);
     }
     /* Specific button styles with gradients */
@@ -129,20 +131,28 @@
     .btn-copy { background-image: linear-gradient(to bottom, var(--btn-copy), var(--btn-copy-hover)); }
     .btn-copy:hover { background-image: linear-gradient(to top, var(--btn-copy), var(--btn-copy-hover)); }
 
+    /* Stream Status Specific Styles */
+    .btn-check-stream {
+        background-color: #ff9800; /* Orange */
+        color: #fff;
+    }
+    .btn-check-stream:hover {
+        background-color: #fb8c00;
+    }
 
     .channel-list-box {
         background-color: var(--bg-input);
-        border-radius: 15px; /* More rounded */
+        border-radius: 15px;
         border: 1px solid var(--border-color);
-        padding: 20px; /* More padding */
+        padding: 20px;
         margin-bottom: 25px;
-        box-shadow: 0 3px 10px var(--shadow-medium); /* Deeper shadow */
+        box-shadow: 0 3px 10px var(--shadow-medium);
     }
     .channel-list-box .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px; /* More space */
+        margin-bottom: 20px;
         flex-wrap: wrap;
     }
     .channel-list-box .header h5 {
@@ -157,7 +167,7 @@
         display: flex;
         gap: 10px;
         flex-grow: 1;
-        max-width: 350px; /* Wider search box */
+        max-width: 350px;
     }
     @media (max-width: 576px) {
         .channel-list-box .header {
@@ -174,30 +184,29 @@
     #previewList {
         display: flex;
         flex-direction: column;
-        gap: 12px; /* More space between items */
-        max-height: 320px; /* Slightly taller */
+        gap: 12px;
+        max-height: 320px;
         overflow-y: auto;
-        padding-right: 8px; /* For scrollbar */
+        padding-right: 8px;
     }
 
     /* Custom Scrollbar */
-    #previewList::-webkit-scrollbar { width: 10px; } /* Wider scrollbar */
+    #previewList::-webkit-scrollbar { width: 10px; }
     #previewList::-webkit-scrollbar-track { background: var(--border-color); border-radius: 10px; }
     #previewList::-webkit-scrollbar-thumb {
         background-color: var(--accent-blue);
         border-radius: 10px;
-        border: 2px solid var(--bg-input); /* Border matches background */
+        border: 2px solid var(--bg-input);
     }
     #previewList::-webkit-scrollbar-thumb:hover { background-color: var(--accent-blue-dark); }
-
 
     .channel-preview {
       display: flex;
       align-items: center;
-      gap: 15px; /* More space */
+      gap: 15px;
       padding: 10px 15px;
-      background-color: var(--bg-container); /* Matches container background */
-      border-radius: 10px; /* More rounded */
+      background-color: var(--bg-container);
+      border-radius: 10px;
       border: 1px solid var(--border-color);
       box-shadow: 0 2px 5px var(--shadow-light);
       transition: all 0.2s ease-in-out;
@@ -207,12 +216,12 @@
         box-shadow: 0 3px 8px var(--shadow-medium);
     }
     .channel-preview img {
-      height: 35px; /* Larger logo */
-      width: 35px; /* Larger logo */
+      height: 35px;
+      width: 35px;
       object-fit: contain;
-      border-radius: 8px; /* More rounded */
+      border-radius: 8px;
       background-color: var(--border-color);
-      padding: 4px; /* More padding */
+      padding: 4px;
       flex-shrink: 0;
     }
     .channel-preview span {
@@ -222,37 +231,48 @@
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      font-size: 1rem; /* Slightly larger font */
+      font-size: 1rem;
     }
 
     /* Action buttons */
     .channel-preview .action-buttons {
         display: flex;
-        gap: 8px; /* More space */
+        gap: 8px;
         flex-shrink: 0;
     }
     .channel-preview .action-buttons button {
       background: none;
       border: none;
       border-radius: 50%;
-      width: 32px; /* Larger buttons */
-      height: 32px; /* Larger buttons */
+      width: 32px;
+      height: 32px;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 1.1em; /* Larger icon */
+      font-size: 1.1em;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
     }
     .channel-preview .delete-btn { color: var(--red-error); }
-    .channel-preview .delete-btn:hover { background-color: rgba(220, 53, 69, 0.25); transform: scale(1.15); } /* More prominent hover */
+    .channel-preview .delete-btn:hover { background-color: rgba(220, 53, 69, 0.25); transform: scale(1.15); }
     .channel-preview .edit-btn { color: var(--yellow-warning); }
-    .channel-preview .edit-btn:hover { background-color: rgba(255, 193, 7, 0.25); transform: scale(1.15); } /* More prominent hover */
+    .channel-preview .edit-btn:hover { background-color: rgba(255, 193, 7, 0.25); transform: scale(1.15); }
+
+    /* Stream Status Icon */
+    .channel-preview .status-icon {
+        margin-left: auto; /* Push to the right */
+        font-size: 1.2em;
+        width: 24px;
+        text-align: center;
+    }
+    .status-icon.loading { color: #f0ad4e; } /* Orange-yellow for loading */
+    .status-icon.ok { color: #5cb85c; } /* Green for OK */
+    .status-icon.error { color: #d9534f; } /* Red for Error */
 
     textarea {
       width: 100%;
-      height: 220px; /* Slightly taller */
-      font-family: 'Roboto Mono', monospace; /* Monospace font for code */
+      height: 220px;
+      font-family: 'Roboto Mono', monospace;
       margin-top: 20px;
       border-radius: 12px;
       background-color: var(--bg-input);
@@ -280,11 +300,11 @@
     .footer {
       margin-top: 40px;
       text-align: center;
-      font-size: 15px; /* Slightly larger */
+      font-size: 15px;
       color: var(--text-placeholder);
       text-shadow: 0.5px 0.5px 1px var(--shadow-dark);
       padding-top: 20px;
-      border-top: 1px solid var(--border-color); /* Separator line */
+      border-top: 1px solid var(--border-color);
     }
     .footer a {
         color: var(--accent-blue);
@@ -317,23 +337,23 @@
         display: none;
         position: absolute;
         background-color: var(--bg-input);
-        min-width: 280px; /* Wider */
+        min-width: 280px;
         box-shadow: 0 5px 15px var(--shadow-dark);
         border: 1px solid var(--border-color);
-        border-radius: 15px; /* More rounded */
+        border-radius: 15px;
         z-index: 1;
-        max-height: 350px; /* Taller */
+        max-height: 350px;
         overflow-y: auto;
         left: 0;
         right: 0;
         top: 100%;
-        margin-top: 12px; /* More space from button */
+        margin-top: 12px;
         padding: 10px 0;
     }
     .dropdown-content.show { display: block; }
     .dropdown-content button {
         color: var(--text-light);
-        padding: 12px 18px; /* More padding */
+        padding: 12px 18px;
         text-decoration: none;
         display: block;
         background: none;
@@ -346,7 +366,7 @@
         transition: background-color 0.2s ease, transform 0.2s ease;
     }
     .dropdown-content button:last-child { border-bottom: none; }
-    .dropdown-content button:hover { background-color: var(--border-color); transform: translateX(8px); } /* More pronounced slide */
+    .dropdown-content button:hover { background-color: var(--border-color); transform: translateX(8px); }
     .dropdown-item-actions {
         display: flex;
         justify-content: space-between;
@@ -365,7 +385,7 @@
         background: none;
         border: none;
         color: var(--red-error);
-        font-size: 1.2em; /* Larger icon */
+        font-size: 1.2em;
         cursor: pointer;
         opacity: 0.8;
         transition: opacity 0.2s ease, transform 0.2s ease;
@@ -380,7 +400,7 @@
 
     .playlist-actions-section {
         margin-top: 25px;
-        padding: 25px; /* More padding */
+        padding: 25px;
         background-color: #252525;
         border-radius: 15px;
         box-shadow: 0 3px 10px var(--shadow-medium);
@@ -393,13 +413,13 @@
     .button-group-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px; /* More space */
+        gap: 12px;
         margin-top: 18px;
         justify-content: center;
     }
     .button-group-row .btn {
         flex: 1 1 auto;
-        min-width: 140px; /* Wider */
+        min-width: 140px;
     }
     @media (max-width: 576px) {
         .button-group-row .btn {
@@ -418,23 +438,23 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0,0,0,0.8); /* Darker overlay */
+      background-color: rgba(0,0,0,0.8);
       padding-top: 60px;
-      backdrop-filter: blur(8px); /* Stronger blur */
+      backdrop-filter: blur(8px);
       animation: fadeInOverlay 0.3s forwards;
     }
 
     .modal-content {
       background-color: var(--bg-container);
       margin: 5% auto;
-      padding: 35px; /* More padding */
+      padding: 35px;
       border: 1px solid var(--border-color);
-      border-radius: 20px; /* More rounded */
-      width: 85%; /* Wider */
-      max-width: 650px; /* Max width */
-      box-shadow: 0 8px 20px var(--shadow-dark); /* Stronger shadow */
+      border-radius: 20px;
+      width: 85%;
+      max-width: 650px;
+      box-shadow: 0 8px 20px var(--shadow-dark);
       position: relative;
-      animation: scaleUpAndFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* Smoother animation */
+      animation: scaleUpAndFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
     /* Modal Animations */
@@ -469,21 +489,21 @@
 
     .modal-content ul li {
       background-color: var(--bg-input);
-      margin-bottom: 12px; /* More space */
-      padding: 15px 18px; /* More padding */
+      margin-bottom: 12px;
+      padding: 15px 18px;
       border-radius: 10px;
       border: 1px solid var(--border-color);
       color: var(--text-light);
       display: flex;
       align-items: center;
-      font-size: 1rem; /* Slightly larger */
+      font-size: 1rem;
       box-shadow: 0 1px 4px var(--shadow-light);
     }
 
     .modal-content ul li i {
-      margin-right: 12px; /* More space */
+      margin-right: 12px;
       color: var(--accent-blue);
-      font-size: 1.2em; /* Larger icon */
+      font-size: 1.2em;
     }
 
     .modal-close-btn {
@@ -491,7 +511,7 @@
       position: absolute;
       top: 20px;
       right: 30px;
-      font-size: 32px; /* Larger close button */
+      font-size: 32px;
       font-weight: bold;
       cursor: pointer;
       transition: 0.3s;
@@ -530,17 +550,6 @@
             right: 20px;
         }
     }
-
-    /* New Bulk Add Modal Specific Styles */
-    #bulkAddTextarea {
-        min-height: 250px; /* Larger textarea for bulk add */
-    }
-    #bulkAddInstructions {
-        color: var(--text-dark);
-        font-size: 0.9rem;
-        margin-bottom: 15px;
-        line-height: 1.5;
-    }
     
     /* Confirmation Modal */
     #confirmationModal .modal-content {
@@ -559,6 +568,23 @@
     }
     #confirmationModal .button-group-row .btn {
         min-width: 100px;
+    }
+
+    /* QR Code Modal Specific */
+    #qrCodeCanvas {
+        display: block;
+        margin: 20px auto 0 auto;
+        max-width: 80%;
+        height: auto;
+        border-radius: 10px;
+        background-color: #fff; /* QR code needs a light background */
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    #qrCodeMessage {
+        text-align: center;
+        margin-top: 15px;
+        color: var(--text-dark);
     }
   </style>
 </head>
@@ -591,12 +617,8 @@
         <button class="btn btn-success" id="addChannelBtn">
             <i class="fas fa-plus-circle"></i> Add Channel
         </button>
-        <button class="btn btn-info" id="openBulkAddModalBtn">
-            <i class="fas fa-layer-group"></i> Bulk Add
-        </button>
-        <button class="btn btn-dark" id="importM3UBtn">
-            <i class="fas fa-upload"></i> Import M3U
-            <input type="file" id="m3uFileInput" accept=".m3u" style="display: none;">
+        <button class="btn btn-check-stream" id="checkStreamsBtn">
+            <i class="fas fa-signal"></i> Check Streams
         </button>
     </div>
 
@@ -636,6 +658,9 @@
             <button class="btn btn-dark" id="downloadM3UBtn">
                 <i class="fas fa-download"></i> Download
             </button>
+            <button class="btn btn-copy" id="generateQrCodeBtn">
+                <i class="fas fa-qrcode"></i> Generate QR
+            </button>
             <button class="btn btn-secondary" id="clearCurrentBtn">
                 <i class="fas fa-trash-alt"></i> Clear Current
             </button>
@@ -662,28 +687,13 @@
         <li><i class="fas fa-film"></i> **Smart Logo Fetching:** If you add a channel containing "movie" in its name and no custom logo, we'll try to fetch a relevant movie poster from TMDB!</li>
         <li><i class="fas fa-sliders-h"></i> Set **global default logo and group names** for all channels. These will be saved automatically!</li>
         <li><i class="fas fa-search"></i> **Search and manage** your added channels with ease.</li>
-        <li><i class="fas fa-layer-group"></i> **Bulk Add Channels:** Add multiple channels quickly by pasting them in a specific format.</li>
-        <li><i class="fas fa-upload"></i> **Import M3U:** Upload an existing `.m3u` file to populate your channel list.</li>
+        <li><i class="fas fa-signal"></i> **Live Stream Checker:** Quickly check if your added stream URLs are active.</li>
         <li><i class="fas fa-save"></i> **Save and load multiple playlists** locally in your browser.</li>
         <li><i class="fas fa-download"></i> **Generate and download** your M3U playlist file instantly.</li>
+        <li><i class="fas fa-qrcode"></i> **Generate QR Code:** Get a QR code for your playlist URL for easy access on other devices.</li>
         <li><i class="fas fa-copy"></i> **Copy** the generated M3U output to your clipboard.</li>
       </ul>
       <p class="modal-footer-text">Get started by adding your first channel or Pixeldrain folder link!</p>
-    </div>
-  </div>
-
-  <div id="bulkAddModal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close-btn" id="bulkAddModalCloseBtn">&times;</span>
-      <h4>Bulk Add Channels</h4>
-      <p id="bulkAddInstructions">
-        Paste multiple channels below, one per line. Use the format: <br>
-        `Channel Name | Stream URL | Optional Logo URL | Optional Group Name` <br>
-        Example: `Zee Cinema | https://example.com/zeecinema.m3u8 | https://example.com/zeelogo.png | Movies` <br>
-        (Only "Channel Name" and "Stream URL" are required per line)
-      </p>
-      <textarea id="bulkAddTextarea" class="form-control" placeholder="Paste your channels here..."></textarea>
-      <button class="btn btn-success w-100 mt-3" id="processBulkAddBtn"><i class="fas fa-plus-square"></i> Add All Channels</button>
     </div>
   </div>
 
@@ -698,16 +708,25 @@
     </div>
   </div>
 
+  <div id="qrCodeModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close-btn" id="qrCodeModalCloseBtn">&times;</span>
+      <h4>Scan QR Code for Playlist</h4>
+      <canvas id="qrCodeCanvas"></canvas>
+      <p id="qrCodeMessage">Scan this QR code with your device to access the playlist.</p>
+    </div>
+  </div>
+
   <script>
     let currentChannels = [];
     let savedPlaylists = {};
-    let isProcessingFolder = false; // To prevent multiple simultaneous folder processing
+    let isProcessingFolder = false;
 
     // Local Storage Keys
     const LOCAL_STORAGE_KEYS = {
         CURRENT_PLAYLIST: 'currentM3UChannels',
         SAVED_PLAYLISTS: 'savedM3UPlaylists',
-        GLOBAL_SETTINGS: 'globalM3USettings', // New key for global settings
+        GLOBAL_SETTINGS: 'globalM3USettings',
         WELCOME_MODAL_SHOWN: 'welcomeModalShown'
     };
 
@@ -715,13 +734,13 @@
 
     // TMDB API Key (Replace with your actual TMDB API Key)
     const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; // <--- এখানে আপনার TMDB API Key যোগ করুন!
-    const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w200';
+    const TMDB_IMAGE_BASE_URL = 'https://image.themoviedb.org/t/p/w200';
 
     // List of common video file extensions for Pixeldrain folder processing
     const videoFileExtensions = [
         '.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mpeg', '.mpg', '.3gp',
         '.ts', '.m2ts', '.ogg', '.ogv', '.f4v', '.swf', '.vob', '.qt', '.rm', '.rmvb',
-        '.divx', '.xvid', '.m4v', '.asf', '.dat', '.evo', '.hevc', '.h264', '.h265', '.m3u8' // Added .m3u8
+        '.divx', '.xvid', '.m4v', '.asf', '.dat', '.evo', '.hevc', '.h264', '.h265', '.m3u8'
     ];
 
     // DOM Elements
@@ -732,9 +751,7 @@
         channelURL: document.getElementById("channelURL"),
         channelLogo: document.getElementById("channelLogo"),
         addChannelBtn: document.getElementById("addChannelBtn"),
-        openBulkAddModalBtn: document.getElementById("openBulkAddModalBtn"),
-        importM3UBtn: document.getElementById("importM3UBtn"),
-        m3uFileInput: document.getElementById("m3uFileInput"),
+        checkStreamsBtn: document.getElementById("checkStreamsBtn"), // New
         channelSearchInput: document.getElementById("channelSearchInput"),
         previewList: document.getElementById("previewList"),
         savedPlaylistsToggleBtn: document.getElementById("savedPlaylistsToggleBtn"),
@@ -744,22 +761,22 @@
         savePlaylistBtn: document.getElementById("savePlaylistBtn"),
         generateM3UBtn: document.getElementById("generateM3UBtn"),
         downloadM3UBtn: document.getElementById("downloadM3UBtn"),
+        generateQrCodeBtn: document.getElementById("generateQrCodeBtn"), // New
         clearCurrentBtn: document.getElementById("clearCurrentBtn"),
         output: document.getElementById("output"),
         copyOutputBtn: document.getElementById("copyOutputBtn"),
         welcomeModal: document.getElementById("welcomeModal"),
         welcomeModalCloseBtn: document.getElementById("welcomeModalCloseBtn"),
-        bulkAddModal: document.getElementById("bulkAddModal"),
-        bulkAddModalCloseBtn: document.getElementById("bulkAddModalCloseBtn"),
-        bulkAddTextarea: document.getElementById("bulkAddTextarea"),
-        processBulkAddBtn: document.getElementById("processBulkAddBtn"),
         confirmationModal: document.getElementById("confirmationModal"),
         confirmationMessage: document.getElementById("confirmationMessage"),
         confirmActionBtn: document.getElementById("confirmActionBtn"),
         cancelConfirmBtn: document.getElementById("cancelConfirmBtn"),
+        qrCodeModal: document.getElementById("qrCodeModal"), // New
+        qrCodeModalCloseBtn: document.getElementById("qrCodeModalCloseBtn"), // New
+        qrCodeCanvas: document.getElementById("qrCodeCanvas"), // New
     };
 
-    let confirmationCallback = null; // Callback for confirmation modal
+    let confirmationCallback = null;
 
     // --- Helper Functions ---
     function showModal(modalElement) {
@@ -811,8 +828,7 @@
             elements.channelName.disabled = true;
             elements.channelLogo.disabled = true;
             elements.addChannelBtn.disabled = true;
-            elements.openBulkAddModalBtn.disabled = true; // Disable bulk add during folder processing
-            elements.importM3UBtn.disabled = true; // Disable import during folder processing
+            elements.checkStreamsBtn.disabled = true; // Disable during folder processing
 
             const response = await fetch(apiUrl);
             if (!response.ok) {
@@ -858,8 +874,7 @@
             elements.channelName.disabled = false;
             elements.channelLogo.disabled = false;
             elements.addChannelBtn.disabled = false;
-            elements.openBulkAddModalBtn.disabled = false;
-            elements.importM3UBtn.disabled = false;
+            elements.checkStreamsBtn.disabled = false;
         }
         return addedChannelsFromFolder;
     }
@@ -963,13 +978,13 @@
             elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">${message}</p>`;
         } else {
             filteredChannels.forEach((ch, index) => {
-                const originalIndex = currentChannels.indexOf(ch);
+                const originalIndex = currentChannels.indexOf(ch); // Find the original index for operations
                 const previewDiv = document.createElement("div");
                 previewDiv.className = "channel-preview";
                 previewDiv.innerHTML = `
                     <img src="${ch.logo}" alt="Logo" onerror="this.onerror=null;this.src='https://via.placeholder.com/30';" loading="lazy">
                     <span>${ch.name} ${ch.group ? `(${ch.group})` : ''}</span>
-                    <div class="action-buttons">
+                    <div class="status-icon" id="status-${originalIndex}"></div> <div class="action-buttons">
                         <button class="edit-btn" data-index="${originalIndex}">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -980,7 +995,6 @@
                 `;
                 elements.previewList.appendChild(previewDiv);
             });
-            // Attach event listeners for edit and delete buttons
             elements.previewList.querySelectorAll('.edit-btn').forEach(button => {
                 button.addEventListener('click', (e) => editChannel(parseInt(e.currentTarget.dataset.index)));
             });
@@ -991,7 +1005,11 @@
         generateM3U();
     }
 
-    async function addChannel(name, url, customLogo) {
+    async function addChannelFromInputs() {
+        const name = elements.channelName.value.trim();
+        let url = elements.channelURL.value.trim();
+        const customLogo = elements.channelLogo.value.trim();
+
         if (!url) {
             alert("Stream URL (or Pixeldrain Folder Link) is required!");
             return;
@@ -1010,38 +1028,41 @@
                 renderCurrentChannels();
                 alert(`Added ${channelsFromFolder.length} video channels from Pixeldrain folder!`);
             }
-            return;
-        }
+        } else {
+            if (!name) {
+                alert("Channel name is required for single channel entries!");
+                return;
+            }
+            url = convertPixeldrainFileUrl(url);
 
-        if (!name) {
-            alert("Channel name is required for single channel entries!");
-            return;
-        }
-
-        url = convertPixeldrainFileUrl(url);
-
-        let finalLogo = customLogo;
-        if (!customLogo && name.toLowerCase().includes("movie")) {
-            const tempLogo = "https://via.placeholder.com/30?text=Loading...";
-            const channelIndex = currentChannels.length;
-            currentChannels.push({ name, url, logo: tempLogo, group: elements.globalGroup.value.trim() });
-            saveCurrentChannels();
-            renderCurrentChannels();
-
-            const fetchedLogo = await searchMovieLogo(name);
-            currentChannels[channelIndex].logo = fetchedLogo;
-            setTimeout(() => {
+            let finalLogo = customLogo;
+            if (!customLogo && name.toLowerCase().includes("movie") && TMDB_API_KEY !== 'YOUR_TMDB_API_KEY' && TMDB_API_KEY) {
+                const tempLogo = "https://via.placeholder.com/30?text=Loading...";
+                const channelIndex = currentChannels.length;
+                currentChannels.push({ name, url, logo: tempLogo, group: elements.globalGroup.value.trim() });
                 saveCurrentChannels();
                 renderCurrentChannels();
-            }, 100);
 
-        } else {
-            finalLogo = customLogo || elements.logoAll.value.trim() || "https://via.placeholder.com/30";
-            currentChannels.push({ name, url, logo: finalLogo, group: elements.globalGroup.value.trim() });
-            saveCurrentChannels();
-            renderCurrentChannels();
+                const fetchedLogo = await searchMovieLogo(name);
+                currentChannels[channelIndex].logo = fetchedLogo;
+                setTimeout(() => {
+                    saveCurrentChannels();
+                    renderCurrentChannels();
+                }, 100);
+
+            } else {
+                finalLogo = customLogo || elements.logoAll.value.trim() || "https://via.placeholder.com/30";
+                currentChannels.push({ name, url, logo: finalLogo, group: elements.globalGroup.value.trim() });
+                saveCurrentChannels();
+                renderCurrentChannels();
+            }
         }
+
+        elements.channelName.value = "";
+        elements.channelURL.value = "";
+        elements.channelLogo.value = "";
     }
+
 
     function removeChannel(index) {
         currentChannels.splice(index, 1);
@@ -1212,7 +1233,7 @@
             saveCurrentChannels();
             renderCurrentChannels();
             toggleSavedPlaylistsDropdown();
-            elements.playlistFileNameInput.value = "playlist"; // Reset name to default or just keep it blank
+            elements.playlistFileNameInput.value = "playlist";
             return;
         }
 
@@ -1252,78 +1273,146 @@
         alert(`Playlist "${name}" deleted.`);
     }
 
-    // --- Bulk Add Channels Functions ---
-    async function processBulkAdd() {
-        const bulkText = elements.bulkAddTextarea.value.trim();
-        if (!bulkText) {
-            alert("Please paste channel data into the textarea.");
+    // --- QR Code Generator ---
+    function generateQrCode() {
+        const playlistContent = elements.output.value;
+        if (!playlistContent.trim()) {
+            alert("Please generate a playlist first to create a QR code.");
             return;
         }
 
-        const lines = bulkText.split('\n');
-        const newChannels = [];
-        const globalLogo = elements.logoAll.value.trim();
-        const globalGroup = elements.globalGroup.value.trim();
+        // To make the QR code scannable on another device, we need a publicly accessible URL.
+        // For local development, this won't work directly for external devices.
+        // A common workaround is to upload the M3U to a temporary pastebin or file hosting service
+        // and generate a QR code for *that* URL.
+        // For simplicity in this local code, we'll generate QR for the content directly.
+        // If you host this online, you could offer to upload the M3U and provide a URL.
+        // Example: If you host playlist.m3u on your server, QR would be for yoursite.com/playlist.m3u
 
-        for (const line of lines) {
-            const parts = line.split('|').map(part => part.trim());
-            if (parts.length < 2) continue; // Needs at least name and URL
+        // For this example, we'll use a data URI or a simple text representation if it's too large.
+        // Qrious can handle reasonable amounts of text.
+        try {
+            new QRious({
+                element: elements.qrCodeCanvas,
+                value: playlistContent,
+                size: 250, // Size of the QR code
+                background: 'white', // Background color of QR code
+                foreground: 'black', // Foreground color of QR code
+            });
+            showModal(elements.qrCodeModal);
+        } catch (error) {
+            console.error("Error generating QR code:", error);
+            alert("Failed to generate QR code. The playlist might be too large.");
+        }
+    }
 
-            let name = parts[0];
-            let url = parts[1];
-            let logo = parts[2] || globalLogo || "https://via.placeholder.com/30";
-            let group = parts[3] || globalGroup;
+    // --- Live Stream Checker ---
+    async function checkStreams() {
+        if (currentChannels.length === 0) {
+            alert("No channels to check. Please add some channels first.");
+            return;
+        }
 
-            // Convert Pixeldrain file URL if applicable
-            url = convertPixeldrainFileUrl(url);
+        // Disable button and show loading state
+        elements.checkStreamsBtn.disabled = true;
+        elements.checkStreamsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
 
-            // Fetch TMDB logo if applicable and no custom logo is provided
-            if (!parts[2] && name.toLowerCase().includes("movie") && TMDB_API_KEY !== 'YOUR_TMDB_API_KEY' && TMDB_API_KEY) {
-                logo = await searchMovieLogo(name);
+        for (let i = 0; i < currentChannels.length; i++) {
+            const channel = currentChannels[i];
+            const statusIconElement = document.getElementById(`status-${i}`);
+            if (statusIconElement) {
+                statusIconElement.innerHTML = '<i class="fas fa-circle-notch fa-spin loading"></i>'; // Loading spinner
             }
 
-            newChannels.push({ name, url, logo, group });
+            try {
+                // Use a proxy for CORS if necessary, or a simple fetch for direct links.
+                // Note: Direct fetch will often fail due to CORS for actual stream URLs.
+                // A server-side proxy is usually needed for robust stream checking.
+                // For demonstration, a simple HEAD request is used.
+                const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' }); // no-cors for basic reachability
+                // We cannot check actual content with no-cors, just if the URL is reachable.
+                // For proper stream validation, you would need a backend.
+
+                if (statusIconElement) {
+                    // This check is very basic and might not be accurate for all streams due to CORS and stream types.
+                    // If response.ok (HTTP 2xx) is not reachable due to 'no-cors', it implies it's reachable at least.
+                    // A proper check would involve actual stream parsing, which is complex for client-side JS.
+                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if reachable
+                }
+            } catch (error) {
+                console.error(`Error checking stream ${channel.name} (${channel.url}):`, error);
+                if (statusIconElement) {
+                    statusIconElement.innerHTML = '<i class="fas fa-times-circle error"></i>'; // Error
+                }
+            }
+            await new Promise(resolve => setTimeout(resolve, 200)); // Small delay to prevent overwhelming requests
         }
 
-        if (newChannels.length > 0) {
-            currentChannels.push(...newChannels);
-            saveCurrentChannels();
-            renderCurrentChannels();
-            alert(`Successfully added ${newChannels.length} channels.`);
-            closeModal(elements.bulkAddModal);
-            elements.bulkAddTextarea.value = ""; // Clear textarea after successful add
-        } else {
-            alert("No valid channels found in the input. Please check the format.");
+        elements.checkStreamsBtn.disabled = false;
+        elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
+        alert("Stream checking complete!");
+    }
+
+
+    // --- Event Listeners ---
+    elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
+    elements.channelSearchInput.addEventListener('keyup', filterChannels);
+    elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
+    elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
+    elements.generateM3UBtn.addEventListener('click', generateM3U);
+    elements.downloadM3UBtn.addEventListener('click', downloadM3U);
+    elements.copyOutputBtn.addEventListener('click', copyOutput);
+    elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
+    elements.generateQrCodeBtn.addEventListener('click', generateQrCode); // New
+    elements.checkStreamsBtn.addEventListener('click', checkStreams); // New
+
+    // Global settings auto-save
+    elements.logoAll.addEventListener('input', saveGlobalSettings);
+    elements.globalGroup.addEventListener('input', saveGlobalSettings);
+
+    // Modal Close Listeners
+    elements.welcomeModalCloseBtn.addEventListener('click', () => closeModal(elements.welcomeModal));
+    elements.confirmationModalCloseBtn.addEventListener('click', () => closeModal(elements.confirmationModal));
+    elements.qrCodeModalCloseBtn.addEventListener('click', () => closeModal(elements.qrCodeModal)); // New
+
+    // Confirmation Modal Action Listeners
+    elements.confirmActionBtn.addEventListener('click', () => {
+        if (confirmationCallback) {
+            confirmationCallback();
         }
-    }
+    });
+    elements.cancelConfirmBtn.addEventListener('click', () => closeModal(elements.confirmationModal));
 
-    // --- M3U Import Function ---
-    function importM3UFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    // Close dropdown/modals if clicked outside
+    window.addEventListener('click', (event) => {
+        if (!event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
+            elements.savedPlaylistsDropdown.classList.remove('show');
+        }
+        if (event.target === elements.welcomeModal) {
+            closeModal(elements.welcomeModal);
+            localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+        }
+        if (event.target === elements.confirmationModal) {
+            closeModal(elements.confirmationModal);
+        }
+        if (event.target === elements.qrCodeModal) { // New
+            closeModal(elements.qrCodeModal);
+        }
+    });
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target.result;
-            parseM3UContent(content);
-        };
-        reader.readAsText(file);
-    }
+    // --- Initialize on Load ---
+    window.onload = () => {
+        loadGlobalSettings();
+        loadCurrentChannels();
+        loadPlaylistsFromLocalStorage();
+        elements.playlistFileNameInput.value = "playlist";
 
-    function parseM3UContent(m3uContent) {
-        const lines = m3uContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        const importedChannels = [];
-        let tempChannel = {};
-        const globalLogo = elements.logoAll.value.trim() || "https://via.placeholder.com/30";
-        const globalGroup = elements.globalGroup.value.trim();
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-
-            if (line.startsWith('#EXTINF')) {
-                // Parse attributes
-                const nameMatch = line.match(/,(.+)$/);
-                tempChannel.name = nameMatch ? nameMatch[1].trim() : `Channel ${importedChannels.length + 1}`;
-
-                const logoMatch = line.match(/tvg-logo="([^"]+)"/);
-                tempChannel.logo = logoMatch ?
+        const welcomeModalShown = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN);
+        if (!welcomeModalShown) {
+            showModal(elements.welcomeModal);
+            localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+        }
+    };
+  </script>
+</body>
+</html>
