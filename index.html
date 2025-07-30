@@ -993,7 +993,7 @@
 
     // --- Channel Management Functions (Current Playlist) ---
     function renderCurrentChannels() {
-        if (!elements.previewList) return; // Add null check for robustness
+        if (!elements.previewList) return;
         elements.previewList.innerHTML = "";
         const searchTerm = elements.channelSearchInput ? elements.channelSearchInput.value.toLowerCase() : '';
         const filteredChannels = currentChannels.filter(ch =>
@@ -1009,15 +1009,22 @@
             }
             elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No channels added yet.</p>`;
         } else {
-            filteredChannels.forEach((ch) => {
-                // IMPORTANT CHANGE HERE:
-                // `originalIndex` খুঁজে বের করা হচ্ছে `currentChannels` অ্যারেতে `ch` (চ্যানেল অবজেক্ট)-এর রেফারেন্স ব্যবহার করে।
-                // এটি নিশ্চিত করে যে আমরা সবসময় মূল অ্যারেতে সঠিক আইটেমটি চিহ্নিত করছি, এমনকি যদি তালিকা ফিল্টার করা হয় বা সাজানো হয়।
-                const originalIndex = currentChannels.findIndex(item => item === ch);
-                if (originalIndex === -1) return; // Should not happen if filteredChannels is a subset of currentChannels
+            // It's crucial to iterate over currentChannels to get the real index
+            // and then check if it's part of the filtered set to display.
+            currentChannels.forEach((ch, originalIndex) => {
+                // Check if this channel should be displayed based on the search term
+                const isMatching = ch.name.toLowerCase().includes(searchTerm) ||
+                                   ch.url.toLowerCase().includes(searchTerm) ||
+                                   (ch.group && ch.group.toLowerCase().includes(searchTerm));
+
+                if (!isMatching) {
+                    return; // Skip rendering if it doesn't match the search term
+                }
 
                 const previewDiv = document.createElement("div");
                 previewDiv.className = "channel-preview";
+                // Store the original index as a data attribute
+                previewDiv.setAttribute('data-original-index', originalIndex);
                 previewDiv.innerHTML = `
                     <img src="${ch.logo}" alt="Logo" onerror="this.onerror=null;this.src='https://via.placeholder.com/30';" loading="lazy">
                     <span>${ch.name} ${ch.group ? `(${ch.group})` : ''}</span>
@@ -1032,20 +1039,39 @@
                 `;
                 elements.previewList.appendChild(previewDiv);
             });
-            elements.previewList.querySelectorAll('.edit-btn').forEach(button => {
-                button.addEventListener('click', (e) => editChannel(parseInt(e.currentTarget.dataset.index)));
-            });
-            elements.previewList.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const confirmed = await showCustomConfirm("Are you sure you want to delete this channel?");
-                    if (confirmed) {
-                        removeChannel(parseInt(e.currentTarget.dataset.index));
-                    }
-                });
-            });
+
+            // Event delegation for edit and delete buttons
+            // Attach a single listener to the parent container
+            elements.previewList.removeEventListener('click', handleChannelActions); // Remove previous listener to avoid duplicates
+            elements.previewList.addEventListener('click', handleChannelActions);
         }
         generateM3U();
     }
+
+    async function handleChannelActions(e) {
+        const target = e.target;
+        const button = target.closest('button'); // Find the closest button ancestor
+
+        if (!button) return; // Not a button click
+
+        const originalIndex = parseInt(button.dataset.index);
+
+        if (isNaN(originalIndex) || originalIndex < 0 || originalIndex >= currentChannels.length) {
+            console.error("Invalid index obtained from button data-index:", button.dataset.index, "Original Index:", originalIndex);
+            await showCustomAlert("Error: Invalid channel index. Could not perform action.");
+            return;
+        }
+
+        if (button.classList.contains('edit-btn')) {
+            editChannel(originalIndex);
+        } else if (button.classList.contains('delete-btn')) {
+            const confirmed = await showCustomConfirm("Are you sure you want to delete this channel?");
+            if (confirmed) {
+                removeChannel(originalIndex); // Pass the original index
+            }
+        }
+    }
+
 
     async function addChannelFromInputs() {
         const name = elements.channelName ? elements.channelName.value.trim() : '';
@@ -1107,16 +1133,17 @@
 
 
     function removeChannel(index) {
-        // IMPORTANT CHANGE HERE:
-        // `index` এর বৈধতা নিশ্চিত করা হচ্ছে।
-        // এটি নিশ্চিত করে যে `index` `currentChannels` অ্যারের সীমার মধ্যে আছে।
+        console.log("Attempting to remove channel at index:", index);
+        console.log("currentChannels BEFORE:", JSON.parse(JSON.stringify(currentChannels))); // Deep copy for logging
+
         if (index >= 0 && index < currentChannels.length) {
             currentChannels.splice(index, 1);
             saveCurrentChannels(); // Auto-save after removal
             renderCurrentChannels();
+            console.log("Channel removed successfully. currentChannels AFTER:", JSON.parse(JSON.stringify(currentChannels)));
         } else {
-            console.error("Invalid index for channel removal:", index);
-            showCustomAlert("Error: Could not delete channel. Please try refreshing the page.");
+            console.error("Invalid index for channel removal:", index, "Array length:", currentChannels.length);
+            showCustomAlert("Error: Could not delete channel. Invalid index. Please try refreshing the page.");
         }
     }
 
@@ -1428,7 +1455,7 @@
         elements.addChannelBtn = document.getElementById("addChannelBtn");
         elements.checkStreamsBtn = document.getElementById("checkStreamsBtn");
         elements.channelSearchInput = document.getElementById("channelSearchInput");
-        elements.previewList = document.getElementById("previewList");
+        elements.previewList = document.getElementById("previewList"); // This is the parent for channel previews
         elements.savedPlaylistsToggleBtn = document.getElementById("savedPlaylistsToggleBtn");
         elements.savedPlaylistsDropdown = document.getElementById("savedPlaylistsDropdown");
         elements.savedPlaylistsCount = document.getElementById("savedPlaylistsCount");
@@ -1455,7 +1482,7 @@
 
 
         if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
-        if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams); // New listener for check streams
+        if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams);
         if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('keyup', filterChannels);
         if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
         if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
@@ -1499,74 +1526,4 @@
         if (elements.alertOkBtn) elements.alertOkBtn.addEventListener('click', () => {
             closeModal(elements.alertModal);
             if (resolveAlert) {
-                resolveAlert(); // Resolve the promise
-                resolveAlert = null;
-            }
-        });
-
-        // QR Code Modal OK Button Listener
-        if (elements.qrCodeModalOkBtn) elements.qrCodeModalOkBtn.addEventListener('click', () => {
-            closeModal(elements.qrCodeModal);
-            if (resolveQrCode) {
-                resolveQrCode();
-                resolveQrCode = null;
-            }
-        });
-
-        // Close dropdown/modals if clicked outside or ESC key pressed
-        window.addEventListener('click', (event) => {
-            if (elements.savedPlaylistsDropdown && !event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
-                elements.savedPlaylistsDropdown.classList.remove('show');
-            }
-        });
-
-        window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                if (elements.welcomeModal && elements.welcomeModal.style.display === 'block') {
-                    closeModal(elements.welcomeModal);
-                    localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
-                    if (resolveWelcome) { // Resolve if ESC is pressed
-                        resolveWelcome();
-                        resolveWelcome = null;
-                    }
-                } else if (elements.confirmationModal && elements.confirmationModal.style.display === 'block') {
-                    closeModal(elements.confirmationModal);
-                    if (resolveConfirmation) {
-                        resolveConfirmation(false); // Resolve with false if ESC
-                        resolveConfirmation = null;
-                    }
-                } else if (elements.alertModal && elements.alertModal.style.display === 'block') {
-                    closeModal(elements.alertModal);
-                    if (resolveAlert) {
-                        resolveAlert(); // Resolve if ESC
-                        resolveAlert = null;
-                    }
-                } else if (elements.qrCodeModal && elements.qrCodeModal.style.display === 'block') {
-                    closeModal(elements.qrCodeModal);
-                    if (resolveQrCode) { // Resolve if ESC
-                        resolveQrCode();
-                        resolveQrCode = null;
-                    }
-                }
-            }
-        });
-
-        // --- Initialize on Load ---
-        (async () => {
-            loadGlobalSettings();
-            loadPlaylistsFromLocalStorage(); // Load all saved playlists, including auto-save
-            loadCurrentChannels(); // This will now load from the "Auto Saved Session" if available
-
-            if (elements.playlistFileNameInput) {
-                elements.playlistFileNameInput.value = "playlist"; // Reset playlist name input
-            }
-
-            const welcomeModalShown = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN);
-            if (!welcomeModalShown && elements.welcomeModal) {
-                await showWelcomeModal(); // Use await to ensure modal is closed before proceeding
-            }
-        })();
-    });
-  </script>
-</body>
-</html>
+                resolve
