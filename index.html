@@ -816,13 +816,17 @@
 
     // --- Helper Functions ---
     function showModal(modalElement) {
-        modalElement.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent scrolling body when modal is open
+        if (modalElement) {
+            modalElement.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling body when modal is open
+        }
     }
 
     function closeModal(modalElement) {
-        modalElement.style.display = 'none';
-        document.body.style.overflow = ''; // Restore body scrolling
+        if (modalElement) {
+            modalElement.style.display = 'none';
+            document.body.style.overflow = ''; // Restore body scrolling
+        }
     }
 
     /**
@@ -832,7 +836,9 @@
      */
     function showCustomAlert(message) {
         return new Promise(resolve => {
-            elements.alertMessage.textContent = message;
+            if (elements.alertMessage) {
+                elements.alertMessage.textContent = message;
+            }
             resolveAlert = resolve; // Store resolve function
             showModal(elements.alertModal);
         });
@@ -845,7 +851,9 @@
      */
     function showCustomConfirm(message) {
         return new Promise(resolve => {
-            elements.confirmationMessage.textContent = message;
+            if (elements.confirmationMessage) {
+                elements.confirmationMessage.textContent = message;
+            }
             resolveConfirmation = resolve; // Store resolve function
             showModal(elements.confirmationModal);
         });
@@ -881,12 +889,12 @@
         try {
             isProcessingFolder = true;
             // Show loading state
-            elements.channelURL.value = "Loading folder content...";
-            elements.channelURL.disabled = true;
-            elements.channelName.disabled = true;
-            elements.channelLogo.disabled = true;
-            elements.addChannelBtn.disabled = true;
-            elements.checkStreamsBtn.disabled = true; // Disable during folder processing
+            if (elements.channelURL) elements.channelURL.value = "Loading folder content...";
+            if (elements.channelURL) elements.channelURL.disabled = true;
+            if (elements.channelName) elements.channelName.disabled = true;
+            if (elements.channelLogo) elements.channelLogo.disabled = true;
+            if (elements.addChannelBtn) elements.addChannelBtn.disabled = true;
+            if (elements.checkStreamsBtn) elements.checkStreamsBtn.disabled = true; // Disable during folder processing
 
             const response = await fetch(apiUrl);
             if (!response.ok) {
@@ -927,12 +935,12 @@
             await showCustomAlert(`Error processing Pixeldrain folder: ${error.message}. Please check the URL and try again.`);
         } finally {
             isProcessingFolder = false;
-            elements.channelURL.value = "";
-            elements.channelURL.disabled = false;
-            elements.channelName.disabled = false;
-            elements.channelLogo.disabled = false;
-            elements.addChannelBtn.disabled = false;
-            elements.checkStreamsBtn.disabled = false;
+            if (elements.channelURL) elements.channelURL.value = "";
+            if (elements.channelURL) elements.channelURL.disabled = false;
+            if (elements.channelName) elements.channelName.disabled = false;
+            if (elements.channelLogo) elements.channelLogo.disabled = false;
+            if (elements.addChannelBtn) elements.addChannelBtn.disabled = false;
+            if (elements.checkStreamsBtn) elements.checkStreamsBtn.disabled = false;
         }
         return addedChannelsFromFolder;
     }
@@ -996,7 +1004,7 @@
     function loadPlaylistsFromLocalStorage() {
         const storedPlaylists = localStorage.getItem(LOCAL_STORAGE_KEYS.SAVED_PLAYLISTS);
         if (storedPlaylists) {
-            savedPlaylists = JSON.parse(storedPlaylists);
+            savedPlaylists = JSON.parse(storedPlayasts);
         }
         renderSavedPlaylistsDropdown();
     }
@@ -1020,6 +1028,7 @@
 
     // --- Channel Management Functions (Current Playlist) ---
     function renderCurrentChannels() {
+        if (!elements.previewList) return; // Add null check for robustness
         elements.previewList.innerHTML = "";
         const searchTerm = elements.channelSearchInput.value.toLowerCase();
         const filteredChannels = currentChannels.filter(ch =>
@@ -1182,7 +1191,9 @@
         currentChannels.forEach(ch => {
             output += `#EXTINF:-1 tvg-logo="${ch.logo}"${ch.group ? ` group-title="${ch.group}"` : ''},${ch.name}\n${ch.url}\n`;
         });
-        elements.output.value = output;
+        if (elements.output) {
+            elements.output.value = output;
+        }
     }
 
     async function downloadM3U() {
@@ -1203,6 +1214,7 @@
     }
 
     async function copyOutput() {
+        if (!elements.output) return;
         elements.output.select();
         elements.output.setSelectionRange(0, 99999);
 
@@ -1217,20 +1229,25 @@
 
     // --- Saved Playlists Menu Functions ---
     function toggleSavedPlaylistsDropdown() {
-        elements.savedPlaylistsDropdown.classList.toggle("show");
-        if (elements.savedPlaylistsDropdown.classList.contains("show")) {
-            renderSavedPlaylistsDropdown();
+        if (elements.savedPlaylistsDropdown) {
+            elements.savedPlaylistsDropdown.classList.toggle("show");
+            if (elements.savedPlaylistsDropdown.classList.contains("show")) {
+                renderSavedPlaylistsDropdown();
+            }
         }
     }
 
     function renderSavedPlaylistsDropdown() {
+        if (!elements.savedPlaylistsDropdown) return;
         elements.savedPlaylistsDropdown.innerHTML = "";
         const playlistNames = Object.keys(savedPlaylists).sort((a, b) => {
             if (a === AUTO_SAVE_PLAYLIST_NAME) return -1;
             if (b === AUTO_SAVE_PLAYLIST_NAME) return 1;
             return a.localeCompare(b);
         });
-        elements.savedPlaylistsCount.textContent = `(${playlistNames.length})`;
+        if (elements.savedPlaylistsCount) {
+            elements.savedPlaylistsCount.textContent = `(${playlistNames.length})`;
+        }
 
         if (playlistNames.length === 0) {
             elements.savedPlaylistsDropdown.innerHTML = `<p style="padding: 10px 15px; color: var(--text-placeholder); margin: 0;">No saved playlists yet.</p>`;
@@ -1340,6 +1357,10 @@
 
     // --- QR Code Generator ---
     async function generateQrCode() {
+        if (!elements.output) {
+            await showCustomAlert("Output element not found.");
+            return;
+        }
         const playlistContent = elements.output.value;
         if (!playlistContent.trim()) {
             await showCustomAlert("Please generate a playlist first to create a QR code.");
@@ -1347,14 +1368,18 @@
         }
 
         try {
-            new QRious({
-                element: elements.qrCodeCanvas,
-                value: playlistContent,
-                size: 250, // Size of the QR code
-                background: 'white', // Background color of QR code
-                foreground: 'black', // Foreground color of QR code
-            });
-            showModal(elements.qrCodeModal);
+            if (elements.qrCodeCanvas) {
+                new QRious({
+                    element: elements.qrCodeCanvas,
+                    value: playlistContent,
+                    size: 250, // Size of the QR code
+                    background: 'white', // Background color of QR code
+                    foreground: 'black', // Foreground color of QR code
+                });
+                showModal(elements.qrCodeModal);
+            } else {
+                await showCustomAlert("QR Code Canvas element not found.");
+            }
         } catch (error) {
             console.error("Error generating QR code:", error);
             await showCustomAlert("Failed to generate QR code. The playlist might be too large.");
@@ -1369,8 +1394,11 @@
         }
 
         // Disable button and show loading state
-        elements.checkStreamsBtn.disabled = true;
-        elements.checkStreamsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+        if (elements.checkStreamsBtn) {
+            elements.checkStreamsBtn.disabled = true;
+            elements.checkStreamsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+        }
+
 
         for (let i = 0; i < currentChannels.length; i++) {
             const channel = currentChannels[i];
@@ -1400,35 +1428,37 @@
             await new Promise(resolve => setTimeout(resolve, 200)); // Small delay to prevent overwhelming requests
         }
 
-        elements.checkStreamsBtn.disabled = false;
-        elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
+        if (elements.checkStreamsBtn) {
+            elements.checkStreamsBtn.disabled = false;
+            elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
+        }
         await showCustomAlert("Stream checking complete!");
     }
 
 
     // --- Event Listeners ---
-    elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
-    elements.channelSearchInput.addEventListener('keyup', filterChannels);
-    elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
-    elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
-    elements.generateM3UBtn.addEventListener('click', generateM3U);
-    elements.downloadM3UBtn.addEventListener('click', downloadM3U);
-    elements.copyOutputBtn.addEventListener('click', copyOutput);
-    elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
-    elements.generateQrCodeBtn.addEventListener('click', generateQrCode); // New
-    elements.checkStreamsBtn.addEventListener('click', checkStreams); // New
+    if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
+    if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('keyup', filterChannels);
+    if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
+    if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
+    if (elements.generateM3UBtn) elements.generateM3UBtn.addEventListener('click', generateM3U);
+    if (elements.downloadM3UBtn) elements.downloadM3UBtn.addEventListener('click', downloadM3U);
+    if (elements.copyOutputBtn) elements.copyOutputBtn.addEventListener('click', copyOutput);
+    if (elements.clearCurrentBtn) elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
+    if (elements.generateQrCodeBtn) elements.generateQrCodeBtn.addEventListener('click', generateQrCode); // New
+    if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams); // New
 
     // Global settings auto-save
-    elements.logoAll.addEventListener('input', saveGlobalSettings);
-    elements.globalGroup.addEventListener('input', saveGlobalSettings);
+    if (elements.logoAll) elements.logoAll.addEventListener('input', saveGlobalSettings);
+    if (elements.globalGroup) elements.globalGroup.addEventListener('input', saveGlobalSettings);
 
     // Modal Close Listeners
-    elements.welcomeModalCloseBtn.addEventListener('click', () => {
+    if (elements.welcomeModalCloseBtn) elements.welcomeModalCloseBtn.addEventListener('click', () => {
         closeModal(elements.welcomeModal);
         localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
     });
 
-    elements.confirmationModalCloseBtn.addEventListener('click', () => {
+    if (elements.confirmationModalCloseBtn) elements.confirmationModalCloseBtn.addEventListener('click', () => {
         closeModal(elements.confirmationModal);
         if (resolveConfirmation) {
             resolveConfirmation(false); // Resolve with false if modal is closed without choice
@@ -1436,7 +1466,7 @@
         }
     });
 
-    elements.alertModalCloseBtn.addEventListener('click', () => { // New
+    if (elements.alertModalCloseBtn) elements.alertModalCloseBtn.addEventListener('click', () => { // New
         closeModal(elements.alertModal);
         if (resolveAlert) {
             resolveAlert(); // Resolve the promise
@@ -1445,14 +1475,14 @@
     });
     
     // Confirmation Modal Action Listeners
-    elements.confirmActionBtn.addEventListener('click', () => {
+    if (elements.confirmActionBtn) elements.confirmActionBtn.addEventListener('click', () => {
         closeModal(elements.confirmationModal);
         if (resolveConfirmation) {
             resolveConfirmation(true); // Resolve with true for 'Yes'
             resolveConfirmation = null;
         }
     });
-    elements.cancelConfirmBtn.addEventListener('click', () => {
+    if (elements.cancelConfirmBtn) elements.cancelConfirmBtn.addEventListener('click', () => {
         closeModal(elements.confirmationModal);
         if (resolveConfirmation) {
             resolveConfirmation(false); // Resolve with false for 'No'
@@ -1461,7 +1491,7 @@
     });
 
     // Alert Modal OK Button Listener (New)
-    elements.alertOkBtn.addEventListener('click', () => {
+    if (elements.alertOkBtn) elements.alertOkBtn.addEventListener('click', () => {
         closeModal(elements.alertModal);
         if (resolveAlert) {
             resolveAlert(); // Resolve the promise
@@ -1469,54 +1499,54 @@
         }
     });
 
-    elements.qrCodeModalCloseBtn.addEventListener('click', () => closeModal(elements.qrCodeModal)); // New
+    if (elements.qrCodeModalCloseBtn) elements.qrCodeModalCloseBtn.addEventListener('click', () => closeModal(elements.qrCodeModal)); // New
 
     // Close dropdown/modals if clicked outside or ESC key pressed
     window.addEventListener('click', (event) => {
-        if (!event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
+        if (elements.savedPlaylistsDropdown && !event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
             elements.savedPlaylistsDropdown.classList.remove('show');
         }
-        if (event.target === elements.welcomeModal) {
+        if (elements.welcomeModal && event.target === elements.welcomeModal) {
             closeModal(elements.welcomeModal);
             localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
         }
-        if (event.target === elements.confirmationModal) {
+        if (elements.confirmationModal && event.target === elements.confirmationModal) {
             closeModal(elements.confirmationModal);
             if (resolveConfirmation) {
                 resolveConfirmation(false);
                 resolveConfirmation = null;
             }
         }
-        if (event.target === elements.alertModal) { // New
+        if (elements.alertModal && event.target === elements.alertModal) { // New
             closeModal(elements.alertModal);
             if (resolveAlert) {
                 resolveAlert();
                 resolveAlert = null;
             }
         }
-        if (event.target === elements.qrCodeModal) {
+        if (elements.qrCodeModal && event.target === elements.qrCodeModal) {
             closeModal(elements.qrCodeModal);
         }
     });
 
     window.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            if (elements.welcomeModal.style.display === 'block') {
+            if (elements.welcomeModal && elements.welcomeModal.style.display === 'block') {
                 closeModal(elements.welcomeModal);
                 localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
-            } else if (elements.confirmationModal.style.display === 'block') {
+            } else if (elements.confirmationModal && elements.confirmationModal.style.display === 'block') {
                 closeModal(elements.confirmationModal);
                 if (resolveConfirmation) {
                     resolveConfirmation(false);
                     resolveConfirmation = null;
                 }
-            } else if (elements.alertModal.style.display === 'block') { // New
+            } else if (elements.alertModal && elements.alertModal.style.display === 'block') { // New
                 closeModal(elements.alertModal);
                 if (resolveAlert) {
                     resolveAlert();
                     resolveAlert = null;
                 }
-            } else if (elements.qrCodeModal.style.display === 'block') {
+            } else if (elements.qrCodeModal && elements.qrCodeModal.style.display === 'block') {
                 closeModal(elements.qrCodeModal);
             }
         }
@@ -1527,10 +1557,12 @@
         loadGlobalSettings();
         loadCurrentChannels();
         loadPlaylistsFromLocalStorage();
-        elements.playlistFileNameInput.value = "playlist";
+        if (elements.playlistFileNameInput) {
+            elements.playlistFileNameInput.value = "playlist";
+        }
 
         const welcomeModalShown = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN);
-        if (!welcomeModalShown) {
+        if (!welcomeModalShown && elements.welcomeModal) {
             showModal(elements.welcomeModal);
         }
     };
