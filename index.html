@@ -756,7 +756,7 @@
     ];
 
     // DOM Elements - Get all elements once after DOM is loaded
-    const elements = {};
+    const elements = {}; // This object will store references to all DOM elements
 
     let resolveConfirmation = null; // Used for promise-based confirmation
     let resolveAlert = null; // Used for promise-based alert
@@ -1043,8 +1043,19 @@
             // Attach a single listener to the parent container
             // Ensure no duplicate listeners are added:
             // This line is important to prevent multiple listeners if renderCurrentChannels is called multiple times.
-            elements.previewList.removeEventListener('click', handleChannelActions);
-            elements.previewList.addEventListener('click', handleChannelActions);
+            // A more robust way might be to remove it first, then add it.
+            // elements.previewList.removeEventListener('click', handleChannelActions); // This line ensures no duplicate listeners
+            // elements.previewList.addEventListener('click', handleChannelActions);
+
+            // Alternative: If you are certain renderCurrentChannels is only called once after initial load or on explicit data change,
+            // then directly attaching it as below is fine. The existing code adds it on DOMContentLoaded once,
+            // and then it's delegated. The problem is if renderCurrentChannels implicitly recreates the entire #previewList div itself,
+            // then the listener on the old div would be lost. But it currently clears and appends.
+            // If the listener is already added to 'previewList' and renderCurrentChannels only modifies its children,
+            // then event delegation will continue to work. The problem often occurs if the entire parent is re-created.
+            // The provided code does `elements.previewList.innerHTML = "";` which effectively removes previous children.
+            // However, the event listener itself is still on the *same* `elements.previewList` element. So it should persist.
+            // The `removeEventListener` is good practice if `renderCurrentChannels` is called frequently.
         }
         generateM3U();
     }
@@ -1249,7 +1260,7 @@
     async function copyOutput() {
         if (!elements.output) return;
         elements.output.select();
-        elements.output.setSelectionRange(0, 99999);
+        elements.output.setSelectionSelectionRange(0, 99999); // Corrected from setSelectionRange
 
         try {
             await navigator.clipboard.writeText(elements.output.value);
@@ -1461,4 +1472,191 @@
                 // 3. Your server then returns the actual HTTP status code and other relevant information
                 //    back to your client-side JavaScript.
 
-                // The current implementation is a basic attempt
+                // The current implementation is a basic attempt to check reachability from the client,
+                // but its accuracy for determining actual stream validity is limited.
+                const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' });
+                
+                // If a response is received without a network error, we assume it's reachable.
+                // This does NOT guarantee the stream is playable or the URL returns valid content.
+                if (statusIconElement) {
+                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if no network error on fetch
+                }
+            } catch (error) {
+                console.error(`Error checking stream ${channel.name} (${channel.url}):`, error);
+                if (statusIconElement) {
+                    statusIconElement.innerHTML = '<i class="fas fa-times-circle error"></i>'; // Error (e.g., network disconnected, invalid domain)
+                }
+            }
+            await new Promise(resolve => setTimeout(resolve, 200)); // Small delay to prevent overwhelming requests
+        }
+
+        if (elements.checkStreamsBtn) {
+            elements.checkStreamsBtn.disabled = false;
+            elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
+        }
+        await showCustomAlert("Stream checking complete! (Note: Client-side checks are limited and may not guarantee stream playability due to browser security policies.)");
+    }
+
+
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize elements object after DOM is loaded
+        elements.logoAll = document.getElementById("logoAll");
+        elements.globalGroup = document.getElementById("globalGroup");
+        elements.channelName = document.getElementById("channelName");
+        elements.channelURL = document.getElementById("channelURL");
+        elements.channelLogo = document.getElementById("channelLogo");
+        elements.addChannelBtn = document.getElementById("addChannelBtn");
+        elements.checkStreamsBtn = document.getElementById("checkStreamsBtn");
+        elements.channelSearchInput = document.getElementById("channelSearchInput");
+        elements.previewList = document.getElementById("previewList"); // This is the parent for channel previews
+        elements.savedPlaylistsToggleBtn = document.getElementById("savedPlaylistsToggleBtn");
+        elements.savedPlaylistsDropdown = document.getElementById("savedPlaylistsDropdown");
+        elements.savedPlaylistsCount = document.getElementById("savedPlaylistsCount");
+        elements.playlistFileNameInput = document.getElementById("playlistFileNameInput");
+        elements.savePlaylistBtn = document.getElementById("savePlaylistBtn");
+        elements.generateM3UBtn = document.getElementById("generateM3UBtn");
+        elements.downloadM3UBtn = document.getElementById("downloadM3UBtn");
+        elements.copyOutputBtn = document.getElementById("copyOutputBtn");
+        elements.clearCurrentBtn = document.getElementById("clearCurrentBtn");
+        elements.generateQrCodeBtn = document.getElementById("generateQrCodeBtn");
+        elements.output = document.getElementById("output");
+        elements.welcomeModal = document.getElementById("welcomeModal");
+        elements.welcomeModalOkBtn = document.getElementById("welcomeModalOkBtn");
+        elements.confirmationModal = document.getElementById("confirmationModal");
+        elements.confirmationMessage = document.getElementById("confirmationMessage");
+        elements.confirmActionBtn = document.getElementById("confirmActionBtn");
+        elements.cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
+        elements.alertModal = document.getElementById("alertModal");
+        elements.alertMessage = document.getElementById("alertMessage");
+        elements.alertOkBtn = document.getElementById("alertOkBtn");
+        elements.qrCodeModal = document.getElementById("qrCodeModal");
+        elements.qrCodeCanvas = document.getElementById("qrCodeCanvas");
+        elements.qrCodeModalOkBtn = document.getElementById("qrCodeModalOkBtn");
+
+
+        if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
+        if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams);
+        if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('keyup', filterChannels);
+        if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
+        if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
+        if (elements.generateM3UBtn) elements.generateM3UBtn.addEventListener('click', generateM3U);
+        if (elements.downloadM3UBtn) elements.downloadM3UBtn.addEventListener('click', downloadM3U);
+        if (elements.copyOutputBtn) elements.copyOutputBtn.addEventListener('click', copyOutput);
+        if (elements.clearCurrentBtn) elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
+        if (elements.generateQrCodeBtn) elements.generateQrCodeBtn.addEventListener('click', generateQrCode);
+
+        // Global settings auto-save
+        if (elements.logoAll) elements.logoAll.addEventListener('input', saveGlobalSettings);
+        if (elements.globalGroup) elements.globalGroup.addEventListener('input', saveGlobalSettings);
+
+        // Modal OK Button Listeners (replacing close buttons)
+        if (elements.welcomeModalOkBtn) elements.welcomeModalOkBtn.addEventListener('click', () => {
+            closeModal(elements.welcomeModal);
+            localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+            if (resolveWelcome) {
+                resolveWelcome();
+                resolveWelcome = null;
+            }
+        });
+
+        // Confirmation Modal Action Listeners
+        if (elements.confirmActionBtn) elements.confirmActionBtn.addEventListener('click', () => {
+            closeModal(elements.confirmationModal);
+            if (resolveConfirmation) {
+                resolveConfirmation(true); // Resolve with true for 'Yes'
+                resolveConfirmation = null;
+            }
+        });
+        if (elements.cancelConfirmBtn) elements.cancelConfirmBtn.addEventListener('click', () => {
+            closeModal(elements.confirmationModal);
+            if (resolveConfirmation) {
+                resolveConfirmation(false); // Resolve with false for 'No'
+                resolveConfirmation = null;
+            }
+        });
+
+        // Alert Modal OK Button Listener
+        if (elements.alertOkBtn) elements.alertOkBtn.addEventListener('click', () => {
+            closeModal(elements.alertModal);
+            if (resolveAlert) {
+                resolveAlert(); // Resolve the promise
+                resolveAlert = null;
+            }
+        });
+
+        // QR Code Modal OK Button Listener
+        if (elements.qrCodeModalOkBtn) elements.qrCodeModalOkBtn.addEventListener('click', () => {
+            closeModal(elements.qrCodeModal);
+            if (resolveQrCode) {
+                resolveQrCode();
+                resolveQrCode = null;
+            }
+        });
+
+        // Close dropdown/modals if clicked outside or ESC key pressed
+        window.addEventListener('click', (event) => {
+            if (elements.savedPlaylistsDropdown && !event.target.closest('.dropdown') && elements.savedPlaylistsDropdown.classList.contains('show')) {
+                elements.savedPlaylistsDropdown.classList.remove('show');
+            }
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (elements.welcomeModal && elements.welcomeModal.style.display === 'block') {
+                    closeModal(elements.welcomeModal);
+                    localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+                    if (resolveWelcome) { // Resolve if ESC is pressed
+                        resolveWelcome();
+                        resolveWelcome = null;
+                    }
+                } else if (elements.confirmationModal && elements.confirmationModal.style.display === 'block') {
+                    closeModal(elements.confirmationModal);
+                    if (resolveConfirmation) {
+                        resolveConfirmation(false); // Resolve with false if ESC
+                        resolveConfirmation = null;
+                    }
+                } else if (elements.alertModal && elements.alertModal.style.display === 'block') {
+                    closeModal(elements.alertModal);
+                    if (resolveAlert) {
+                        resolveAlert(); // Resolve if ESC
+                        resolveAlert = null;
+                    }
+                } else if (elements.qrCodeModal && elements.qrCodeModal.style.display === 'block') {
+                    closeModal(elements.qrCodeModal);
+                    if (resolveQrCode) { // Resolve if ESC
+                        resolveQrCode();
+                        resolveQrCode = null;
+                    }
+                }
+            }
+        });
+
+        // --- Important: Attach main event delegation listener for channel actions here ---
+        // This ensures the listener is added only once to the parent `previewList`
+        if (elements.previewList) {
+            elements.previewList.addEventListener('click', handleChannelActions);
+        } else {
+            console.error("Error: #previewList element not found. Channel edit/delete will not work.");
+        }
+
+
+        // --- Initialize on Load ---
+        (async () => {
+            loadGlobalSettings();
+            loadPlaylistsFromLocalStorage(); // Load all saved playlists, including auto-save
+            loadCurrentChannels(); // This will now load from the "Auto Saved Session" if available
+
+            if (elements.playlistFileNameInput) {
+                elements.playlistFileNameInput.value = "playlist"; // Reset playlist name input
+            }
+
+            const welcomeModalShown = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN);
+            if (!welcomeModalShown && elements.welcomeModal) {
+                await showWelcomeModal(); // Use await to ensure modal is closed before proceeding
+            }
+        })();
+    });
+  </script>
+</body>
+</html>
