@@ -1009,8 +1009,11 @@
             }
             elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">${message}</p>`;
         } else {
-            filteredChannels.forEach((ch, index) => {
-                const originalIndex = currentChannels.indexOf(ch); // Find the original index for operations
+            filteredChannels.forEach((ch) => { // Removed index here, we will use a unique identifier
+                // Find the actual index of the channel in the currentChannels array
+                const originalIndex = currentChannels.findIndex(item => item === ch); // Find the original index using reference
+                if (originalIndex === -1) return; // Should not happen if filteredChannels is a subset of currentChannels
+
                 const previewDiv = document.createElement("div");
                 previewDiv.className = "channel-preview";
                 previewDiv.innerHTML = `
@@ -1102,9 +1105,14 @@
 
 
     function removeChannel(index) {
-        currentChannels.splice(index, 1);
-        saveCurrentChannels(); // Auto-save after removal
-        renderCurrentChannels();
+        // Ensure the index is valid and within bounds
+        if (index >= 0 && index < currentChannels.length) {
+            currentChannels.splice(index, 1);
+            saveCurrentChannels(); // Auto-save after removal
+            renderCurrentChannels();
+        } else {
+            console.error("Invalid index for channel removal:", index);
+        }
     }
 
     async function editChannel(index) {
