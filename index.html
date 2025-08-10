@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EXTM3U Playlist Creator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
+  <link href="https://vjs.zencdn.net/8.5.2/video-js.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/videojs-seek-buttons/dist/videojs-seek-buttons.css" rel="stylesheet">
+
+  <style>
+    /* CSS Variables for colors */
+    :root {
+      --bg-dark: #121212;
+      --bg-container: #1e1e1e;
+      --bg-input: #2c2c2c;
+      --text-light: #f8f8f8;
+      --text-medium: #e0e0e0;
+      --text-dark: #bdbdbd;
+      --text-placeholder: #777;
+      --accent-blue: #64b5f6; /* Primary accent */
+      --accent-blue-dark: #42a5f5; /* Darker accent on hover/focus */
+      --btn-success: #4caf50;
+      --btn-success-hover: #43a047;
+      --btn-info: #2196f3;
+      --btn-info-hover: #1976d2;
+      --btn-dark: #424242;
+      --btn-dark-hover: #333333;
+      --btn-secondary: #757575;
+      --btn-secondary-hover: #616161;
+      --btn-primary: #3f51b5;
+      --btn-primary-hover: #303f9f;
+      --btn-copy: #607d8b;
+      --btn-copy-hover: #455a64;
+      --red-error: #dc3545;
+      --red-error-hover: #c82333;
+      --yellow-warning: #ffc107;
+      --yellow-warning-hover: #e0a800;
+      --border-color: #333;
+      --shadow-dark: rgba(0, 0, 0, 0.5);
+      --shadow-medium: rgba(0, 0, 0, 0.6);
+      --shadow-light: rgba(0, 0, 0, 0.3);
+      --modal-bg-overlay: rgba(0,0,0,0.8);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      font-family: 'Roboto', sans-serif;
+      color: var(--text-light);
+      padding: 15px;
+      line-height: 1.6;
+    }
+    .container {
+      background-color: var(--bg-container);
+      border-radius: 20px;
+      box-shadow: 0 0 25px var(--shadow-dark);
+      padding: 35px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    h3 {
+      font-family: 'Poppins', sans-serif;
+      color: var(--text-medium);
+      text-shadow: 1px 1px 3px var(--shadow-dark);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 25px;
+      letter-spacing: 1px;
+    }
+    .form-label {
+        color: var(--text-dark);
+        font-weight: 500;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    .form-control, .btn {
+      border-radius: 12px;
+      transition: all 0.3s ease-in-out;
+      border: 1px solid var(--border-color);
+      font-size: 1rem;
+    }
+    .form-control {
+      background-color: var(--bg-input);
+      color: var(--text-light);
+      padding: 14px 18px;
+    }
+    .form-control::placeholder {
+        color: var(--text-placeholder);
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 8px rgba(100, 181, 246, 0.6);
+      background-color: var(--bg-input);
+      color: var(--text-light);
+    }
+    .btn {
+      padding: 14px 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 3px 8px var(--shadow-medium);
+      cursor: pointer;
+      background-image: linear-gradient(to bottom, var(--btn-primary), var(--btn-primary-hover));
+      border: none;
+      color: #fff;
+    }
+    .btn i {
+        margin-right: 10px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px var(--shadow-dark);
+      opacity: 0.95;
+    }
+    .btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 5px var(--shadow-dark);
+    }
+    /* Specific button styles with gradients */
+    .btn-success { background-image: linear-gradient(to bottom, var(--btn-success), var(--btn-success-hover)); }
+    .btn-success:hover { background-image: linear-gradient(to top, var(--btn-success), var(--btn-success-hover)); }
+    .btn-info { background-image: linear-gradient(to bottom, var(--btn-info), var(--btn-info-hover)); }
+    .btn-info:hover { background-image: linear-gradient(to top, var(--btn-info), var(--btn-info-hover)); }
+    .btn-dark { background-image: linear-gradient(to bottom, var(--btn-dark), var(--btn-dark-hover)); }
+    .btn-dark:hover { background-image: linear-gradient(to top, var(--btn-dark), var(--btn-dark-hover)); }
+    .btn-secondary { background-image: linear-gradient(to bottom, var(--btn-secondary), var(--btn-secondary-hover)); }
+    .btn-secondary:hover { background-image: linear-gradient(to top, var(--btn-secondary), var(--btn-secondary-hover)); }
+    .btn-primary { background-image: linear-gradient(to bottom, var(--btn-primary), var(--btn-primary-hover)); }
+    .btn-primary:hover { background-image: linear-gradient(to top, var(--btn-primary), var(--btn-primary-hover)); }
+    .btn-copy { background-image: linear-gradient(to bottom, var(--btn-copy), var(--btn-copy-hover)); }
+    .btn-copy:hover { background-image: linear-gradient(to top, var(--btn-copy), var(--btn-copy-hover)); }
+
+    /* Stream Status Specific Styles */
+    .btn-check-stream {
+        background-color: #ff9800; /* Orange */
+        color: #fff;
+    }
+    .btn-check-stream:hover {
+        background-color: #fb8c00;
+    }
+
+    .channel-list-box {
+        background-color: var(--bg-input);
+        border-radius: 15px;
+        border: 1px solid var(--border-color);
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 3px 10px var(--shadow-medium);
+    }
+    .channel-list-box .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .channel-list-box .header h5 {
+        margin: 0;
+        color: var(--text-medium);
+        font-weight: 600;
+        flex-grow: 1;
+        min-width: 150px;
+        font-family: 'Poppins', sans-serif;
+    }
+    .channel-list-box .header .search-box {
+        display: flex;
+        gap: 10px;
+        flex-grow: 1;
+        max-width: 350px;
+    }
+    @media (max-width: 576px) {
+        .channel-list-box .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .channel-list-box .header .search-box {
+            width: 100%;
+            max-width: none;
+        }
+    }
+
+    #previewList {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    /* Custom Scrollbar */
+    #previewList::-webkit-scrollbar { width: 10px; }
+    #previewList::-webkit-scrollbar-track { background: var(--border-color); border-radius: 10px; }
+    #previewList::-webkit-scrollbar-thumb {
+        background-color: var(--accent-blue);
+        border-radius: 10px;
+        border: 2px solid var(--bg-input);
+    }
+    #previewList::-webkit-scrollbar-thumb:hover { background-color: var(--accent-blue-dark); }
+
+    .channel-preview {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px 15px;
+      background-color: var(--bg-container);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 5px var(--shadow-light);
+      transition: all 0.2s ease-in-out;
+    }
+    .channel-preview:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px var(--shadow-medium);
+    }
+    .channel-preview img {
+      height: 35px;
+      width: 35px;
+      object-fit: contain;
+      border-radius: 8px;
+      background-color: var(--border-color);
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .channel-preview span {
+      font-weight: 400;
+      color: var(--text-medium);
+      flex-grow: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      font-size: 1rem;
+    }
+
+    /* Action buttons */
+    .channel-preview .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .channel-preview .action-buttons button {
+      background: none;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* New Play button style */
+    .channel-preview .play-btn {
+        color: #4caf50; /* Green color for play */
+        background-color: rgba(76, 175, 80, 0.15);
+    }
+    .channel-preview .play-btn:hover {
+        background-color: rgba(76, 175, 80, 0.25);
+        transform: scale(1.15);
+    }
+
+    .channel-preview .delete-btn { color: var(--red-error); }
+    .channel-preview .delete-btn:hover { background-color: rgba(220, 53, 69, 0.25); transform: scale(1.15); }
+    .channel-preview .edit-btn { color: var(--yellow-warning); }
+    .channel-preview .edit-btn:hover { background-color: rgba(255, 193, 7, 0.25); transform: scale(1.15); }
+
+    /* Stream Status Icon */
+    .channel-preview .status-icon {
+        margin-left: auto; /* Push to the right */
+        font-size: 1.2em;
+        width: 24px;
+        text-align: center;
+    }
+    .status-icon.loading { color: #f0ad4e; } /* Orange-yellow for loading */
+    .status-icon.ok { color: #5cb85c; } /* Green for OK */
+    .status-icon.error { color: #d9534f; } /* Red for Error */
+
+    textarea {
+      width: 100%;
+      height: 220px;
+      font-family: 'Roboto Mono', monospace;
+      margin-top: 20px;
+      border-radius: 12px;
+      background-color: var(--bg-input);
+      color: var(--text-light);
+      padding: 18px;
+      border: 1px solid var(--border-color);
+      resize: vertical;
+      line-height: 1.5;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 8px rgba(100, 181, 246, 0.6);
+      background-color: var(--bg-input);
+      color: var(--text-light);
+    }
+    h5 {
+        color: var(--text-dark);
+        font-weight: 600;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: 0.8px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--text-placeholder);
+      text-shadow: 0.5px 0.5px 1px var(--shadow-dark);
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+    .footer a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .footer a:hover {
+        text-decoration: underline;
+        color: var(--accent-blue-dark);
+    }
+
+    /* Saved Playlists Styling */
+    .dropdown {
+        position: relative;
+        display: block;
+        width: 100%;
+        margin-bottom: 25px;
+    }
+    .dropdown > button {
+        width: 100%;
+        text-align: left;
+        background-image: linear-gradient(to bottom, var(--btn-primary), var(--btn-primary-hover));
+        color: #fff;
+        border: none;
+    }
+    .dropdown > button:hover {
+        background-image: linear-gradient(to top, var(--btn-primary), var(--btn-primary-hover));
+    }
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: var(--bg-input);
+        min-width: 280px;
+        box-shadow: 0 5px 15px var(--shadow-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        z-index: 1;
+        max-height: 350px;
+        overflow-y: auto;
+        left: 0;
+        right: 0;
+        top: 100%;
+        margin-top: 12px;
+        padding: 10px 0;
+    }
+    .dropdown-content.show { display: block; }
+    .dropdown-content button {
+        color: var(--text-light);
+        padding: 12px 18px;
+        text-decoration: none;
+        display: block;
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-weight: 500;
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .dropdown-content button:last-child { border-bottom: none; }
+    .dropdown-content button:hover { background-color: var(--border-color); transform: translateX(8px); }
+    .dropdown-item-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
+    }
+    .dropdown-item-actions .playlist-name-text {
+        flex-grow: 1;
+        text-align: left;
+        padding: 10px 0;
+        cursor: pointer;
+        color: var(--text-medium);
+        font-size: 0.98rem;
+    }
+    .dropdown-item-actions .delete-playlist-btn {
+        background: none;
+        border: none;
+        color: var(--red-error);
+        font-size: 1.2em;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        padding: 5px;
+        border-radius: 5px;
+    }
+    .dropdown-item-actions .delete-playlist-btn:hover {
+        opacity: 1;
+        background-color: rgba(244, 67, 54, 0.15);
+        transform: scale(1.1);
+    }
+
+    .playlist-actions-section {
+        margin-top: 25px;
+        padding: 25px;
+        background-color: #252525;
+        border-radius: 15px;
+        box-shadow: 0 3px 10px var(--shadow-medium);
+    }
+    .playlist-actions-section .form-control {
+        margin-bottom: 18px;
+    }
+
+    /* New button layout */
+    .button-group-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+        justify-content: center;
+    }
+    .button-group-row .btn {
+        flex: 1 1 auto;
+        min-width: 140px;
+    }
+    @media (max-width: 576px) {
+        .button-group-row .btn {
+            width: 100%;
+            flex-grow: 0;
+        }
+    }
+
+    /* Modal (Popup) Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: var(--modal-bg-overlay);
+      padding-top: 60px;
+      backdrop-filter: blur(8px);
+      animation: fadeInOverlay 0.3s forwards;
+    }
+
+    .modal-content {
+      background-color: var(--bg-container);
+      margin: 5% auto;
+      padding: 35px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      width: 85%;
+      max-width: 650px;
+      box-shadow: 0 8px 20px var(--shadow-dark);
+      position: relative;
+      animation: scaleUpAndFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    /* Modal Animations */
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes scaleUpAndFadeIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-content h4 {
+      color: var(--text-medium);
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 700;
+      font-family: 'Poppins', sans-serif;
+      letter-spacing: 0.8px;
+    }
+
+    .modal-content p {
+        color: var(--text-light);
+        line-height: 1.7;
+    }
+
+    .modal-content ul {
+      list-style-type: none;
+      padding: 0;
+      margin-bottom: 30px;
+    }
+
+    .modal-content ul li {
+      background-color: var(--bg-input);
+      margin-bottom: 12px;
+      padding: 15px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      font-size: 1rem;
+      box-shadow: 0 1px 4px var(--shadow-light);
+    }
+
+    .modal-content ul li i {
+      margin-right: 12px;
+      color: var(--accent-blue);
+      font-size: 1.2em;
+    }
+
+    /* Removed .modal-close-btn styles as the button is removed */
+
+    .modal-footer-text {
+        text-align: center;
+        color: var(--text-placeholder);
+        font-size: 0.9rem;
+    }
+
+    /* Responsive adjustments for modal */
+    @media (max-width: 768px) {
+        .modal-content {
+            width: 95%;
+            margin: 10% auto;
+            padding: 25px;
+        }
+        .modal-content h4 {
+            font-size: 1.4rem;
+        }
+        .modal-content ul li {
+            font-size: 0.95rem;
+            padding: 12px 15px;
+        }
+    }
+
+    /* Confirmation Modal */
+    #confirmationModal .modal-content {
+        max-width: 450px;
+        padding: 25px;
+    }
+    #confirmationModal p {
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 1.1rem;
+        color: var(--text-medium);
+    }
+    #confirmationModal .button-group-row {
+        justify-content: space-around;
+        margin-top: 0;
+    }
+    #confirmationModal .button-group-row .btn {
+        min-width: 100px;
+    }
+
+    /* Alert Modal (re-using confirmation modal styles but with only one button) */
+    #alertModal .modal-content {
+        max-width: 450px;
+        padding: 25px;
+    }
+    #alertModal p {
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 1.1rem;
+        color: var(--text-medium);
+    }
+    #alertModal .button-group-row {
+        justify-content: center;
+        margin-top: 0;
+    }
+    #alertModal .button-group-row .btn {
+        min-width: 120px;
+    }
+
+
+    /* QR Code Modal Specific */
+    #qrCodeCanvas {
+        display: block;
+        margin: 20px auto 0 auto;
+        max-width: 80%;
+        height: auto;
+        border-radius: 10px;
+        background-color: #fff; /* QR code needs a light background */
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    #qrCodeMessage {
+        text-align: center;
+        margin-top: 15px;
+        color: var(--text-dark);
+    }
+
+    /* Video Player Modal */
+    #playerModal .modal-content {
+        max-width: 1200px;
+        padding: 15px;
+    }
+    #playerModal .modal-content h4 {
+        margin-bottom: 15px;
+    }
+    .player-container {
+        border-radius: 15px;
+        overflow: hidden;
+        background-color: #000;
+    }
+    .video-js {
+        width: 100%;
+        height: auto;
+    }
+
+    /* Floating Telegram Button */
+    .telegram-float-btn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 60px;
+        height: 60px;
+        background-color: #0088cc;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        z-index: 999;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .telegram-float-btn:hover {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+    .telegram-float-btn:active {
+        transform: scale(0.95);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h3 class="text-center mb-4">📺 EXTM3U Playlist Creator</h3>
+
+    <div class="mb-3">
+      <label class="form-label" for="logoAll">🌐 Global Logo URL (default for all)</label>
+      <input type="text" id="logoAll" class="form-control" placeholder="https://example.com/logo.png" />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="globalGroup">🗂️ Global Group Name (default for all channels)</label>
+      <input type="text" id="globalGroup" class="form-control" placeholder="e.g., Movies, Sports, News" />
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" id="channelName" class="form-control" placeholder="📺 Channel Name" />
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="channelURL" class="form-control" placeholder="🔗 Stream URL (or Pixeldrain Folder Link)" />
+      </div>
+      <div class="col-md-4">
+        <input type="text" id="channelLogo" class="form-control" placeholder="🖼️ Optional Logo URL" />
+      </div>
+    </div>
+    <div class="button-group-row mb-4">
+        <button class="btn btn-success" id="addChannelBtn">
+            <i class="fas fa-plus-circle"></i> Add Channel
+        </button>
+        <button class="btn btn-check-stream" id="checkStreamsBtn">
+            <i class="fas fa-signal"></i> Check Streams
+        </button>
+    </div>
+
+    <div class="channel-list-box">
+        <div class="header">
+            <h5>📊 Added Channels</h5>
+            <div class="search-box">
+                <input type="text" id="channelSearchInput" class="form-control" placeholder="🔍 Search channels...">
+            </div>
+        </div>
+        <div id="previewList" class="mb-4">
+            <p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No channels added yet.</p>
+        </div>
+    </div>
+    <div class="mb-3">
+        <div class="dropdown">
+            <button class="btn btn-primary" id="savedPlaylistsToggleBtn">
+                <i class="fas fa-list-ul"></i> Saved Playlists <span id="savedPlaylistsCount"></span>
+            </button>
+            <div id="savedPlaylistsDropdown" class="dropdown-content">
+                <p style="padding: 10px 15px; color: var(--text-placeholder); margin: 0;">No saved playlists yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="playlist-actions-section">
+        <label class="form-label" for="playlistFileNameInput">📝 Playlist Name (for saving & downloading)</label>
+        <input type="text" id="playlistFileNameInput" class="form-control" placeholder="Enter playlist name (e.g., MyChannels)" value="playlist" />
+
+        <div class="button-group-row">
+            <button class="btn btn-primary" id="savePlaylistBtn">
+                <i class="fas fa-save"></i> Save Playlist
+            </button>
+            <button class="btn btn-info" id="generateM3UBtn">
+                <i class="fas fa-cogs"></i> Generate
+            </button>
+            <button class="btn btn-dark" id="downloadM3UBtn">
+                <i class="fas fa-download"></i> Download
+            </button>
+            <button class="btn btn-copy" id="generateQrCodeBtn">
+                <i class="fas fa-qrcode"></i> Generate QR
+            </button>
+            <button class="btn btn-secondary" id="clearCurrentBtn">
+                <i class="fas fa-trash-alt"></i> Clear Current
+            </button>
+        </div>
+    </div>
+
+    <h5>📄 Output</h5>
+    <textarea id="output" readonly></textarea>
+    <button class="btn btn-copy w-100 mt-3" id="copyOutputBtn"><i class="fas fa-copy"></i> Copy Output</button>
+
+    <div class="footer">
+        Made with ❤️ — By MR X (AI) | Enjoy  <a href="https://new-try-theta.vercel.app/?link=https%3A%2F%2Fnew-try-theta.vercel.app%2Fplaylist.m3u" target="_blank">LIVE TV 📺</a>
+    </div>
+  </div>
+
+  <a href="https://t.me/TECH_HOUSE_01" target="_blank" class="telegram-float-btn" title="Join our Telegram channel">
+      <i class="fab fa-telegram-plane"></i>
+  </a>
+
+
+  <div id="welcomeModal" class="modal">
+    <div class="modal-content">
+      <h4>Welcome to EXTM3U Playlist Creator!</h4>
+      <p style="text-align: center; color: var(--text-light);">Easily create and manage your M3U playlists with advanced features:</p>
+      <ul>
+        <li><i class="fas fa-stream"></i> **Easy Channel Addition:** Add any channel with a name, URL, and your preferred logo.</li>
+        <li><i class="fas fa-folder"></i> **Automatic Addition from Pixeldrain Folder:** Just paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`). All video files from that folder will be automatically added as separate channels with API links!</li>
+        <li><i class="fas fa-film"></i> **Smart Logo Fetching (TMDB):** If you add a "movie" channel and don't provide a separate logo, we'll try to automatically add a relevant movie poster as a logo from TMDB!</li>
+        <li><i class="fas fa-sliders-h"></i> **Global Settings:** Set a default logo URL and group name for all channels. These settings will be automatically saved.</li>
+        <li><i class="fas fa-search"></i> **Easy Channel Search:** Easily find and manage your added channels.</li>
+        <li><i class="fas fa-signal"></i> **Live Stream Checker:** Quickly verify if your added stream URLs are active.</li>
+        <li><i class="fas fa-save"></i> **Save & Load Playlists:** Locally save multiple playlists in your browser and load them as needed.</li>
+        <li><i class="fas fa-download"></i> **Generate & Download M3U File:** Create and download your M3U playlist file with a single click.</li>
+        <li><i class="fas fa-qrcode"></i> **Generate QR Code:** Create a QR code for your playlist URL, which you can easily access on other devices.</li>
+        <li><i class="fas fa-copy"></i> **Copy Output:** Copy the generated M3U output to your clipboard.</li>
+      </ul>
+      <p class="modal-footer-text">Start by adding your first channel or Pixeldrain folder link!</p>
+      <div class="button-group-row">
+        <button class="btn btn-primary" id="welcomeModalOkBtn">Get Started!</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmationModal" class="modal">
+    <div class="modal-content">
+      <p id="confirmationMessage"></p>
+      <div class="button-group-row">
+        <button class="btn btn-secondary" id="cancelConfirmBtn">No</button>
+        <button class="btn btn-danger" id="confirmActionBtn">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="alertModal" class="modal">
+    <div class="modal-content">
+      <p id="alertMessage"></p>
+      <div class="button-group-row">
+        <button class="btn btn-primary" id="alertOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="qrCodeModal" class="modal">
+    <div class="modal-content">
+      <h4>Scan QR Code for Playlist</h4>
+      <canvas id="qrCodeCanvas"></canvas>
+      <p id="qrCodeMessage">Scan this QR code to access the playlist on other devices.</p>
+       <div class="button-group-row">
+        <button class="btn btn-primary" id="qrCodeModalOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="playerModal" class="modal">
+    <div class="modal-content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+             <h4 id="playerChannelName">Now Playing:</h4>
+             <button type="button" class="btn-close" aria-label="Close" onclick="closeModal(elements.playerModal)"></button>
+        </div>
+        <div class="player-container">
+            <video id="my-player" class="video-js vjs-16-9 vjs-big-play-centered" controls preload="auto" data-setup='{"playbackRates": [0.5, 1, 1.5, 2]}'>
+                </video>
+        </div>
+    </div>
+  </div>
+
+
+  <script src="https://vjs.zencdn.net/8.5.2/video.min.js"></script>
+  <script src="https://unpkg.com/@videojs/http-streaming/dist/videojs-http-streaming.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-seek-buttons/dist/videojs-seek-buttons.min.js"></script>
+
+  <script>
+    let currentChannels = [];
+    let savedPlaylists = {};
+    let isProcessingFolder = false;
+    let videoPlayer; // Global variable for the video.js player instance
+
+    // Local Storage Keys
+    const LOCAL_STORAGE_KEYS = {
+        CURRENT_PLAYLIST: 'currentM3UChannels', // This will now primarily be used for "Auto Saved Session"
+        SAVED_PLAYLISTS: 'savedM3UPlaylists',
+        GLOBAL_SETTINGS: 'globalM3USettings',
+        WELCOME_MODAL_SHOWN: 'welcomeModalShown'
+    };
+
+    const AUTO_SAVE_PLAYLIST_NAME = "Auto Saved Session";
+
+    // TMDB API Key (Replace with your actual TMDB API Key)
+    const TMDB_API_KEY = 'YOUR_TMDB_API_KEY'; // <--- Add your TMDB API Key here!
+    const TMDB_IMAGE_BASE_URL = 'https://image.themoviedb.org/t/p/w200';
+
+    // List of common video file extensions for Pixeldrain folder processing
+    const videoFileExtensions = [
+        '.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mpeg', '.mpg', '.3gp',
+        '.ts', '.m2ts', '.ogg', '.ogv', '.f4v', '.swf', '.vob', '.qt', '.rm', '.rmvb',
+        '.divx', '.xvid', '.m4v', '.asf', '.dat', '.evo', '.hevc', '.h264', '.h265', '.m3u8'
+    ];
+
+    // DOM Elements - Get all elements once after DOM is loaded
+    const elements = {}; // This object will store references to all DOM elements
+
+    let resolveConfirmation = null; // Used for promise-based confirmation
+    let resolveAlert = null; // Used for promise-based alert
+    let resolveWelcome = null; // New: for welcome modal
+    let resolveQrCode = null; // New: for QR code modal
+
+    // --- Helper Functions ---
+    function showModal(modalElement) {
+        if (modalElement) {
+            modalElement.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling body when modal is open
+        }
+    }
+
+    function closeModal(modalElement) {
+        if (modalElement) {
+            modalElement.style.display = 'none';
+            document.body.style.overflow = ''; // Restore body scrolling
+            // If the player modal is being closed, stop the video
+            if (modalElement.id === 'playerModal' && videoPlayer) {
+                videoPlayer.pause();
+                videoPlayer.src({ type: 'video/mp4', src: '' });
+                videoPlayer.poster('');
+            }
+        }
+    }
+
+    /**
+     * Shows a custom alert modal.
+     * @param {string} message - The message to display.
+     * @returns {Promise<void>} A promise that resolves when the user clicks OK.
+     */
+    function showCustomAlert(message) {
+        return new Promise(resolve => {
+            if (elements.alertMessage) {
+                elements.alertMessage.textContent = message;
+            }
+            resolveAlert = resolve; // Store resolve function
+            showModal(elements.alertModal);
+        });
+    }
+
+    /**
+     * Shows a custom confirmation modal.
+     * @param {string} message - The message to display.
+     * @returns {Promise<boolean>} A promise that resolves to true if 'Yes' is clicked, false if 'No'.
+     */
+    function showCustomConfirm(message) {
+        return new Promise(resolve => {
+            if (elements.confirmationMessage) {
+                elements.confirmationMessage.textContent = message;
+            }
+            resolveConfirmation = resolve; // Store resolve function
+            showModal(elements.confirmationModal);
+        });
+    }
+
+    /**
+     * Shows the welcome modal.
+     * @returns {Promise<void>} A promise that resolves when the user clicks OK.
+     */
+    function showWelcomeModal() {
+        return new Promise(resolve => {
+            resolveWelcome = resolve;
+            showModal(elements.welcomeModal);
+        });
+    }
+
+    /**
+     * Shows the QR Code modal.
+     * @returns {Promise<void>} A promise that resolves when the user clicks OK.
+     */
+    function showQrCodeModal() {
+        return new Promise(resolve => {
+            resolveQrCode = resolve;
+            showModal(elements.qrCodeModal);
+        });
+    }
+
+    function isValidUrl(string) {
+      try {
+        new URL(string);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function convertPixeldrainFileUrl(originalUrl) {
+        const pixeldrainFileRegex = /^https:\/\/pixeldrain\.com\/u\/([a-zA-Z0-9]+)$/;
+        const match = originalUrl.match(pixeldrainFileRegex);
+        if (match && match[1]) {
+            return `https://pixeldrain.com/api/file/${match[1]}`;
+        }
+        return originalUrl;
+    }
+
+    async function processPixeldrainFolder(folderUrl) {
+        if (isProcessingFolder) {
+            await showCustomAlert("Already processing a folder. Please wait.");
+            return [];
+        }
+
+        const folderIdRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
+        const match = folderUrl.match(folderIdRegex);
+        if (!match || !match[1]) {
+            console.error("Invalid Pixeldrain folder URL format.");
+            await showCustomAlert("Invalid Pixeldrain folder URL. Please use a link like: https://pixeldrain.com/l/FOLDER_ID");
+            return [];
+        }
+
+        const folderId = match[1];
+        const apiUrl = `https://pixeldrain.com/api/list/${folderId}`;
+        const addedChannelsFromFolder = [];
+
+        try {
+            isProcessingFolder = true;
+            // Show loading state
+            if (elements.channelURL) elements.channelURL.value = "Loading folder content...";
+            if (elements.channelURL) elements.channelURL.disabled = true;
+            if (elements.channelName) elements.channelName.disabled = true;
+            if (elements.channelLogo) elements.channelLogo.disabled = true;
+            if (elements.addChannelBtn) elements.addChannelBtn.disabled = true;
+            if (elements.checkStreamsBtn) elements.checkStreamsBtn.disabled = true; // Disable during folder processing
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Pixeldrain folder not found or invalid ID.");
+                }
+                throw new Error(`Failed to fetch Pixeldrain folder: ${response.statusText}`);
+            }
+            const data = await response.json();
+
+            if (data && data.files && data.files.length > 0) {
+                let channelCount = currentChannels.length + 1;
+
+                for (const file of data.files) {
+                    const fileExtension = file.name ? '.' + file.name.split('.').pop().toLowerCase() : '';
+                    if (file.id && videoFileExtensions.includes(fileExtension)) {
+                        const fileName = file.name || `Channel ${channelCount}`;
+                        const fileApiUrl = `https://pixeldrain.com/api/file/${file.id}`;
+                        const fileThumbnailUrl = `https://pixeldrain.com/api/file/${file.id}/thumbnail`;
+
+                        addedChannelsFromFolder.push({
+                            name: fileName,
+                            url: fileApiUrl,
+                            logo: fileThumbnailUrl,
+                            group: elements.globalGroup ? elements.globalGroup.value.trim() : ''
+                        });
+                        channelCount++;
+                    }
+                }
+                if (addedChannelsFromFolder.length === 0) {
+                    await showCustomAlert("No video files found in the Pixeldrain folder.");
+                }
+            } else {
+                await showCustomAlert("No files found in the Pixeldrain folder.");
+            }
+        } catch (error) {
+            console.error("Error processing Pixeldrain folder:", error);
+            await showCustomAlert(`Error processing Pixeldrain folder: ${error.message}. Please check the URL and try again.`);
+        } finally {
+            isProcessingFolder = false;
+            if (elements.channelURL) elements.channelURL.value = "";
+            if (elements.channelURL) elements.channelURL.disabled = false;
+            if (elements.channelName) elements.channelName.disabled = false;
+            if (elements.channelLogo) elements.channelLogo.disabled = false;
+            if (elements.addChannelBtn) elements.addChannelBtn.disabled = false;
+            if (elements.checkStreamsBtn) elements.checkStreamsBtn.disabled = false;
+        }
+        return addedChannelsFromFolder;
+    }
+
+    async function searchMovieLogo(movieName) {
+        if (!movieName || TMDB_API_KEY === 'YOUR_TMDB_API_KEY' || !TMDB_API_KEY) {
+            console.warn("TMDB API Key is not set or movie name is empty. Using placeholder logo.");
+            return "https://via.placeholder.com/30";
+        }
+
+        try {
+            const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(movieName)}`);
+            if (!response.ok) {
+                throw new Error(`TMDB API call failed with status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                const movie = data.results[0];
+                if (movie.poster_path) {
+                    return TMDB_IMAGE_BASE_URL + movie.poster_path;
+                } else if (movie.backdrop_path) {
+                    return TMDB_IMAGE_BASE_URL + movie.backdrop_path;
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching movie logo from TMDB:", error);
+        }
+        return "https://via.placeholder.com/30";
+    }
+
+    // --- Local Storage Functions ---
+    function saveCurrentChannels() {
+        // Save the current channels to the "Auto Saved Session"
+        savedPlaylists[AUTO_SAVE_PLAYLIST_NAME] = [...currentChannels];
+        savePlaylistsToLocalStorage();
+        renderSavedPlaylistsDropdown(); // Update dropdown to show auto-saved count
+    }
+
+    function loadCurrentChannels() {
+        try {
+            const storedAutoSave = savedPlaylists[AUTO_SAVE_PLAYLIST_NAME];
+            if (storedAutoSave) {
+                currentChannels = JSON.parse(JSON.stringify(storedAutoSave)); // Deep copy
+                currentChannels.forEach(channel => {
+                    // Ensure logos are set if they were placeholders or missing
+                    if (!channel.logo || channel.logo.includes("placeholder.com") || channel.logo.includes("Loading...")) {
+                        channel.logo = (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Failed to load auto-saved playlist from local storage:", error);
+            currentChannels = []; // Reset to empty to prevent a broken state
+        }
+        renderCurrentChannels();
+    }
+
+    function savePlaylistsToLocalStorage() {
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.SAVED_PLAYLISTS, JSON.stringify(savedPlaylists));
+        } catch (error) {
+            console.error("Failed to save playlists to local storage:", error);
+            showCustomAlert("Error saving playlists. Local storage might be full or unavailable.");
+        }
+    }
+
+    function loadPlaylistsFromLocalStorage() {
+        try {
+            const storedPlaylists = localStorage.getItem(LOCAL_STORAGE_KEYS.SAVED_PLAYLISTS);
+            if (storedPlaylists) {
+                savedPlaylists = JSON.parse(storedPlaylists);
+            }
+        } catch (error) {
+            console.error("Failed to parse saved playlists from local storage:", error);
+            showCustomAlert("Error loading saved playlists. Your stored data may be corrupted.");
+            savedPlaylists = {}; // Reset to an empty object
+        }
+        renderSavedPlaylistsDropdown();
+    }
+
+    function saveGlobalSettings() {
+        try {
+            const settings = {
+                globalLogo: elements.logoAll ? elements.logoAll.value.trim() : '',
+                globalGroup: elements.globalGroup ? elements.globalGroup.value.trim() : '',
+            };
+            localStorage.setItem(LOCAL_STORAGE_KEYS.GLOBAL_SETTINGS, JSON.stringify(settings));
+        } catch (error) {
+            console.error("Failed to save global settings to local storage:", error);
+        }
+    }
+
+    function loadGlobalSettings() {
+        try {
+            const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEYS.GLOBAL_SETTINGS);
+            if (storedSettings) {
+                const settings = JSON.parse(storedSettings);
+                if (elements.logoAll) elements.logoAll.value = settings.globalLogo || '';
+                if (elements.globalGroup) elements.globalGroup.value = settings.globalGroup || '';
+            }
+        } catch (error) {
+            console.error("Failed to parse global settings from local storage:", error);
+        }
+    }
+
+    // --- Channel Management Functions (Current Playlist) ---
+    function renderCurrentChannels() {
+        if (!elements.previewList) return;
+        elements.previewList.innerHTML = "";
+        const searchTerm = elements.channelSearchInput ? elements.channelSearchInput.value.toLowerCase() : '';
+        const filteredChannels = currentChannels.filter(ch =>
+            ch.name.toLowerCase().includes(searchTerm) ||
+            ch.url.toLowerCase().includes(searchTerm) ||
+            (ch.group && ch.group.toLowerCase().includes(searchTerm))
+        );
+
+        if (filteredChannels.length === 0 && currentChannels.length === 0) {
+            elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No channels added yet.</p>`;
+        } else if (filteredChannels.length === 0 && currentChannels.length > 0 && searchTerm !== '') {
+             elements.previewList.innerHTML = `<p style="text-align: center; color: var(--text-placeholder); padding: 20px; width: 100%;">No matching channels found.</p>`;
+        }
+        else {
+            // It's crucial to iterate over currentChannels to get the real index
+            // and then check if it's part of the filtered set to display.
+            currentChannels.forEach((ch, originalIndex) => {
+                // Check if this channel should be displayed based on the search term
+                const isMatching = ch.name.toLowerCase().includes(searchTerm) ||
+                                   ch.url.toLowerCase().includes(searchTerm) ||
+                                   (ch.group && ch.group.toLowerCase().includes(searchTerm));
+
+                if (!isMatching) {
+                    return; // Skip rendering if it doesn't match the search term
+                }
+
+                const previewDiv = document.createElement("div");
+                previewDiv.className = "channel-preview";
+                // Store the original index as a data attribute
+                previewDiv.setAttribute('data-original-index', originalIndex);
+                previewDiv.innerHTML = `
+                    <img src="${ch.logo}" alt="Logo" onerror="this.onerror=null;this.src='https://via.placeholder.com/30';" loading="lazy">
+                    <span>${ch.name} ${ch.group ? `(${ch.group})` : ''}</span>
+                    <div class="status-icon" id="status-${originalIndex}"></div>
+                    <div class="action-buttons">
+                        <button class="play-btn" data-index="${originalIndex}" title="Play Channel">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="edit-btn" data-index="${originalIndex}" title="Edit Channel">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-btn" data-index="${originalIndex}" title="Delete Channel">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                elements.previewList.appendChild(previewDiv);
+            });
+        }
+        generateM3U();
+    }
+
+    async function handleChannelActions(e) {
+        const target = e.target;
+        const button = target.closest('.play-btn, .edit-btn, .delete-btn');
+
+        if (!button) {
+            return;
+        }
+
+        const originalIndex = parseInt(button.dataset.index);
+
+        if (isNaN(originalIndex) || originalIndex < 0 || originalIndex >= currentChannels.length) {
+            console.error("Invalid index obtained from button data-index:", button.dataset.index, "Original Index:", originalIndex);
+            await showCustomAlert("Error: Invalid channel index. Could not perform action. Please refresh the page if this persists.");
+            return;
+        }
+
+        if (button.classList.contains('play-btn')) {
+            playChannel(originalIndex);
+        } else if (button.classList.contains('edit-btn')) {
+            editChannel(originalIndex);
+        } else if (button.classList.contains('delete-btn')) {
+            const confirmed = await showCustomConfirm("Are you sure you want to delete this channel?");
+            if (confirmed) {
+                removeChannel(originalIndex);
+            }
+        }
+    }
+
+
+    async function addChannelFromInputs() {
+        const name = elements.channelName ? elements.channelName.value.trim() : '';
+        let url = elements.channelURL ? elements.channelURL.value.trim() : '';
+        const customLogo = elements.channelLogo ? elements.channelLogo.value.trim() : '';
+
+        if (!url) {
+            await showCustomAlert("Stream URL (or Pixeldrain Folder Link) is required!");
+            return;
+        }
+
+        const pixeldrainFolderRegex = /^https:\/\/pixeldrain\.com\/l\/([a-zA-Z0-9]+)$/;
+        const pixeldrainFileRegex = /^https:\/\/pixeldrain\.com\/u\/([a-zA-Z0-9]+)$/;
+
+        if (pixeldrainFolderRegex.test(url)) {
+            if (name) await showCustomAlert("When adding a Pixeldrain folder, channel name input will be ignored. Names will be taken from file names or numbered.");
+            if (customLogo) await showCustomAlert("When adding a Pixeldrain folder, custom logo input will be ignored. Thumbnails will be used as logos.");
+
+            const channelsFromFolder = await processPixeldrainFolder(url);
+            if (channelsFromFolder.length > 0) {
+                currentChannels.push(...channelsFromFolder);
+                saveCurrentChannels(); // Auto-save after adding from folder
+                renderCurrentChannels();
+                await showCustomAlert(`Added ${channelsFromFolder.length} video channels from Pixeldrain folder!`);
+            }
+        } else {
+             if (!name) {
+                await showCustomAlert("Channel name is required for single channel entries!");
+                return;
+            }
+            if (!isValidUrl(url) && !pixeldrainFileRegex.test(url)) {
+                await showCustomAlert("Please enter a valid URL for the stream or a valid Pixeldrain link.");
+                return;
+            }
+            url = convertPixeldrainFileUrl(url);
+
+            let finalLogo = customLogo;
+            // Only try to fetch TMDB logo if customLogo is NOT provided,
+            // and the TMDB_API_KEY is properly set AND it's a "movie" channel.
+            if (!customLogo && name.toLowerCase().includes("movie") && TMDB_API_KEY !== 'YOUR_TMDB_API_KEY' && TMDB_API_KEY) {
+                const tempLogo = "https://via.placeholder.com/30?text=Loading...";
+                const channelIndex = currentChannels.length;
+                currentChannels.push({ name, url, logo: tempLogo, group: elements.globalGroup ? elements.globalGroup.value.trim() : '' });
+                saveCurrentChannels(); // Auto-save after adding temp
+                renderCurrentChannels();
+
+                const fetchedLogo = await searchMovieLogo(name);
+                currentChannels[channelIndex].logo = fetchedLogo;
+                setTimeout(() => {
+                    saveCurrentChannels(); // Auto-save after logo is fetched
+                    renderCurrentChannels();
+                }, 100); // Small delay to allow UI to update if needed
+
+            } else {
+                finalLogo = customLogo || (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
+                currentChannels.push({ name, url, logo: finalLogo, group: elements.globalGroup ? elements.globalGroup.value.trim() : '' });
+                saveCurrentChannels(); // Auto-save after adding
+                renderCurrentChannels();
+            }
+        }
+
+        // Clear input fields only if not processing folder
+        if (!isProcessingFolder) {
+            if (elements.channelName) elements.channelName.value = "";
+            if (elements.channelURL) elements.channelURL.value = "";
+            if (elements.channelLogo) elements.channelLogo.value = "";
+        }
+    }
+
+
+    function removeChannel(index) {
+        if (index >= 0 && index < currentChannels.length) {
+            currentChannels.splice(index, 1);
+            saveCurrentChannels(); // Auto-save after removal
+            renderCurrentChannels(); // Re-render the list
+        } else {
+            console.error("Invalid index for channel removal:", index, "Array length:", currentChannels.length);
+            showCustomAlert("Error: Could not delete channel. Invalid index. Please try refreshing the page.");
+        }
+    }
+
+    async function editChannel(index) {
+        const channel = currentChannels[index];
+        if (!channel) {
+            await showCustomAlert("Error: Channel not found for editing. Please refresh the page.");
+            return;
+        }
+
+        let newName = prompt("Edit Channel Name:", channel.name);
+        if (newName === null) return; // User cancelled
+        newName = newName.trim();
+        if (newName === "") {
+             await showCustomAlert("Channel name cannot be empty. Edit cancelled.");
+             return;
+        }
+
+
+        let newUrl = prompt("Edit Stream URL:", channel.url);
+        if (newUrl === null) return; // User cancelled
+        newUrl = convertPixeldrainFileUrl(newUrl.trim());
+        if (newUrl === "") {
+            await showCustomAlert("Stream URL cannot be empty. Edit cancelled.");
+            return;
+        }
+        if (!isValidUrl(newUrl) && !/^https:\/\/pixeldrain\.com\/api\/file\/[a-zA-Z0-9]+$/.test(newUrl)) {
+            await showCustomAlert("Please enter a valid URL. Edit cancelled.");
+            return;
+        }
+
+
+        let newLogo = prompt("Edit Logo URL (leave empty for global/TMDB if applicable):", channel.logo);
+        if (newLogo === null) newLogo = channel.logo; // Keep current logo if cancelled
+        newLogo = newLogo.trim();
+
+        let newGroup = prompt("Edit Group Name:", channel.group || '');
+        if (newGroup === null) newGroup = channel.group; // Keep current group if cancelled
+        newGroup = newGroup.trim();
+
+        channel.name = newName;
+        channel.url = newUrl;
+        channel.logo = newLogo || (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
+        channel.group = newGroup;
+
+        saveCurrentChannels(); // Auto-save after edit
+        renderCurrentChannels();
+        await showCustomAlert("Channel updated successfully!");
+    }
+
+    // New function to handle playing a channel
+    function playChannel(index) {
+        const channel = currentChannels[index];
+        if (!channel || !channel.url) {
+            showCustomAlert("Error: Channel or stream URL not found.");
+            return;
+        }
+
+        // Update the modal's title with the channel name
+        elements.playerChannelName.textContent = `Now Playing: ${channel.name}`;
+
+        // Get the player instance. `videojs` is the global function.
+        // It's crucial to check if an instance exists and re-use it.
+        if (!videoPlayer) {
+            videoPlayer = videojs('my-player');
+        }
+
+        // Check for specific file types to set the correct `type`
+        let sourceType = 'video/mp4'; // Default to mp4
+        if (channel.url.includes('.m3u8')) {
+            sourceType = 'application/x-mpegURL';
+        } else if (channel.url.includes('.mpd')) {
+            sourceType = 'application/dash+xml';
+        }
+
+        videoPlayer.src({
+            src: channel.url,
+            type: sourceType
+        });
+
+        // Set the poster image if available
+        if (channel.logo) {
+            videoPlayer.poster(channel.logo);
+        } else {
+            videoPlayer.poster('');
+        }
+
+        // Play the video and show the modal
+        videoPlayer.load();
+        videoPlayer.play();
+        showModal(elements.playerModal);
+    }
+
+    function filterChannels() {
+        renderCurrentChannels(); // Re-render based on search input
+    }
+
+    async function clearCurrentChannels() {
+        const confirmed = await showCustomConfirm("Are you sure you want to clear all channels from the current playlist?");
+        if (confirmed) {
+            currentChannels = [];
+            saveCurrentChannels(); // Auto-save after clearing
+            renderCurrentChannels();
+            await showCustomAlert("All channels cleared.");
+        }
+    }
+
+    // --- M3U Generation & Download ---
+    function generateM3U() {
+        let output = "#EXTM3U\n";
+        currentChannels.forEach(ch => {
+            output += `#EXTINF:-1 tvg-logo="${ch.logo}"${ch.group ? ` group-title="${ch.group}"` : ''},${ch.name}\n${ch.url}\n`;
+        });
+        if (elements.output) {
+            elements.output.value = output;
+        }
+    }
+
+    async function downloadM3U() {
+        const content = elements.output ? elements.output.value : '';
+        if (currentChannels.length === 0) {
+            await showCustomAlert("Add some channels before downloading a playlist!");
+            return;
+        }
+        let fileName = elements.playlistFileNameInput ? elements.playlistFileNameInput.value.trim() : 'playlist';
+        if (!fileName) {
+            fileName = prompt("Please enter a file name for the playlist:", "playlist");
+            if (!fileName) {
+                await showCustomAlert("Download cancelled. File name is required.");
+                return;
+            }
+        }
+        const blob = new Blob([content], { type: "audio/x-mpegurl" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${fileName}.m3u`;
+        document.body.appendChild(a); // Append to body to ensure it's in the DOM for Firefox
+        a.click();
+        document.body.removeChild(a); // Clean up
+        URL.revokeObjectURL(a.href); // Free up memory
+    }
+
+    async function copyOutput() {
+        if (!elements.output) return;
+        elements.output.select();
+        elements.output.setSelectionRange(0, 99999); // Corrected function name
+
+        try {
+            await navigator.clipboard.writeText(elements.output.value);
+            await showCustomAlert("Output copied to clipboard!");
+        } catch (err) {
+            console.error("Failed to copy text: ", err);
+            await showCustomAlert("Failed to copy text. Please copy manually.");
+        }
+    }
+
+    // --- Saved Playlists Menu Functions ---
+    function toggleSavedPlaylistsDropdown() {
+        if (elements.savedPlaylistsDropdown) {
+            elements.savedPlaylistsDropdown.classList.toggle("show");
+            if (elements.savedPlaylistsDropdown.classList.contains("show")) {
+                renderSavedPlaylistsDropdown();
+            }
+        }
+    }
+
+    function renderSavedPlaylistsDropdown() {
+        if (!elements.savedPlaylistsDropdown) return;
+        elements.savedPlaylistsDropdown.innerHTML = "";
+        const playlistNames = Object.keys(savedPlaylists).sort((a, b) => {
+            // "Auto Saved Session" always first
+            if (a === AUTO_SAVE_PLAYLIST_NAME) return -1;
+            if (b === AUTO_SAVE_PLAYLIST_NAME) return 1;
+            return a.localeCompare(b);
+        });
+        if (elements.savedPlaylistsCount) {
+            elements.savedPlaylistsCount.textContent = `(${playlistNames.length})`;
+        }
+
+        if (playlistNames.length === 0) {
+            elements.savedPlaylistsDropdown.innerHTML = `<p style="padding: 10px 15px; color: var(--text-placeholder); margin: 0;">No saved playlists yet.</p>`;
+        } else {
+            playlistNames.forEach(name => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "dropdown-item-actions";
+                itemDiv.innerHTML = `
+                    <span class="playlist-name-text" data-playlist-name="${name}">${name}</span>
+                    ${name !== AUTO_SAVE_PLAYLIST_NAME ? `<button class="delete-playlist-btn" data-playlist-name="${name}" title="Delete Playlist">✖</button>` : ''}
+                `;
+                elements.savedPlaylistsDropdown.appendChild(itemDiv);
+            });
+            // Attach listeners to newly created elements
+            elements.savedPlaylistsDropdown.querySelectorAll('.playlist-name-text').forEach(span => {
+                span.addEventListener('click', (e) => loadSavedPlaylist(e.currentTarget.dataset.playlistName));
+            });
+            elements.savedPlaylistsDropdown.querySelectorAll('.delete-playlist-btn').forEach(button => {
+                button.addEventListener('click', (e) => confirmDeleteSavedPlaylist(e.currentTarget.dataset.playlistName, e));
+            });
+        }
+    }
+
+    async function saveCurrentPlaylist() {
+        let playlistName = elements.playlistFileNameInput ? elements.playlistFileNameInput.value.trim() : '';
+
+        if (currentChannels.length === 0) {
+            await showCustomAlert("No channels to save. Add channels to the current playlist first.");
+            return;
+        }
+
+        if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
+            playlistName = prompt("Please enter a name for this playlist:", `My Playlist ${Object.keys(savedPlaylists).length + 1}`);
+            if (!playlistName) return; // User cancelled prompt
+            playlistName = playlistName.trim();
+            if (!playlistName || playlistName === AUTO_SAVE_PLAYLIST_NAME) {
+                await showCustomAlert("Invalid playlist name. Cannot be empty or 'Auto Saved Session'.");
+                return;
+            }
+        }
+
+        if (savedPlaylists?.[playlistName]) {
+            const confirmed = await showCustomConfirm(`A playlist named "${playlistName}" already exists. Do you want to overwrite it?`);
+            if (confirmed) {
+                savedPlaylists = { ...savedPlaylists, [playlistName]: [...currentChannels] };
+                savePlaylistsToLocalStorage();
+                renderSavedPlaylistsDropdown();
+                await showCustomAlert(`Playlist "${playlistName}" overwritten successfully!`);
+            }
+        } else {
+            savedPlaylists = { ...savedPlaylists, [playlistName]: [...currentChannels] };
+            savePlaylistsToLocalStorage();
+            renderSavedPlaylistsDropdown();
+            await showCustomAlert(`Playlist "${playlistName}" saved successfully!`);
+        }
+    }
+
+    async function loadSavedPlaylist(name) {
+        // Prevent loading if already processing a folder to avoid state conflicts
+        if (isProcessingFolder) {
+            await showCustomAlert("Cannot load playlist while processing a Pixeldrain folder. Please wait.");
+            return;
+        }
+
+        const confirmed = await showCustomConfirm(`Loading "${name}" will replace your current playlist. Continue?`);
+        if (confirmed) {
+            currentChannels = [...savedPlaylists?.[name] || []];
+            currentChannels.forEach(channel => {
+                // Ensure logos are set if they were placeholders or missing
+                if (!channel.logo || channel.logo.includes("placeholder.com") || channel.logo.includes("Loading...")) {
+                    channel.logo = (elements.logoAll ? elements.logoAll.value.trim() : '') || "https://via.placeholder.com/30";
+                }
+            });
+            saveCurrentChannels(); // Auto-save the newly loaded playlist (this also updates the auto-save entry)
+            renderCurrentChannels();
+            toggleSavedPlaylistsDropdown(); // Close dropdown after loading
+            if (elements.playlistFileNameInput) {
+                // Set the filename input to the loaded playlist's name, or default if auto-saved
+                elements.playlistFileNameInput.value = name === AUTO_SAVE_PLAYLIST_NAME ? "playlist" : name;
+            }
+            await showCustomAlert(`Playlist "${name}" loaded.`);
+        }
+    }
+
+    async function confirmDeleteSavedPlaylist(name, event) {
+        event.stopPropagation(); // Prevent the dropdown from closing immediately
+        if (name === AUTO_SAVE_PLAYLIST_NAME) {
+            await showCustomAlert("The 'Auto Saved Session' playlist cannot be manually deleted.");
+            return;
+        }
+        const confirmed = await showCustomConfirm(`Are you sure you want to delete the playlist "${name}"? This action cannot be undone.`);
+        if (confirmed) {
+            deleteSavedPlaylist(name);
+        }
+    }
+
+    async function deleteSavedPlaylist(name) {
+        // Create a new object excluding the playlist to be deleted
+        const {[name]: deleted, ...rest} = savedPlaylists;
+        savedPlaylists = rest;
+        savePlaylistsToLocalStorage();
+        renderSavedPlaylistsDropdown();
+        await showCustomAlert(`Playlist "${name}" deleted.`);
+    }
+
+    // --- QR Code Generator ---
+    async function generateQrCode() {
+        if (!elements.output) {
+            await showCustomAlert("Output element not found.");
+            return;
+        }
+        const playlistContent = elements.output.value;
+        if (!playlistContent.trim()) {
+            await showCustomAlert("Please generate a playlist first to create a QR code.");
+            return;
+        }
+
+        try {
+            if (elements.qrCodeCanvas) {
+                // Clear previous QR code if any
+                const context = elements.qrCodeCanvas.getContext('2d');
+                context.clearRect(0, 0, elements.qrCodeCanvas.width, elements.qrCodeCanvas.height);
+
+                new QRious({
+                    element: elements.qrCodeCanvas,
+                    value: playlistContent,
+                    size: 250, // Size of the QR code
+                    background: 'white', // Background color of QR code
+                    foreground: 'black', // Foreground color of QR code
+                });
+                await showQrCodeModal(); // Use the promise-based showQrCodeModal
+            } else {
+                await showCustomAlert("QR Code Canvas element not found.");
+            }
+        } catch (error) {
+            console.error("Error generating QR code:", error);
+            await showCustomAlert("Failed to generate QR code. The playlist might be too large or invalid characters are present.");
+        }
+    }
+
+    // --- Live Stream Checker ---
+    async function checkStreams() {
+        if (currentChannels.length === 0) {
+            await showCustomAlert("No channels to check. Please add some channels first.");
+            return;
+        }
+
+        // Disable button and show loading state
+        if (elements.checkStreamsBtn) {
+            elements.checkStreamsBtn.disabled = true;
+            elements.checkStreamsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+        }
+
+
+        for (let i = 0; i < currentChannels.length; i++) {
+            const channel = currentChannels[i];
+            const statusIconElement = document.getElementById(`status-${i}`);
+            if (statusIconElement) {
+                statusIconElement.innerHTML = '<i class="fas fa-circle-notch fa-spin loading"></i>'; // Loading spinner
+            }
+
+            try {
+                // Client-side stream checking using `fetch` with `mode: 'no-cors'`.
+                // This is a basic reachability check and is limited by browser CORS policy.
+                // It can't reliably confirm if the stream is playable, only that the URL exists.
+                // For a truly reliable check, a server-side proxy would be required.
+                const response = await fetch(channel.url, { method: 'HEAD', mode: 'no-cors' });
+
+                // If a response is received without a network error, we assume it's reachable.
+                if (statusIconElement) {
+                    statusIconElement.innerHTML = '<i class="fas fa-check-circle ok"></i>'; // Assume OK if no network error on fetch
+                }
+            } catch (error) {
+                console.error(`Error checking stream ${channel.name} (${channel.url}):`, error);
+                if (statusIconElement) {
+                    statusIconElement.innerHTML = '<i class="fas fa-times-circle error"></i>'; // Error (e.g., network disconnected, invalid domain)
+                }
+            }
+            await new Promise(resolve => setTimeout(resolve, 200)); // Small delay to prevent overwhelming requests
+        }
+
+        if (elements.checkStreamsBtn) {
+            elements.checkStreamsBtn.disabled = false;
+            elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
+        }
+        await showCustomAlert("Stream checking complete! (Note: Client-side checks are limited and may
