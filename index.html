@@ -13,44 +13,43 @@
   <link href="https://cdn.jsdelivr.net/npm/videojs-seek-buttons/dist/videojs-seek-buttons.css" rel="stylesheet">
 
   <style>
-    /* CSS Variables for colors */
+    /* CSS Variables for the new LIGHT color theme */
     :root {
-      --bg-dark: #121212;
-      --bg-container: #1e1e1e;
-      --bg-input: #2c2c2c;
-      --text-light: #f8f8f8;
-      --text-medium: #e0e0e0;
-      --text-dark: #bdbdbd;
-      --text-placeholder: #777;
-      --accent-blue: #64b5f6; /* Primary accent */
-      --accent-blue-dark: #42a5f5; /* Darker accent on hover/focus */
-      --btn-success: #4caf50;
-      --btn-success-hover: #43a047;
-      --btn-info: #2196f3;
-      --btn-info-hover: #1976d2;
-      --btn-dark: #424242;
-      --btn-dark-hover: #333333;
-      --btn-secondary: #757575;
-      --btn-secondary-hover: #616161;
-      --btn-primary: #3f51b5;
-      --btn-primary-hover: #303f9f;
-      --btn-copy: #607d8b;
-      --btn-copy-hover: #455a64;
+      --bg-light: #f0f2f5;
+      --bg-container: #ffffff;
+      --bg-input: #e8ecf1;
+      --text-dark: #333333;
+      --text-medium: #555555;
+      --text-placeholder: #777777;
+      --accent-blue: #007bff; /* Primary accent */
+      --accent-blue-dark: #0056b3; /* Darker accent on hover/focus */
+      --btn-success: #28a745;
+      --btn-success-hover: #218838;
+      --btn-info: #17a2b8;
+      --btn-info-hover: #138496;
+      --btn-dark: #343a40;
+      --btn-dark-hover: #1d2124;
+      --btn-secondary: #6c757d;
+      --btn-secondary-hover: #545b62;
+      --btn-primary: #6f42c1;
+      --btn-primary-hover: #563d7c;
+      --btn-copy: #6c757d;
+      --btn-copy-hover: #5a6268;
       --red-error: #dc3545;
       --red-error-hover: #c82333;
       --yellow-warning: #ffc107;
       --yellow-warning-hover: #e0a800;
-      --border-color: #333;
-      --shadow-dark: rgba(0, 0, 0, 0.5);
-      --shadow-medium: rgba(0, 0, 0, 0.6);
-      --shadow-light: rgba(0, 0, 0, 0.3);
-      --modal-bg-overlay: rgba(0,0,0,0.8);
+      --border-color: #ced4da;
+      --shadow-light: rgba(0, 0, 0, 0.1);
+      --shadow-medium: rgba(0, 0, 0, 0.15);
+      --shadow-dark: rgba(0, 0, 0, 0.25);
+      --modal-bg-overlay: rgba(0,0,0,0.5);
     }
 
     body {
-      background-color: var(--bg-dark);
+      background-color: var(--bg-light);
       font-family: 'Roboto', sans-serif;
-      color: var(--text-light);
+      color: var(--text-dark);
       padding: 15px;
       line-height: 1.6;
     }
@@ -64,15 +63,15 @@
     }
     h3 {
       font-family: 'Poppins', sans-serif;
-      color: var(--text-medium);
-      text-shadow: 1px 1px 3px var(--shadow-dark);
+      color: var(--text-dark);
+      text-shadow: none;
       font-weight: 700;
       text-align: center;
       margin-bottom: 25px;
       letter-spacing: 1px;
     }
     .form-label {
-        color: var(--text-dark);
+        color: var(--text-medium);
         font-weight: 500;
         margin-bottom: 8px;
         letter-spacing: 0.5px;
@@ -85,7 +84,7 @@
     }
     .form-control {
       background-color: var(--bg-input);
-      color: var(--text-light);
+      color: var(--text-dark);
       padding: 14px 18px;
     }
     .form-control::placeholder {
@@ -94,9 +93,9 @@
     .form-control:focus {
       outline: none;
       border-color: var(--accent-blue);
-      box-shadow: 0 0 8px rgba(100, 181, 246, 0.6);
-      background-color: var(--bg-input);
-      color: var(--text-light);
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.6);
+      background-color: var(--bg-container);
+      color: var(--text-dark);
     }
     .btn {
       padding: 14px 22px;
@@ -137,11 +136,11 @@
 
     /* Stream Status Specific Styles */
     .btn-check-stream {
-        background-color: #ff9800; /* Orange */
+        background-image: linear-gradient(to bottom, #ff9800, #fb8c00); /* Orange */
         color: #fff;
     }
     .btn-check-stream:hover {
-        background-color: #fb8c00;
+        background-image: linear-gradient(to top, #ff9800, #fb8c00);
     }
 
     .channel-list-box {
@@ -161,7 +160,7 @@
     }
     .channel-list-box .header h5 {
         margin: 0;
-        color: var(--text-medium);
+        color: var(--text-dark);
         font-weight: 600;
         flex-grow: 1;
         min-width: 150px;
@@ -196,7 +195,7 @@
 
     /* Custom Scrollbar */
     #previewList::-webkit-scrollbar { width: 10px; }
-    #previewList::-webkit-scrollbar-track { background: var(--border-color); border-radius: 10px; }
+    #previewList::-webkit-scrollbar-track { background: var(--bg-light); border-radius: 10px; }
     #previewList::-webkit-scrollbar-thumb {
         background-color: var(--accent-blue);
         border-radius: 10px;
@@ -224,7 +223,7 @@
       width: 35px;
       object-fit: contain;
       border-radius: 8px;
-      background-color: var(--border-color);
+      background-color: var(--bg-input);
       padding: 4px;
       flex-shrink: 0;
     }
@@ -291,7 +290,7 @@
       margin-top: 20px;
       border-radius: 12px;
       background-color: var(--bg-input);
-      color: var(--text-light);
+      color: var(--text-dark);
       padding: 18px;
       border: 1px solid var(--border-color);
       resize: vertical;
@@ -300,12 +299,12 @@
     textarea:focus {
       outline: none;
       border-color: var(--accent-blue);
-      box-shadow: 0 0 8px rgba(100, 181, 246, 0.6);
-      background-color: var(--bg-input);
-      color: var(--text-light);
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.6);
+      background-color: var(--bg-container);
+      color: var(--text-dark);
     }
     h5 {
-        color: var(--text-dark);
+        color: var(--text-medium);
         font-weight: 600;
         margin-top: 30px;
         margin-bottom: 15px;
@@ -317,7 +316,7 @@
       text-align: center;
       font-size: 15px;
       color: var(--text-placeholder);
-      text-shadow: 0.5px 0.5px 1px var(--shadow-dark);
+      text-shadow: none;
       padding-top: 20px;
       border-top: 1px solid var(--border-color);
     }
@@ -351,7 +350,7 @@
     .dropdown-content {
         display: none;
         position: absolute;
-        background-color: var(--bg-input);
+        background-color: var(--bg-container);
         min-width: 280px;
         box-shadow: 0 5px 15px var(--shadow-dark);
         border: 1px solid var(--border-color);
@@ -367,7 +366,7 @@
     }
     .dropdown-content.show { display: block; }
     .dropdown-content button {
-        color: var(--text-light);
+        color: var(--text-dark);
         padding: 12px 18px;
         text-decoration: none;
         display: block;
@@ -381,7 +380,7 @@
         transition: background-color 0.2s ease, transform 0.2s ease;
     }
     .dropdown-content button:last-child { border-bottom: none; }
-    .dropdown-content button:hover { background-color: var(--border-color); transform: translateX(8px); }
+    .dropdown-content button:hover { background-color: var(--bg-light); transform: translateX(8px); }
     .dropdown-item-actions {
         display: flex;
         justify-content: space-between;
@@ -409,14 +408,14 @@
     }
     .dropdown-item-actions .delete-playlist-btn:hover {
         opacity: 1;
-        background-color: rgba(244, 67, 54, 0.15);
+        background-color: rgba(220, 53, 69, 0.1);
         transform: scale(1.1);
     }
 
     .playlist-actions-section {
         margin-top: 25px;
         padding: 25px;
-        background-color: #252525;
+        background-color: var(--bg-input);
         border-radius: 15px;
         box-shadow: 0 3px 10px var(--shadow-medium);
     }
@@ -483,7 +482,7 @@
     }
 
     .modal-content h4 {
-      color: var(--text-medium);
+      color: var(--text-dark);
       text-align: center;
       margin-bottom: 25px;
       font-weight: 700;
@@ -492,7 +491,7 @@
     }
 
     .modal-content p {
-        color: var(--text-light);
+        color: var(--text-medium);
         line-height: 1.7;
     }
 
@@ -508,7 +507,7 @@
       padding: 15px 18px;
       border-radius: 10px;
       border: 1px solid var(--border-color);
-      color: var(--text-light);
+      color: var(--text-medium);
       display: flex;
       align-items: center;
       font-size: 1rem;
@@ -520,8 +519,6 @@
       color: var(--accent-blue);
       font-size: 1.2em;
     }
-
-    /* Removed .modal-close-btn styles as the button is removed */
 
     .modal-footer-text {
         text-align: center;
@@ -598,7 +595,7 @@
     #qrCodeMessage {
         text-align: center;
         margin-top: 15px;
-        color: var(--text-dark);
+        color: var(--text-medium);
     }
 
     /* Video Player Modal */
@@ -623,15 +620,15 @@
         width: 1em;
         height: 1em;
         padding: .25em .25em;
-        color: #fff;
-        background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+        color: #000;
+        background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
         border: 0;
         border-radius: .375rem;
         opacity: .5;
         transition: opacity .15s ease-in-out;
     }
     .btn-close:hover {
-        color: #fff;
+        color: #000;
         text-decoration: none;
         opacity: .75;
     }
@@ -761,7 +758,7 @@
   <div id="welcomeModal" class="modal">
     <div class="modal-content">
       <h4>Welcome to EXTM3U Playlist Creator!</h4>
-      <p style="text-align: center; color: var(--text-light);">Easily create and manage your M3U playlists with advanced features:</p>
+      <p style="text-align: center; color: var(--text-medium);">Easily create and manage your M3U playlists with advanced features:</p>
       <ul>
         <li><i class="fas fa-stream"></i> **Easy Channel Addition:** Add any channel with a name, URL, and your preferred logo.</li>
         <li><i class="fas fa-folder"></i> **Automatic Addition from Pixeldrain Folder:** Just paste a Pixeldrain folder link (e.g., `https://pixeldrain.com/l/FOLDER_ID`). All video files from that folder will be automatically added as separate channels with API links!</li>
@@ -1487,7 +1484,7 @@
             });
             // Attach listeners to newly created elements
             elements.savedPlaylistsDropdown.querySelectorAll('.playlist-name-text').forEach(span => {
-                span.addEventListener('click', (e) => loadSavedPlaylist(e.currentTarget.dataset.playlistName));
+                span.addEventListener('click', (e) => loadSavedPlaylist(e.currentTarget.dataset.playlist-name));
             });
             elements.savedPlaylistsDropdown.querySelectorAll('.delete-playlist-btn').forEach(button => {
                 button.addEventListener('click', (e) => confirmDeleteSavedPlaylist(e.currentTarget.dataset.playlistName, e));
@@ -1743,4 +1740,63 @@
         }
         if (elements.confirmActionBtn) {
             elements.confirmActionBtn.addEventListener('click', () => {
-                closeModal(elements.confirmationModal
+                closeModal(elements.confirmationModal);
+                if (resolveConfirmation) resolveConfirmation(true);
+            });
+        }
+        if (elements.cancelConfirmBtn) {
+            elements.cancelConfirmBtn.addEventListener('click', () => {
+                closeModal(elements.confirmationModal);
+                if (resolveConfirmation) resolveConfirmation(false);
+            });
+        }
+        if (elements.alertOkBtn) {
+            elements.alertOkBtn.addEventListener('click', () => {
+                closeModal(elements.alertModal);
+                if (resolveAlert) resolveAlert();
+            });
+        }
+        if (elements.qrCodeModalOkBtn) {
+            elements.qrCodeModalOkBtn.addEventListener('click', () => {
+                closeModal(elements.qrCodeModal);
+                if (resolveQrCode) resolveQrCode();
+            });
+        }
+        // Listener for the dropdown to close when clicking outside
+        window.addEventListener('click', (event) => {
+            if (elements.savedPlaylistsDropdown && !event.target.matches('#savedPlaylistsToggleBtn')) {
+                if (elements.savedPlaylistsDropdown.classList.contains('show')) {
+                    elements.savedPlaylistsDropdown.classList.remove('show');
+                }
+            }
+            // Close modals if the user clicks outside the modal-content
+            if (event.target.classList.contains('modal')) {
+                const modals = [elements.welcomeModal, elements.confirmationModal, elements.alertModal, elements.qrCodeModal, elements.playerModal];
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        closeModal(modal);
+                    }
+                });
+            }
+        });
+    }
+
+    // Main initialization function
+    function init() {
+        getDomElements();
+        loadPlaylistsFromLocalStorage();
+        loadGlobalSettings();
+        loadCurrentChannels();
+        setupEventListeners();
+
+        // Check if the welcome modal has been shown before
+        if (!localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN)) {
+            showWelcomeModal().then(() => {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_MODAL_SHOWN, 'true');
+            });
+        }
+    }
+
+    // Run the initialization function when the page loads
+    window.addEventListener('DOMContentLoaded', init);
+  </
