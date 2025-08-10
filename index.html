@@ -618,6 +618,23 @@
         width: 100%;
         height: auto;
     }
+    .btn-close {
+        box-sizing: content-box;
+        width: 1em;
+        height: 1em;
+        padding: .25em .25em;
+        color: #fff;
+        background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+        border: 0;
+        border-radius: .375rem;
+        opacity: .5;
+        transition: opacity .15s ease-in-out;
+    }
+    .btn-close:hover {
+        color: #fff;
+        text-decoration: none;
+        opacity: .75;
+    }
 
     /* Floating Telegram Button */
     .telegram-float-btn {
@@ -646,7 +663,6 @@
         transform: scale(0.95);
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
     }
-
   </style>
 </head>
 <body>
@@ -807,7 +823,6 @@
         </div>
     </div>
   </div>
-
 
   <script src="https://vjs.zencdn.net/8.5.2/video.min.js"></script>
   <script src="https://unpkg.com/@videojs/http-streaming/dist/videojs-http-streaming.min.js"></script>
@@ -1610,7 +1625,6 @@
             elements.checkStreamsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
         }
 
-
         for (let i = 0; i < currentChannels.length; i++) {
             const channel = currentChannels[i];
             const statusIconElement = document.getElementById(`status-${i}`);
@@ -1642,4 +1656,91 @@
             elements.checkStreamsBtn.disabled = false;
             elements.checkStreamsBtn.innerHTML = '<i class="fas fa-signal"></i> Check Streams';
         }
-        await showCustomAlert("Stream checking complete! (Note: Client-side checks are limited and may
+        await showCustomAlert("Stream checking complete! (Note: Client-side checks are limited and may not be 100% accurate.)");
+    }
+
+    // --- Initialization and Event Listeners ---
+    function getDomElements() {
+        elements.logoAll = document.getElementById('logoAll');
+        elements.globalGroup = document.getElementById('globalGroup');
+        elements.channelName = document.getElementById('channelName');
+        elements.channelURL = document.getElementById('channelURL');
+        elements.channelLogo = document.getElementById('channelLogo');
+        elements.addChannelBtn = document.getElementById('addChannelBtn');
+        elements.checkStreamsBtn = document.getElementById('checkStreamsBtn');
+        elements.previewList = document.getElementById('previewList');
+        elements.channelSearchInput = document.getElementById('channelSearchInput');
+        elements.savedPlaylistsToggleBtn = document.getElementById('savedPlaylistsToggleBtn');
+        elements.savedPlaylistsDropdown = document.getElementById('savedPlaylistsDropdown');
+        elements.savedPlaylistsCount = document.getElementById('savedPlaylistsCount');
+        elements.playlistFileNameInput = document.getElementById('playlistFileNameInput');
+        elements.savePlaylistBtn = document.getElementById('savePlaylistBtn');
+        elements.generateM3UBtn = document.getElementById('generateM3UBtn');
+        elements.downloadM3UBtn = document.getElementById('downloadM3UBtn');
+        elements.generateQrCodeBtn = document.getElementById('generateQrCodeBtn');
+        elements.clearCurrentBtn = document.getElementById('clearCurrentBtn');
+        elements.output = document.getElementById('output');
+        elements.copyOutputBtn = document.getElementById('copyOutputBtn');
+        elements.welcomeModal = document.getElementById('welcomeModal');
+        elements.welcomeModalOkBtn = document.getElementById('welcomeModalOkBtn');
+        elements.confirmationModal = document.getElementById('confirmationModal');
+        elements.confirmationMessage = document.getElementById('confirmationMessage');
+        elements.confirmActionBtn = document.getElementById('confirmActionBtn');
+        elements.cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+        elements.alertModal = document.getElementById('alertModal');
+        elements.alertMessage = document.getElementById('alertMessage');
+        elements.alertOkBtn = document.getElementById('alertOkBtn');
+        elements.qrCodeModal = document.getElementById('qrCodeModal');
+        elements.qrCodeCanvas = document.getElementById('qrCodeCanvas');
+        elements.qrCodeModalOkBtn = document.getElementById('qrCodeModalOkBtn');
+        elements.playerModal = document.getElementById('playerModal');
+        elements.playerChannelName = document.getElementById('playerChannelName');
+    }
+
+    function setupEventListeners() {
+        if (elements.addChannelBtn) elements.addChannelBtn.addEventListener('click', addChannelFromInputs);
+        if (elements.previewList) elements.previewList.addEventListener('click', handleChannelActions);
+        if (elements.generateM3UBtn) elements.generateM3UBtn.addEventListener('click', generateM3U);
+        if (elements.downloadM3UBtn) elements.downloadM3UBtn.addEventListener('click', downloadM3U);
+        if (elements.copyOutputBtn) elements.copyOutputBtn.addEventListener('click', copyOutput);
+        if (elements.clearCurrentBtn) elements.clearCurrentBtn.addEventListener('click', clearCurrentChannels);
+        if (elements.checkStreamsBtn) elements.checkStreamsBtn.addEventListener('click', checkStreams);
+        if (elements.generateQrCodeBtn) elements.generateQrCodeBtn.addEventListener('click', generateQrCode);
+        if (elements.savePlaylistBtn) elements.savePlaylistBtn.addEventListener('click', saveCurrentPlaylist);
+
+        // Global settings auto-save on input change
+        if (elements.logoAll) elements.logoAll.addEventListener('input', saveGlobalSettings);
+        if (elements.globalGroup) elements.globalGroup.addEventListener('input', saveGlobalSettings);
+
+        // Saved playlists dropdown
+        if (elements.savedPlaylistsToggleBtn) elements.savedPlaylistsToggleBtn.addEventListener('click', toggleSavedPlaylistsDropdown);
+
+        // Filter functionality
+        if (elements.channelSearchInput) elements.channelSearchInput.addEventListener('input', filterChannels);
+
+        // Handle enter key press on input fields
+        if (elements.channelLogo) {
+            elements.channelLogo.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    addChannelFromInputs();
+                }
+            });
+        }
+        if (elements.channelURL) {
+            elements.channelURL.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    addChannelFromInputs();
+                }
+            });
+        }
+
+        // Modal button listeners
+        if (elements.welcomeModalOkBtn) {
+            elements.welcomeModalOkBtn.addEventListener('click', () => {
+                closeModal(elements.welcomeModal);
+                if (resolveWelcome) resolveWelcome();
+            });
+        }
+        if (elements.confirmActionBtn) {
+            elements.confirmActionBtn.addEventListener('click', () => {
+                closeModal(elements.confirmationModal
